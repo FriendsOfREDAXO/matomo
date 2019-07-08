@@ -1,0 +1,7 @@
+package: matomo
+version: '0.0.1-dev'
+author: 'skerbis'
+supportpage: https://github.com/skerbis/matomo
+
+requires:
+    redaxo: ^5.7.0
