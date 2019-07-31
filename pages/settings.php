@@ -61,6 +61,7 @@ if ($check  !== false) {
 
 echo '<div class="rex-form-group form-group"><textarea class="form-control codemirror" height="80">'.$output['value'].'</textarea></div>';
      $addon->setConfig('matomocheck', true);
+     $addon->setConfig('matomojs', $output['value']);
     }
     else {
         $content .= '<div class="alert alert-danger">';
@@ -71,3 +72,4 @@ echo '<div class="rex-form-group form-group"><textarea class="form-control codem
     }
 
 }
+
