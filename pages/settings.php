@@ -37,7 +37,7 @@ if (rex::isBackend()
 {
 
 
-$url = $addon->getConfig('url').'index.php?module=API&method=SitesManager.getJavascriptTag&idSite=7&piwikUrl=&format=JSON&token_auth='.$addon->getConfig('token');
+$url = rex_escape($addon->getConfig('url')).'index.php?module=API&method=SitesManager.getJavascriptTag&idSite=7&piwikUrl=&format=JSON&token_auth='.$addon->getConfig('token');
 
 ?><?php  
 //URL of targeted site  
@@ -56,12 +56,18 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $output = json_decode(curl_exec($ch),true);
 
 $check = strpos($output , 'Matomo');
-    dump($check);
+
 if ($check  !== false) {
 
 echo '<div class="rex-form-group form-group"><textarea class="form-control" height="80">'.$output['value'].'</textarea></div>';
+     $addon->setConfig('matomocheck', true);
     }
+    else {
+        $content .= '<div class="alert alert-danger">';
+        $content .= $addon->i18n('matomo_notfound');
+        $content .= '</div>';
+        echo $content;
+        $addon->setConfig('matomocheck', '');
+    }
+
 }
-?>  
-
-
