@@ -25,6 +25,3 @@ else
     {
     echo $addon->i18n('matomo_settings_info');
 }
-
-
-?>
