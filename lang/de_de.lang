@@ -1,3 +1,4 @@
+matomo_Matomo = Matomo Web-Statistiken
 matomo_url = Matomo-URL mit abschließendem /
 matomo_id = Seiten-ID
 matomo_token = API-Token
