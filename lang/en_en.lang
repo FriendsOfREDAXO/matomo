@@ -8,3 +8,4 @@ matomo_dashboard = Matomo Dashboard
 matomo_settings = Matomo settings
 matomo_link = Open Matomo
 matomo_settings_info = The Matomo add-on has not yet been configured yet.
+matomo_notfound = Matomo was not found
