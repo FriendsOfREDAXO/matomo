@@ -9,8 +9,10 @@ page:
     pjax: true
     icon: rex-icon fa-code
     subpages:
-        settings: { title: 'translate:matomo_settings'}
-        dashboard: { title: 'translate:matomo_dashboard'}      
+        dashboard: { title: 'translate:matomo_dashboard'}
+        settings:
+                title: 'translate:matomo_settings'
+                perm: admin[]
 
 requires:
     redaxo: ^5.7.0
