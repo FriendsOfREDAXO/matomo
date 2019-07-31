@@ -13,7 +13,7 @@ if (rex::isBackend()
 $pass = $addon->getConfig('password');
 $pass = md5($pass);
 ?>
-<a target="_blank" href="<?= $addon->getConfig('url')?>/index.php?module=Login&action=logme&login=<?= $addon->getConfig('user')?>&password=<?=$pass?>"><?=$addon->i18n('matomo_link')?></but>
+<a target="_blank" href="<?= $addon->getConfig('url')?>/index.php?module=Login&action=logme&login=<?= $addon->getConfig('user')?>&password=<?=$pass?>"><?=$addon->i18n('matomo_link')?></a>
 
 
 <iframe src="<?= $addon->getConfig('url')?>index.php?module=Widgetize&action=iframe&moduleToWidgetize=Dashboard&actionToWidgetize=index&idSite=<?= $addon->getConfig('id')?>&period=week&date=yesterday&token_auth=<?= $addon->getConfig('token')?>
