@@ -1,22 +1,23 @@
 <?php 
-$addon = rex_addon::get('matomo')
-$form = rex_config_form::factory($addon);
+$addon = rex_addon::get('matomo');
+$form = rex_config_form::factory($addon->name);
 
-$field = $form->addInputField('url', null);
-$field->setLabel($addon->i18n('matomo_Url'));
-$field->setNotice('Comment');
+$field = $form->addInputField('text', 'url',null,["class" => "form-control"]);
+$field->setLabel($addon->i18n('matomo_url'));
 
-$field = $form->addInputField('token', null]);
+$field = $form->addInputField('text', 'id',null,["class" => "form-control"]);
+$field->setLabel($addon->i18n('matomo_id'));
+
+
+$field = $form->addInputField('text', 'token',null,["class" => "form-control"]);
 $field->setLabel($addon->i18n('matomo_token'));
-$field->setNotice('Comment');
 
-$field = $form->addInputField('user', null]);
+$field = $form->addInputField('text', 'user',null,["class" => "form-control"]);
 $field->setLabel($addon->i18n('matomo_user'));
-$field->setNotice('Comment');
 
-$field = $form->addInputField('password', null);
-$field->setLabel($addon->i18n('matomo_pwasword'));
-$field->setNotice('Comment');
+$field = $form->addInputField('password', 'password',null,["class" => "form-control"]);
+$field->setLabel($addon->i18n('matomo_password'));
+
 
 $fragment = new rex_fragment();
 $fragment->setVar('class', 'edit', false);

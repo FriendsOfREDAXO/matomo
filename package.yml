@@ -1,5 +1,5 @@
 package: matomo
-version: '0.0.2-dev'
+version: '0.0.2'
 author: 'skerbis'
 supportpage: https://github.com/skerbis/matomo
 
@@ -7,7 +7,7 @@ page:
     title: 'Matomo'
     perm: matomo[]
     pjax: true
-    icon: rex-icon fa-code
+    icon: rex-icon rex-icon-seo
     subpages:
         dashboard: { title: 'translate:matomo_dashboard'}
         settings:
