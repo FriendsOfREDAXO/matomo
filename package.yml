@@ -1,7 +1,16 @@
 package: matomo
-version: '0.0.1-dev'
+version: '0.0.2-dev'
 author: 'skerbis'
 supportpage: https://github.com/skerbis/matomo
+
+page:
+    title: 'Custom-Code'
+    perm: matomo[]
+    pjax: true
+    icon: rex-icon fa-code
+    subpages:
+        settings: { title: Matomo}
+
 
 requires:
     redaxo: ^5.7.0
