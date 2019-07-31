@@ -7,4 +7,5 @@ matomo_password = Passwort
 matomo_dashboard = Matomo Dashboard
 matomo_settings = Matomo Einstellungen
 matomo_link = Matomo aufrufen
-matomo_settings_info = Das Matomo-AddOn wurde noch nicht konfiguriert. 
+matomo_settings_info = Das Matomo-AddOn wurde noch nicht konfiguriert.
+matomo_notfound = Matomo wurde nicht gefunden
