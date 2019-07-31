@@ -8,3 +8,7 @@ Features:
 Planned: 
 - minibar widget with direct login to matomo
 - Load embed code via API 
+
+**Projekt-Lead**
+
+[Thomas Skerbis](https://github.com/skerbis)
