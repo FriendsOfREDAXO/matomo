@@ -59,7 +59,7 @@ $check = strpos($output , 'Matomo');
 
 if ($check  !== false) {
 
-echo '<div class="rex-form-group form-group"><textarea class="form-control" height="80">'.$output['value'].'</textarea></div>';
+echo '<div class="rex-form-group form-group"><textarea class="form-control codemirror" height="80">'.$output['value'].'</textarea></div>';
      $addon->setConfig('matomocheck', true);
     }
     else {
