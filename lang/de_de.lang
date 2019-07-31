@@ -4,7 +4,6 @@ matomo_id = Seiten-ID
 matomo_token = API-Token
 matomo_user = Benutzername
 matomo_password = Passwort
-matomo_password = Passwort
 matomo_dashboard = Matomo Dashboard
 matomo_settings = Matomo Einstellungen
 matomo_link = Matomo aufrufen
