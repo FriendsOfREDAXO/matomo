@@ -37,7 +37,7 @@ if (rex::isBackend()
 {
 
 
-$url = 'https://klxm.de/piwik//index.php?module=API&method=SitesManager.getJavascriptTag&idSite=7&piwikUrl=&format=JSON&token_auth='.$addon->getConfig('token');
+$url = $addon->getConfig('url').'index.php?module=API&method=SitesManager.getJavascriptTag&idSite=7&piwikUrl=&format=JSON&token_auth='.$addon->getConfig('token');
 
 ?><?php  
 //URL of targeted site  
@@ -55,10 +55,12 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 // close curl resource, and free up system resources  
 $output = json_decode(curl_exec($ch),true);
 
+$check = strpos($output , 'Matomo');
+    dump($check);
+if ($check  !== false) {
 
-
-#echo json_decode($output);
 echo '<div class="rex-form-group form-group"><textarea class="form-control" height="80">'.$output['value'].'</textarea></div>';
+    }
 }
 ?>  
 
