@@ -1,20 +1,21 @@
 <?php 
-$form = rex_config_form::factory($this->name);
+$addon = rex_addon::get('matomo')
+$form = rex_config_form::factory($addon);
 
-$field = $form->addInputField('url', null, ["class" => "codemirror"]);
-$field->setLabel("Matomo-Url");
+$field = $form->addInputField('url', null);
+$field->setLabel($addon->i18n('matomo_Url'));
 $field->setNotice('Comment');
 
-$field = $form->addInputField('token', null, ["class" => "codemirror"]);
-$field->setLabel("API-Token");
+$field = $form->addInputField('token', null]);
+$field->setLabel($addon->i18n('matomo_token'));
 $field->setNotice('Comment');
 
-$field = $form->addInputField('user', null, ["class" => "codemirror"]);
-$field->setLabel("User");
+$field = $form->addInputField('user', null]);
+$field->setLabel($addon->i18n('matomo_user'));
 $field->setNotice('Comment');
 
-$field = $form->addInputField('password', null, ["class" => "codemirror"]);
-$field->setLabel("Passwort");
+$field = $form->addInputField('password', null);
+$field->setLabel($addon->i18n('matomo_pwasword'));
 $field->setNotice('Comment');
 
 $fragment = new rex_fragment();
