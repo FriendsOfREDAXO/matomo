@@ -1,2 +1,10 @@
 # matomo
 Matomo - Dashboard for REDAXO 5.x
+
+Features: 
+- Embeds the matomo Dashboard for a specific site
+- Deslivers a one-click LogIn to matomo
+
+Planned: 
+- minibar widget with direct login to matomo
+- Load embed code via API 
