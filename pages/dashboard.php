@@ -17,7 +17,7 @@ $pass = md5($pass);
 
 
 <iframe src="<?= $addon->getConfig('url')?>index.php?module=Widgetize&action=iframe&moduleToWidgetize=Dashboard&actionToWidgetize=index&idSite=<?= $addon->getConfig('id')?>&period=week&date=yesterday&token_auth=<?= $addon->getConfig('token')?>
-" frameborder="0" marginheight="0" marginwidth="0" width="100%" style="height: 140vh"></iframe>
+" frameborder="0" marginheight="0" marginwidth="0" width="100%" style="height: 160vh"></iframe>
 
 <?php } 
 
