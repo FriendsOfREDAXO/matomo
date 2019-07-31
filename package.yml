@@ -4,13 +4,13 @@ author: 'skerbis'
 supportpage: https://github.com/skerbis/matomo
 
 page:
-    title: 'Custom-Code'
+    title: 'Matomo'
     perm: matomo[]
     pjax: true
     icon: rex-icon fa-code
     subpages:
-        settings: { title: Matomo}
-
+        settings: { title: 'translate:matomo_settings'}
+        dashboard: { title: 'translate:matomo_dashboard'}      
 
 requires:
     redaxo: ^5.7.0
