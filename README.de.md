@@ -11,7 +11,7 @@ Matomo - Dashboard für REDAXO 5.x
 
 ## Tracking-Code:
 
-Der Tracking-Code kann per Copy&Paste oder mit nachfolgendem PHP-Code im Template ingebunden werden: 
+Der Tracking-Code kann per Copy&Paste oder mit nachfolgendem PHP-Code im Template eingebunden werden: 
 
 ```php
 echo rex_addon::get('matomo')->getConfig('matomojs');
