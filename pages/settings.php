@@ -72,7 +72,7 @@ echo $fragment->parse('core/page/section.php');
         $content .= $addon->i18n('matomo_notfound');
         $content .= '</div>';
         echo $content;
-        $addon->setConfig('matomocheck', '');
+        $addon->setConfig('matomocheck', false);
     }
 
 }
