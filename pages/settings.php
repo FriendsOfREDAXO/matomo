@@ -55,7 +55,7 @@ $check = strpos($output , 'Matomo');
 
 if ($check  !== false) {
 
-$content =  '<div class="rex-form-group form-group"><textarea class="form-control codemirror" height="80">'.$output['value'].'</textarea></div>';
+$content =  '<p>'.$addon->i18n('matomo_trackingcode').'</p><div class="rex-form-group form-group"><textarea class="form-control codemirror" height="80">'.$output['value'].'</textarea></div>';
      $addon->setConfig('matomocheck', true);
      $addon->setConfig('matomojs', $output['value']);
     
@@ -76,3 +76,5 @@ echo $fragment->parse('core/page/section.php');
     }
 
 }
+
+
