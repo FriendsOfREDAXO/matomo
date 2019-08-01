@@ -9,10 +9,12 @@ page:
     pjax: true
     icon: rex-icon rex-icon-seo
     subpages:
-        dashboard: { title: 'translate:matomo_dashboard'}
+        dashboard: { title: 'translate:matomo_dashboard', icon: rex-icon rex-icon-seo}
         settings:
                 title: 'translate:matomo_settings'
                 perm: admin[]
+                help:  
+        help: { title: 'translate:matomo_help',  icon: rex-icon fa-question-circle, subPath: README.md}         
 
 requires:
     redaxo: ^5.7.0
