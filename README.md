@@ -14,7 +14,7 @@ Matomo - Dashboard for REDAXO 5.x
 You may insert the tracking code by adding 
 
 ```php
-echo rex_addon::get('matomo')->getConfig('matomojs')
+echo rex_addon::get('matomo')->getConfig('matomojs');
 ```
 to your template.
 
