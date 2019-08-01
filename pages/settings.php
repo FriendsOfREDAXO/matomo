@@ -48,10 +48,6 @@ curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_HEADER, 0);  
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);  
 
-// grab URL and pass it to the browser  
-
-#$output = curl_exec($ch);  
-
 // close curl resource, and free up system resources  
 $output = json_decode(curl_exec($ch),true);
 
@@ -59,12 +55,20 @@ $check = strpos($output , 'Matomo');
 
 if ($check  !== false) {
 
-echo '<div class="rex-form-group form-group"><textarea class="form-control codemirror" height="80">'.$output['value'].'</textarea></div>';
+$content =  '<div class="rex-form-group form-group"><textarea class="form-control codemirror" height="80">'.$output['value'].'</textarea></div>';
      $addon->setConfig('matomocheck', true);
      $addon->setConfig('matomojs', $output['value']);
+    
+    $fragment = new rex_fragment();
+$fragment->setVar('class', 'edit', false);
+$fragment->setVar('title', "Matomo Tracking Code", false);
+$fragment->setVar('body', $content, false);
+echo $fragment->parse('core/page/section.php');
+
+
     }
     else {
-        $content .= '<div class="alert alert-danger">';
+        $content = '<div class="alert alert-danger">';
         $content .= $addon->i18n('matomo_notfound');
         $content .= '</div>';
         echo $content;
@@ -72,4 +76,3 @@ echo '<div class="rex-form-group form-group"><textarea class="form-control codem
     }
 
 }
-
