@@ -37,7 +37,7 @@ if (rex::isBackend()
 {
 
 
-$url = rex_escape($addon->getConfig('url')).'index.php?module=API&method=SitesManager.getJavascriptTag&idSite=7&piwikUrl=&format=JSON&token_auth='.$addon->getConfig('token');
+$url = rex_escape($addon->getConfig('url')).'index.php?module=API&method=SitesManager.getJavascriptTag&idSite='.rex_escape($addon->getConfig('id')).'&format=JSON&token_auth='.$addon->getConfig('token');
 
 ?><?php  
 //URL of targeted site  
