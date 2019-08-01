@@ -14,7 +14,7 @@ page:
                 title: 'translate:matomo_settings'
                 perm: admin[]
                 help:  
-        help: { title: 'translate:matomo_help',  icon: rex-icon fa-question-circle, subPath: README.md}         
+         help: { title: 'translate:matomo_help', itemclass: pull-right, icon: rex-icon fa-question-circle, subPath: README.md}        
 
 requires:
     redaxo: ^5.7.0
