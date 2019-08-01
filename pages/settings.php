@@ -51,7 +51,7 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 // close curl resource, and free up system resources  
 $output = json_decode(curl_exec($ch),true);
 
-$check = strpos($output , 'Matomo');
+$check = strpos($output['value'] , 'Matomo');
 
 if ($check  !== false) {
 
