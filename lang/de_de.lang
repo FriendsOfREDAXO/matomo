@@ -9,3 +9,5 @@ matomo_settings = Matomo Einstellungen
 matomo_link = Matomo aufrufen
 matomo_settings_info = Das Matomo-AddOn wurde noch nicht konfiguriert.
 matomo_notfound = Matomo wurde nicht gefunden
+matomo_trackingcode_headline = Tracking-Code
+matomo_trackingcode = Der hier generierte Tracking-Code ist der von Matomo ausgeliederte Default-Code. Sollte dieser nicht genügen, erstellen Sie bitte selbst einen in Matomo. 
