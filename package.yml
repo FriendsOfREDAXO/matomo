@@ -16,5 +16,7 @@ page:
         help: { title: 'translate:matomo_help', itemclass: pull-right, icon: rex-icon fa-question-circle, subPath: README.md}        
 
 requires:
+    php:
+        extensions: [curl]
     redaxo: ^5.7.0
     
