@@ -35,11 +35,9 @@ $fragment->setVar('body', $form->get() , false);
 echo $fragment->parse('core/page/section.php');
 
 $tracking_code_extra = array_filter(explode("|", $addon->getConfig('tracking_setup')),'strlen');
-
-if (count($tracking_code_extra) > 0)
-
-{
 $url_extra = '';
+if (count($tracking_code_extra) > 0)
+{
 foreach ($tracking_code_extra as $value)
 {
 $url_extra .= $value;  
