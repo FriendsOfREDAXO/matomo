@@ -5,9 +5,7 @@ Matomo - Dashboard für REDAXO 5.x
 - Bindet das Matomo-Dashboard für eine festgelegte Präsenz ein
 - Buttun zum direkten Einloggen in matomo
 - Per API wird nach dem Speichern der Einstellungen der Tracking-Code abgeholt
-
-## Geplant: 
-- minibar widget
+- Tracking-Code-Optionen können gesetzt werden
 
 ## Tracking-Code:
 
