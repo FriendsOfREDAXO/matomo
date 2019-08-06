@@ -17,16 +17,44 @@ $field->setLabel($addon->i18n('matomo_user'));
 $field = $form->addInputField('password', 'password', null, ["class" => "form-control"]);
 $field->setLabel($addon->i18n('matomo_password'));
 
+
+$field = $form->addSelectField('tracking_setup','',['class'=>'form-control selectpicker']); // die Klasse selectpicker aktiviert den Selectpicker von Bootstrap
+$field->setAttribute('multiple', 'multiple');
+$field->setLabel($addon->i18n('matomo_track_setup'));
+$select = $field->getSelect();
+$select->setSize(3);
+$select->addOption($addon->i18n('matomo_track_mergeSubdomains'), '&mergeSubdomains=true');
+$select->addOption($addon->i18n('matomo_track_groupPageTitlesByDomain'), '&groupPageTitlesByDomain=true');
+$select->addOption($addon->i18n('matomo_track_DonotTrack'), '&doNotTrack=true');
+$select->addOption($addon->i18n('matomo_track_disableCookies'), '&disableCookies=true');
+$select->addOption($addon->i18n('matomo_track_mergeAliasUrls'), '&mergeAliasUrls=true');
+
 $fragment = new rex_fragment();
 $fragment->setVar('class', 'edit', false);
 $fragment->setVar('title', "Matomo Settings", false);
 $fragment->setVar('body', $form->get() , false);
 echo $fragment->parse('core/page/section.php');
 
+
+#echo($addon->getConfig('bestellung2'));
+
+$tracking_code_extra = array_filter(explode("|", $addon->getConfig('tracking_setup')),'strlen');
+
+
+if (count($tracking_code_extra) > 0)
+
+{
+$url_extra = '';
+foreach ($tracking_code_extra as $value)
+{
+$url_extra .= $value;  
+}   
+}
+
 if (rex::isBackend() and $addon->getConfig('token') != '' and $addon->getConfig('user') != '' and $addon->getConfig('password') != '' and $addon->getConfig('url') != '' and $addon->getConfig('id') != '')
 {
 
-    $url = rex_escape($addon->getConfig('url')) . 'index.php?module=API&method=SitesManager.getJavascriptTag&idSite=' . rex_escape($addon->getConfig('id')) . '&format=JSON&token_auth=' . $addon->getConfig('token');
+    $url = rex_escape($addon->getConfig('url')) . 'index.php?module=API&method=SitesManager.getJavascriptTag&idSite=' . rex_escape($addon->getConfig('id')) . $url_extra.'&format=JSON&token_auth=' . $addon->getConfig('token');
 
 ?>
 
@@ -74,3 +102,4 @@ if (rex::isBackend() and $addon->getConfig('token') != '' and $addon->getConfig(
     }
 
 }
+
