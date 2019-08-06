@@ -15,6 +15,6 @@ matomo_trackingcode = Der hier generierte Tracking-Code ist der von Matomo ausge
 matomo_track_setup = Tracking-Optionen
 matomo_track_mergeSubdomains = Subdomains aufzeichnen
 matomo_track_groupPageTitlesByDomain = Gruppierung nach Domain
-matomo_track_DonotTrack = DoNotTrack-Erkennung  
+matomo_track_DonotTrack = DoNotTrack-Erkennung
 matomo_track_disableCookies = Cookies deaktivieren
 matomo_track_mergeAliasUrls = Klicks auf Alias-Domains verbergen
