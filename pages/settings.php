@@ -17,7 +17,6 @@ $field->setLabel($addon->i18n('matomo_user'));
 $field = $form->addInputField('password', 'password', null, ["class" => "form-control"]);
 $field->setLabel($addon->i18n('matomo_password'));
 
-
 $field = $form->addSelectField('tracking_setup','',['class'=>'form-control selectpicker']); // die Klasse selectpicker aktiviert den Selectpicker von Bootstrap
 $field->setAttribute('multiple', 'multiple');
 $field->setLabel($addon->i18n('matomo_track_setup'));
@@ -35,11 +34,7 @@ $fragment->setVar('title', "Matomo Settings", false);
 $fragment->setVar('body', $form->get() , false);
 echo $fragment->parse('core/page/section.php');
 
-
-#echo($addon->getConfig('bestellung2'));
-
 $tracking_code_extra = array_filter(explode("|", $addon->getConfig('tracking_setup')),'strlen');
-
 
 if (count($tracking_code_extra) > 0)
 
