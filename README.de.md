@@ -1,6 +1,8 @@
 # matomo
 Matomo - Dashboard für REDAXO 5.x
 
+![Screenshot](https://raw.githubusercontent.com/FriendsOfREDAXO/matomo/assets/matomo.png)
+
 ## Features: 
 - Bindet das Matomo-Dashboard für eine festgelegte Präsenz ein
 - Buttun zum direkten Einloggen in matomo
