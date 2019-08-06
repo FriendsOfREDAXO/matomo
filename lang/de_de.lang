@@ -12,6 +12,7 @@ matomo_settings_info = Das Matomo-AddOn wurde noch nicht konfiguriert.
 matomo_notfound = Matomo wurde nicht gefunden
 matomo_trackingcode_headline = Tracking-Code
 matomo_trackingcode = Für speziellere Konfigurationen, generieren Sie den Code bitte in matomo selbst. 
+matomo_track_setup = Tracking-Optionen
 matomo_track_mergeSubdomains = Subdomains aufzeichnen
 matomo_track_groupPageTitlesByDomain = Gruppierung nach Domain
 matomo_track_DonotTrack = DoNotTrack-Erkennung
