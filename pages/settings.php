@@ -11,7 +11,9 @@ $field = $form->addInputField('text', 'user', null, ["class" => "form-control"])
 $field->setLabel($addon->i18n('matomo_user'));
 $field = $form->addInputField('password', 'password', null, ["class" => "form-control"]);
 $field->setLabel($addon->i18n('matomo_password'));
-$field = $form->addSelectField('tracking_setup', '', ['class' => 'form-control selectpicker']); // die Klasse selectpicker aktiviert den Selectpicker von Bootstrap
+
+// Tracking code settings 
+$field = $form->addSelectField('tracking_setup', null, ['class' => 'form-control selectpicker']); // die Klasse selectpicker aktiviert den Selectpicker von Bootstrap
 $field->setAttribute('multiple', 'multiple');
 $field->setLabel($addon->i18n('matomo_track_setup'));
 $select = $field->getSelect();
@@ -21,6 +23,7 @@ $select->addOption($addon->i18n('matomo_track_groupPageTitlesByDomain'), '&group
 $select->addOption($addon->i18n('matomo_track_DonotTrack'), '&doNotTrack=true');
 $select->addOption($addon->i18n('matomo_track_disableCookies'), '&disableCookies=true');
 $select->addOption($addon->i18n('matomo_track_mergeAliasUrls'), '&mergeAliasUrls=true');
+
 $fragment = new rex_fragment();
 $fragment->setVar('class', 'edit', false);
 $fragment->setVar('title', "Matomo Settings", false);
