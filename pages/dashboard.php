@@ -17,7 +17,7 @@ $pass = md5($pass);
 <a class="pull-right btn btn-primary" target="_blank" href="<?= $addon->getConfig('url')?>/index.php?module=Login&action=logme&login=<?= $addon->getConfig('user')?>&password=<?=$pass?>"><?=$addon->i18n('matomo_link')?></a>
 
 
-<iframe src="<?= $addon->getConfig('url')?>index.php?module=Widgetize&action=iframe&moduleToWidgetize=Dashboard&actionToWidgetize=index&idSite=<?= $addon->getConfig('id')?>&period=week&date=yesterday&token_auth=<?= $addon->getConfig('token')?>
+<iframe id="matomoframe" src="<?= $addon->getConfig('url')?>index.php?module=Widgetize&action=iframe&moduleToWidgetize=Dashboard&actionToWidgetize=index&idSite=<?= $addon->getConfig('id')?>&period=week&date=yesterday&token_auth=<?= $addon->getConfig('token')?>
 " frameborder="0" marginheight="0" marginwidth="0" width="100%" style="height: 160vh"></iframe>
 
 <?php } 
@@ -27,4 +27,4 @@ else
     echo $addon->i18n('matomo_settings_info');
 }
 ?>
-
+<script>iFrameResize({ log: true }, '#matomoframe')</script>
