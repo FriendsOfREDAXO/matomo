@@ -22,4 +22,8 @@ to your template.
 
 **Projekt-Lead**
 
+[Daniel Springer](https://github.com/danspringer)
+
+**Projekt-Initiator**
+
 [Thomas Skerbis](https://github.com/skerbis)
