@@ -1,6 +1,6 @@
 <?php 
 $addon = rex_addon::get('matomo');
-
+rex_view::addJSFile($addom->getAssetsUrl('iframeresizer.min.js));
 
 if (rex::isBackend() 
     and $addon->getConfig('token')!='' 
