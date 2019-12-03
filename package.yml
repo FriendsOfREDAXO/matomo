@@ -1,10 +1,10 @@
 package: matomo
-version: '1.2'
+version: '1.2.1'
 author: 'Friends Of REDAXO'
 supportpage: https://github.com/FriendsOfREDAXO/matomo
 
 page:
-    title: 'Matomo'
+    title: 'translate:matomo_title'
     perm: matomo[]
     pjax: true
     icon: rex-icon rex-icon-seo
