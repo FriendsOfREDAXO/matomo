@@ -18,3 +18,4 @@ matomo_track_groupPageTitlesByDomain = Gruppera efter domän
 matomo_track_DonotTrack = ccept client DoNotTrack setting
 matomo_track_disableCookies = Deaktivera cookies
 matomo_track_mergeAliasUrls = Dölj klick på aliasdomäner
+matomo_title = Matomo-statistik
