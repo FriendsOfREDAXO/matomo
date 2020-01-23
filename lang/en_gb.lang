@@ -18,3 +18,4 @@ matomo_track_groupPageTitlesByDomain = Group page titles by domain
 matomo_track_DonotTrack = Accept client DoNotTrack setting
 matomo_track_disableCookies = Disable Cookies
 matomo_track_mergeAliasUrls = Merge Alias-Urls
+matomo_title = Matomo statistics
