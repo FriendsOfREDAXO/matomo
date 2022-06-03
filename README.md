@@ -1,5 +1,5 @@
 # matomo
-Matomo - Dashboard for REDAXO 5.x
+Matomo - Dashboard and Tracking-Code Generator for REDAXO 5.x
 
 ![Screenshot](https://raw.githubusercontent.com/FriendsOfREDAXO/matomo/assets/matomo.png)
 
