@@ -1,5 +1,5 @@
 package: matomo
-version: '1.2.2-dev'
+version: '1.2.2'
 author: 'Friends Of REDAXO'
 supportpage: https://github.com/FriendsOfREDAXO/matomo
 
