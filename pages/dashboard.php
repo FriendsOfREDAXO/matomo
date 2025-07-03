@@ -5,16 +5,7 @@ $addon = rex_addon::get('matomo');
 $selected_domain = rex_request('domain', 'string', '');
 $domains = $addon->getConfig('domains', []);
 
-// Check if we have multidomain configuration
-$has_domains = !empty($domains);
-$has_legacy_config = ($addon->getConfig('token') != '' 
-    && $addon->getConfig('user') != '' 
-    && $addon->getConfig('password') != ''
-    && $addon->getConfig('url') != '' 
-    && $addon->getConfig('id') != ''
-    && $addon->getConfig('matomocheck') == true);
-
-if ($has_domains) {
+if (!empty($domains)) {
     // Use multidomain configuration
     if (!$selected_domain || !isset($domains[$selected_domain])) {
         $selected_domain = array_keys($domains)[0]; // Use first domain as default
@@ -44,17 +35,6 @@ if ($has_domains) {
     " frameborder="0" marginheight="0" marginwidth="0" width="100%" style="height: 160vh" onload="iFrameResize({ log: false }, '#matomoframe');"></iframe>
     
     <?php
-} elseif ($has_legacy_config) {
-    // Use legacy single domain configuration
-    $pass = $addon->getConfig('password');
-    $pass = md5($pass);
-    ?>
-    <a class="pull-right btn btn-primary" target="_blank" href="<?= $addon->getConfig('url')?>index.php?module=Login&action=logme&login=<?= $addon->getConfig('user')?>&password=<?=$pass?>"><?=$addon->i18n('matomo_link')?></a>
-
-    <iframe id="matomoframe" src="<?= $addon->getConfig('url')?>index.php?module=Widgetize&action=iframe&moduleToWidgetize=Dashboard&actionToWidgetize=index&idSite=<?= $addon->getConfig('id')?>&period=week&date=yesterday&token_auth=<?= $addon->getConfig('token')?>
-    " frameborder="0" marginheight="0" marginwidth="0" width="100%" style="height: 160vh" onload="iFrameResize({ log: false }, '#matomoframe');"></iframe>
-
-    <?php 
 } else {
     echo $addon->i18n('matomo_settings_info');
 }

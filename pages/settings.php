@@ -6,24 +6,31 @@ $action = rex_request('domain_action', 'string', '');
 $domain_key = rex_request('domain_key', 'string', '');
 
 if ($action === 'add_domain' && rex_request_method() === 'POST') {
-    $domain_name = rex_request('domain_name', 'string', '');
-    $domain_url = rex_request('domain_url', 'string', '');
-    $domain_id = rex_request('domain_id', 'string', '');
-    $domain_token = rex_request('domain_token', 'string', '');
-    $domain_user = rex_request('domain_user', 'string', '');
-    $domain_password = rex_request('domain_password', 'string', '');
-    
-    if ($domain_name && $domain_url && $domain_id && $domain_token && $domain_user && $domain_password) {
-        $domains = $addon->getConfig('domains', []);
-        $domains[$domain_name] = [
-            'url' => $domain_url,
-            'id' => $domain_id,
-            'token' => $domain_token,
-            'user' => $domain_user,
-            'password' => $domain_password
-        ];
-        $addon->setConfig('domains', $domains);
-        echo '<div class="alert alert-success">Domain "' . rex_escape($domain_name) . '" hinzugefügt.</div>';
+    $csrf_token = rex_csrf_token::factory('domain_form');
+    if (!$csrf_token->isValid()) {
+        echo '<div class="alert alert-danger">CSRF token mismatch!</div>';
+    } else {
+        $domain_name = rex_request('domain_name', 'string', '');
+        $domain_url = rex_request('domain_url', 'string', '');
+        $domain_id = rex_request('domain_id', 'string', '');
+        $domain_token = rex_request('domain_token', 'string', '');
+        $domain_user = rex_request('domain_user', 'string', '');
+        $domain_password = rex_request('domain_password', 'string', '');
+        
+        if ($domain_name && $domain_url && $domain_id && $domain_token && $domain_user && $domain_password) {
+            $domains = $addon->getConfig('domains', []);
+            $domains[$domain_name] = [
+                'url' => $domain_url,
+                'id' => $domain_id,
+                'token' => $domain_token,
+                'user' => $domain_user,
+                'password' => $domain_password
+            ];
+            $addon->setConfig('domains', $domains);
+            echo '<div class="alert alert-success">Domain "' . rex_escape($domain_name) . '" hinzugefügt.</div>';
+        } else {
+            echo '<div class="alert alert-danger">Alle Felder sind erforderlich.</div>';
+        }
     }
 }
 
@@ -36,20 +43,8 @@ if ($action === 'delete_domain' && $domain_key) {
     }
 }
 
-// Legacy single domain configuration (for backward compatibility)
+// Tracking code settings form
 $form = rex_config_form::factory($addon->name);
-$field = $form->addInputField('text', 'url', null, ["class" => "form-control"]);
-$field->setLabel($addon->i18n('matomo_url'));
-$field = $form->addInputField('text', 'id', null, ["class" => "form-control"]);
-$field->setLabel($addon->i18n('matomo_id'));
-$field = $form->addInputField('text', 'token', null, ["class" => "form-control"]);
-$field->setLabel($addon->i18n('matomo_token'));
-$field = $form->addInputField('text', 'user', null, ["class" => "form-control"]);
-$field->setLabel($addon->i18n('matomo_user'));
-$field = $form->addInputField('password', 'password', null, ["class" => "form-control"]);
-$field->setLabel($addon->i18n('matomo_password'));
-
-// Tracking code settings 
 $field = $form->addSelectField('tracking_setup', null, ['class' => 'form-control selectpicker']); // die Klasse selectpicker aktiviert den Selectpicker von Bootstrap
 $field->setAttribute('multiple', 'multiple');
 $field->setLabel($addon->i18n('matomo_track_setup'));
@@ -63,7 +58,7 @@ $select->addOption($addon->i18n('matomo_track_mergeAliasUrls'), '&mergeAliasUrls
 
 $fragment = new rex_fragment();
 $fragment->setVar('class', 'edit', false);
-$fragment->setVar('title', "Matomo Settings", false);
+$fragment->setVar('title', $addon->i18n('matomo_track_setup'), false);
 $fragment->setVar('body', $form->get(), false);
 echo $fragment->parse('core/page/section.php');
 
@@ -94,6 +89,7 @@ if (!empty($domains)) {
 $domain_content .= '<h4>' . $addon->i18n('matomo_add_domain') . '</h4>';
 $domain_content .= '<form method="post" action="' . rex_url::currentBackendPage() . '">';
 $domain_content .= '<input type="hidden" name="domain_action" value="add_domain">';
+$domain_content .= rex_csrf_token::factory('domain_form')->getHiddenField();
 $domain_content .= '<div class="row">';
 $domain_content .= '<div class="col-md-6">';
 $domain_content .= '<div class="form-group">';
@@ -134,6 +130,7 @@ $fragment->setVar('class', 'edit', false);
 $fragment->setVar('title', $addon->i18n('matomo_domains'), false);
 $fragment->setVar('body', $domain_content, false);
 echo $fragment->parse('core/page/section.php');
+// Tracking code generation for multidomain configurations
 $tracking_code_extra = array_filter(explode("|", $addon->getConfig('tracking_setup')), 'strlen');
 $url_extra = '';
 if (count($tracking_code_extra) > 0) {
@@ -141,41 +138,6 @@ if (count($tracking_code_extra) > 0) {
         $url_extra.= $value;
     }
 }
-// Tracking code generation for legacy configuration
-if (rex::isBackend() and $addon->getConfig('token') != '' and $addon->getConfig('user') != '' and $addon->getConfig('password') != '' and $addon->getConfig('url') != '' and $addon->getConfig('id') != '') {
-    $url = rex_escape($addon->getConfig('url')) . 'index.php?module=API&method=SitesManager.getJavascriptTag&idSite=' . rex_escape($addon->getConfig('id')) . $url_extra . '&format=JSON&token_auth=' . $addon->getConfig('token');
-    //URL of targeted site
-    $ch = curl_init();
-    // set URL and other appropriate options
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    // close curl resource, and free up system resources
-    $output = json_decode(curl_exec($ch), true);
-    if (array_key_exists("value", $output)) {
-        $check = strpos($output['value'], 'Matomo');
-    } else {
-        $check = false;
-    }
-    if ($check !== false) {
-        $content = '<p>' . $addon->i18n('matomo_trackingcode') . '</p><div class="rex-form-group form-group"><textarea class="form-control codemirror" height="80">' . $output['value'] . '</textarea></div>';
-        $addon->setConfig('matomocheck', true);
-        $addon->setConfig('matomojs', $output['value']);
-        $fragment = new rex_fragment();
-        $fragment->setVar('class', 'edit', false);
-        $fragment->setVar('title', $addon->i18n('matomo_trackingcode_headline'), false);
-        $fragment->setVar('body', $content, false);
-        echo $fragment->parse('core/page/section.php');
-    } else {
-        $content = '<div class="alert alert-danger">';
-        $content.= $addon->i18n('matomo_notfound');
-        $content.= '</div>';
-        echo $content;
-        $addon->setConfig('matomocheck', false);
-    }
-}
-
-// Tracking code generation for multidomain configurations
 $domains = $addon->getConfig('domains', []);
 if (!empty($domains)) {
     $tracking_codes = [];
