@@ -18,5 +18,5 @@ page:
 requires:
     php:
         extensions: [curl]
-        version: '^7.1'   
+        version: '>=7.1'   
     redaxo: ^5.7.0
