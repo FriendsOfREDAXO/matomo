@@ -24,32 +24,44 @@ if (!$matomo_ready) {
 // Auto-Login Fix verarbeiten
 if (rex_get('action') === 'fix_autologin' && $is_admin) {
     $config_file = rex_path::frontend($matomo_path . '/config/config.ini.php');
-    if (file_exists($config_file) && is_writable($config_file)) {
-        $config_content = file_get_contents($config_file);
-        
-        // Prüfe ob [General] Sektion existiert
-        if (strpos($config_content, '[General]') !== false) {
-            // Füge login_allow_logme zur [General] Sektion hinzu
-            $config_content = preg_replace(
-                '/(\[General\])/i',
-                '$1' . PHP_EOL . 'login_allow_logme = 1',
-                $config_content,
-                1
-            );
+    echo rex_view::info('Debug: Versuche Datei zu bearbeiten: ' . $config_file);
+    
+    if (file_exists($config_file)) {
+        if (is_writable($config_file)) {
+            $config_content = file_get_contents($config_file);
+            $original_content = $config_content;
+            
+            // Prüfe ob login_allow_logme bereits existiert
+            if (strpos($config_content, 'login_allow_logme') !== false) {
+                echo rex_view::warning('login_allow_logme ist bereits in der Konfiguration vorhanden.');
+            } else {
+                // Prüfe ob [General] Sektion existiert
+                if (strpos($config_content, '[General]') !== false) {
+                    // Füge login_allow_logme zur [General] Sektion hinzu (nach der Zeile mit [General])
+                    $config_content = preg_replace(
+                        '/(\[General\]\s*\n)/i',
+                        '$1login_allow_logme = 1' . PHP_EOL,
+                        $config_content,
+                        1
+                    );
+                } else {
+                    // Füge [General] Sektion am Anfang hinzu
+                    $config_content = "[General]" . PHP_EOL . "login_allow_logme = 1" . PHP_EOL . PHP_EOL . $config_content;
+                }
+                
+                if (file_put_contents($config_file, $config_content)) {
+                    echo rex_view::success('Auto-Login wurde erfolgreich aktiviert! Die Buttons funktionieren jetzt.');
+                    $auto_login_available = true;
+                    $auto_login_config_error = false;
+                } else {
+                    echo rex_view::error('Fehler beim Schreiben der Konfigurationsdatei.');
+                }
+            }
         } else {
-            // Füge [General] Sektion am Anfang hinzu
-            $config_content = "[General]" . PHP_EOL . "login_allow_logme = 1" . PHP_EOL . PHP_EOL . $config_content;
-        }
-        
-        if (file_put_contents($config_file, $config_content)) {
-            echo rex_view::success('Auto-Login wurde erfolgreich aktiviert! Die Buttons funktionieren jetzt.');
-            $auto_login_available = true;
-            $auto_login_config_error = false;
-        } else {
-            echo rex_view::error('Fehler beim Schreiben der Konfigurationsdatei.');
+            echo rex_view::error('Konfigurationsdatei ist nicht beschreibbar. Permissions: ' . substr(sprintf('%o', fileperms($config_file)), -4));
         }
     } else {
-        echo rex_view::error('Konfigurationsdatei nicht gefunden oder nicht beschreibbar.');
+        echo rex_view::error('Konfigurationsdatei nicht gefunden: ' . $config_file);
     }
 }
 
@@ -172,15 +184,17 @@ login_allow_logme = 1</pre>
                         $matomo_password = rex_config::get('matomo', 'matomo_password', '');
                         
                         if ($matomo_user && $matomo_password): 
-                            // Login-URL mit MD5-Hash erstellen
+                            // Einfache Login-URL ohne Weiterleitung - Matomo macht das automatisch
                             $password_hash = md5($matomo_password);
                             $login_url = $matomo_url . '/index.php?module=Login&action=logme&login=' . 
-                                        urlencode($matomo_user) . '&password=' . urlencode($password_hash) . 
-                                        '&url=' . urlencode($matomo_url);
+                                        urlencode($matomo_user) . '&password=' . urlencode($password_hash);
                         ?>
                             <a href="<?= rex_escape($login_url) ?>" target="_blank" class="btn btn-primary btn-sm rex-pulse">
                                 <i class="fa fa-sign-in-alt"></i> Automatisch anmelden
                             </a>
+                            <?php if ($is_admin): ?>
+                                <br><small class="text-muted">Debug: <code><?= rex_escape($login_url) ?></code></small>
+                            <?php endif; ?>
                         <?php else: ?>
                             <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-primary btn-sm rex-pulse">
                                 <i class="fa fa-external-link-alt"></i> Matomo öffnen
