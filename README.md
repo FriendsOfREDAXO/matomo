@@ -181,4 +181,4 @@ This AddOn is available under the MIT License. Matomo itself is available under 
 ---
 
 **Developed by Friends Of REDAXO**  
-For REDAXO 5.7+ | Matomo 4.x/5.x compatible
+For REDAXO 5.16.1+ | Matomo 4.x/5.x compatible
