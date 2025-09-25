@@ -14,8 +14,6 @@ if ($matomo_url && $admin_token && $matomo_path) {
     $matomo_ready = file_exists($full_path . 'index.php');
 }
 
-echo rex_view::title($addon->i18n('matomo_overview_title'));
-
 if (!$matomo_ready) {
     echo rex_view::warning($addon->i18n('matomo_not_configured', rex_url::currentBackendPage(['page' => 'matomo/settings'])));
     return;
