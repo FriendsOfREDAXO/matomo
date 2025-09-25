@@ -134,8 +134,8 @@ try {
 <div class="row">
     <div class="col-sm-12">
         
-        <!-- Auto-Login Status Warnung -->
-        <?php if ($matomo_user && $matomo_password && $auto_login_config_error): ?>
+        <!-- Auto-Login Status Warnung (nur für Admins) -->
+        <?php if ($user->isAdmin() && $matomo_user && $matomo_password && $auto_login_config_error): ?>
             <div class="alert alert-warning">
                 <h4><i class="fa fa-exclamation-triangle"></i> Auto-Login nicht verfügbar</h4>
                 <p><strong>Problem:</strong> Matomo Auto-Login ist nicht konfiguriert.</p>
