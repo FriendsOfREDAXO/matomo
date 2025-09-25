@@ -14,12 +14,14 @@ if (rex_post('save_settings', 'boolean')) {
     $admin_token = rex_post('admin_token', 'string', '');
     $matomo_user = rex_post('matomo_user', 'string', '');
     $matomo_password = rex_post('matomo_password', 'string', '');
+    $show_top_pages = rex_post('show_top_pages', 'boolean', false);
 
     rex_config::set('matomo', 'matomo_path', $matomo_path);
     rex_config::set('matomo', 'matomo_url', $matomo_url);
     rex_config::set('matomo', 'admin_token', $admin_token);
     rex_config::set('matomo', 'matomo_user', $matomo_user);
     rex_config::set('matomo', 'matomo_password', $matomo_password);
+    rex_config::set('matomo', 'show_top_pages', $show_top_pages);
 
     $message = $addon->i18n('matomo_config_saved');
 }
@@ -52,6 +54,7 @@ $matomo_path = rex_config::get('matomo', 'matomo_path', 'auswertung');
 $admin_token = rex_config::get('matomo', 'admin_token', '');
 $matomo_user = rex_config::get('matomo', 'matomo_user', '');
 $matomo_password = rex_config::get('matomo', 'matomo_password', '');
+$show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
 
 // Status prüfen
 $matomo_installed = false;
@@ -155,6 +158,17 @@ if ($error) {
                         <input type="password" class="form-control" id="matomo_password" name="matomo_password" 
                                value="<?= rex_escape($matomo_password) ?>" placeholder="">
                         <small class="text-muted">Ihr Matomo-Passwort für automatischen Login</small>
+                    </div>
+                    
+                    <hr>
+                    <h4><i class="fa fa-chart-line"></i> Statistik-Features</h4>
+                    
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="show_top_pages" value="1" <?= $show_top_pages ? 'checked' : '' ?>>
+                            <strong>Top 5 Seiten anzeigen</strong>
+                        </label>
+                        <p class="text-muted">Zeigt die 5 meistbesuchten Seiten der aktuellen Woche in der Übersicht an</p>
                     </div>
                     
                     <button type="submit" name="save_settings" value="1" class="btn btn-success">

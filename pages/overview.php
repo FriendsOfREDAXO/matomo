@@ -9,6 +9,7 @@ $matomo_url = rex_config::get('matomo', 'matomo_url', '');
 $admin_token = rex_config::get('matomo', 'admin_token', '');
 $user_token = rex_config::get('matomo', 'user_token', '');
 $matomo_path = rex_config::get('matomo', 'matomo_path', '');
+$show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
 
 $matomo_ready = false;
 $is_external_matomo = false;
@@ -221,6 +222,20 @@ try {
             $stats_week[$site_id] = $week;
         } catch (Exception $e) {
             $stats_week[$site_id] = ['nb_visits' => 0, 'nb_actions' => 0, 'nb_users' => 0];
+        }
+    }
+
+    // Top Pages laden (wenn aktiviert)
+    $top_pages_data = [];
+    if ($show_top_pages) {
+        foreach ($sites as $site) {
+            $site_id = $site['idsite'];
+            try {
+                $top_pages = $api->getTopPages($site_id, 'week', 'today', 5);
+                $top_pages_data[$site_id] = $top_pages ?: [];
+            } catch (Exception $e) {
+                $top_pages_data[$site_id] = [];
+            }
         }
     }
 } catch (Exception $e) {
@@ -447,6 +462,116 @@ login_allow_logme = 1</pre>
                 </div>
             </div>
         </div>
+
+        <!-- Top 5 Seiten (diese Woche) -->
+        <?php if ($show_top_pages && !empty($sites)): ?>
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <i class="fa fa-chart-line"></i> Top 5 Seiten dieser Woche
+                    <small class="text-muted">(meistbesuchte Seiten)</small>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <?php 
+                // Alle Top Pages kombinieren und nach Visits sortieren
+                $all_top_pages = [];
+                foreach ($top_pages_data as $site_id => $pages) {
+                    if (is_array($pages)) {
+                        $site_name = '';
+                        foreach ($sites as $site) {
+                            if ($site['idsite'] == $site_id) {
+                                $site_name = $site['name'];
+                                break;
+                            }
+                        }
+                        
+                        foreach ($pages as $page) {
+                            if (is_array($page) && isset($page['label']) && isset($page['nb_visits'])) {
+                                $all_top_pages[] = [
+                                    'site_name' => $site_name,
+                                    'site_id' => $site_id,
+                                    'url' => $page['label'],
+                                    'visits' => (int) $page['nb_visits'],
+                                    'actions' => (int) ($page['nb_hits'] ?? 0),
+                                    'avg_time' => isset($page['avg_time_on_page']) ? round($page['avg_time_on_page']) : 0
+                                ];
+                            }
+                        }
+                    }
+                }
+                
+                // Nach Visits sortieren
+                usort($all_top_pages, function($a, $b) {
+                    return $b['visits'] - $a['visits'];
+                });
+                
+                // Nur Top 5 anzeigen
+                $all_top_pages = array_slice($all_top_pages, 0, 5);
+                ?>
+                
+                <?php if (empty($all_top_pages)): ?>
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> 
+                        <strong>Keine Daten verfügbar:</strong> Es wurden noch keine Seitenaufrufe in dieser Woche erfasst.
+                    </div>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th><i class="fa fa-trophy"></i> Rang</th>
+                                    <th><i class="fa fa-file-alt"></i> Seite</th>
+                                    <th><i class="fa fa-globe"></i> Domain</th>
+                                    <th class="text-center"><i class="fa fa-eye"></i> Besuche</th>
+                                    <th class="text-center"><i class="fa fa-mouse-pointer"></i> Aktionen</th>
+                                    <th class="text-center"><i class="fa fa-clock"></i> Ø Zeit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($all_top_pages as $index => $page): ?>
+                                <tr>
+                                    <td>
+                                        <span class="label <?= $index < 3 ? 'label-warning' : 'label-default' ?>">
+                                            #<?= $index + 1 ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <code title="<?= rex_escape($page['url']) ?>">
+                                            <?= rex_escape(strlen($page['url']) > 50 ? substr($page['url'], 0, 47) . '...' : $page['url']) ?>
+                                        </code>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted"><?= rex_escape($page['site_name']) ?></small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="label label-primary">
+                                            <i class="fa fa-eye"></i> <?= number_format($page['visits']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="label label-success">
+                                            <i class="fa fa-mouse-pointer"></i> <?= number_format($page['actions']) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php if ($page['avg_time'] > 0): ?>
+                                            <span class="label label-info">
+                                                <i class="fa fa-clock"></i> <?= gmdate('i:s', $page['avg_time']) ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Domain-spezifische Statistiken -->
         <div class="panel panel-default">

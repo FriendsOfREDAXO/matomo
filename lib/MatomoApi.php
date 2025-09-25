@@ -250,4 +250,21 @@ class MatomoApi
         
         return $this->apiCall('VisitsSummary.get', $params, true);
     }
+
+    /**
+     * Top Seiten abrufen
+     */
+    public function getTopPages($site_id, $period = 'week', $date = 'today', $limit = 5)
+    {
+        $params = [
+            'idSite' => $site_id,
+            'period' => $period,
+            'date' => $date,
+            'filter_limit' => $limit,
+            'flat' => 1,
+            'expanded' => 1
+        ];
+        
+        return $this->apiCall('Actions.getPageUrls', $params, true);
+    }
 }
