@@ -21,6 +21,7 @@ $iframe_token = $user_token ?: $admin_token;
 
 // Site-Informationen laden wenn spezifische Site gewählt
 $selected_site = null;
+$dashboard_site_id = $dashboard_site; // Numerische ID für iframe
 if ($dashboard_site != '0') {
     try {
         $api = new MatomoApi($matomo_url, $admin_token, $user_token);
@@ -28,6 +29,7 @@ if ($dashboard_site != '0') {
         foreach ($sites as $site) {
             if ($site['idsite'] == $dashboard_site) {
                 $selected_site = $site;
+                $dashboard_site_id = $site['idsite']; // Stelle sicher, dass wir die numerische ID haben
                 break;
             }
         }
@@ -78,7 +80,7 @@ if ($dashboard_site != '0') {
                     <h3 class="panel-title">
                         <i class="fa fa-tachometer-alt"></i> <?= $selected_site ? rex_escape($selected_site['name']) : $addon->i18n('matomo_dashboard') ?>
                         <div class="pull-right">
-                            <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $dashboard_site ?>&period=day&date=today" 
+                            <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= rex_escape($dashboard_site_id) ?>&period=day&date=today" 
                                target="_blank" class="btn btn-primary btn-sm rex-pulse">
                                 <i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open_matomo') ?>
                             </a>
@@ -101,7 +103,7 @@ if ($dashboard_site != '0') {
                     <!-- Matomo iframe -->
                     <div class="embed-responsive embed-responsive-16by9">
                         <iframe id="matomo-dashboard" 
-                                src="<?= rex_escape($matomo_url) ?>/index.php?module=Widgetize&action=iframe&moduleToWidgetize=Dashboard&actionToWidgetize=index&idSite=<?= $dashboard_site ?>&period=week&date=today&token_auth=<?= rex_escape($iframe_token) ?>" 
+                                src="<?= rex_escape($matomo_url) ?>/index.php?module=Widgetize&action=iframe&moduleToWidgetize=Dashboard&actionToWidgetize=index&idSite=<?= rex_escape($dashboard_site_id) ?>&period=week&date=today&token_auth=<?= rex_escape($iframe_token) ?>" 
                                 class="embed-responsive-item"
                                 frameborder="0">
                         </iframe>
