@@ -12,10 +12,14 @@ if (rex_post('save_settings', 'boolean')) {
     $matomo_path = rex_post('matomo_path', 'string', '');
     $matomo_url = rex_post('matomo_url', 'string', '');
     $admin_token = rex_post('admin_token', 'string', '');
+    $matomo_user = rex_post('matomo_user', 'string', '');
+    $matomo_password = rex_post('matomo_password', 'string', '');
 
     rex_config::set('matomo', 'matomo_path', $matomo_path);
     rex_config::set('matomo', 'matomo_url', $matomo_url);
     rex_config::set('matomo', 'admin_token', $admin_token);
+    rex_config::set('matomo', 'matomo_user', $matomo_user);
+    rex_config::set('matomo', 'matomo_password', $matomo_password);
 
     $message = $addon->i18n('matomo_config_saved');
 }
@@ -46,6 +50,8 @@ if (rex_post('download_matomo', 'boolean')) {
 $matomo_url = rex_config::get('matomo', 'matomo_url', '');
 $matomo_path = rex_config::get('matomo', 'matomo_path', 'auswertung');
 $admin_token = rex_config::get('matomo', 'admin_token', '');
+$matomo_user = rex_config::get('matomo', 'matomo_user', '');
+$matomo_password = rex_config::get('matomo', 'matomo_password', '');
 
 // Status prüfen
 $matomo_installed = false;
@@ -122,6 +128,24 @@ if ($error) {
                         <input type="text" class="form-control" id="admin_token" name="admin_token" 
                                value="<?= rex_escape($admin_token) ?>" placeholder="">
                         <small class="text-muted">Finden Sie in Matomo unter: Administration → Platform → API → User Authentication</small>
+                    </div>
+                    
+                    <hr>
+                    <h4><i class="fa fa-sign-in-alt"></i> Automatischer Login (optional)</h4>
+                    <p class="text-muted">Für den "Automatisch anmelden" Button in der Übersicht:</p>
+                    
+                    <div class="form-group">
+                        <label for="matomo_user">Matomo Username:</label>
+                        <input type="text" class="form-control" id="matomo_user" name="matomo_user" 
+                               value="<?= rex_escape($matomo_user) ?>" placeholder="admin">
+                        <small class="text-muted">Ihr Matomo-Benutzername für automatischen Login</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="matomo_password">Matomo Passwort:</label>
+                        <input type="password" class="form-control" id="matomo_password" name="matomo_password" 
+                               value="<?= rex_escape($matomo_password) ?>" placeholder="">
+                        <small class="text-muted">Ihr Matomo-Passwort für automatischen Login</small>
                     </div>
                     
                     <button type="submit" name="save_settings" value="1" class="btn btn-success">

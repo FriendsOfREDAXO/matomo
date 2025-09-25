@@ -88,9 +88,22 @@ try {
                     <i class="fa fa-chart-bar"></i> Analytics Übersicht
                     <small class="text-muted">(<?= count($sites) ?> <?= count($sites) == 1 ? 'Domain' : 'Domains' ?>)</small>
                     <div class="btn-group pull-right">
-                        <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-primary btn-sm rex-pulse">
-                            <i class="fa fa-external-link-alt"></i> Matomo öffnen
-                        </a>
+                        <?php
+                        $matomo_user = rex_config::get('matomo', 'matomo_user', '');
+                        $matomo_password = rex_config::get('matomo', 'matomo_password', '');
+                        
+                        if ($matomo_user && $matomo_password): ?>
+                            <button onclick="loginToMatomo()" class="btn btn-primary btn-sm rex-pulse">
+                                <i class="fa fa-sign-in-alt"></i> Automatisch anmelden
+                            </button>
+                        <?php else: ?>
+                            <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-primary btn-sm rex-pulse">
+                                <i class="fa fa-external-link-alt"></i> Matomo öffnen
+                            </a>
+                            <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/settings']) ?>" class="btn btn-warning btn-sm">
+                                <i class="fa fa-cog"></i> Login konfigurieren
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </h3>
             </div>
@@ -332,8 +345,36 @@ try {
     </div>
 </div>
 
-<!-- Auto-Refresh Script -->
+<!-- Auto-Login & Refresh Script -->
 <script>
+// Automatischer Matomo-Login
+function loginToMatomo() {
+    var matomoUrl = '<?= rex_escape($matomo_url) ?>';
+    var username = '<?= rex_escape($matomo_user ?? '') ?>';
+    var password = '<?= rex_escape($matomo_password ?? '') ?>';
+    
+    if (!username || !password) {
+        alert('Bitte konfigurieren Sie zunächst Username und Passwort in den Einstellungen.');
+        window.open('<?= rex_url::currentBackendPage(['page' => 'matomo/settings']) ?>', '_blank');
+        return;
+    }
+    
+    // Login-URL erstellen
+    var loginUrl = matomoUrl + '/index.php?module=Login&action=logme&login=' + 
+                   encodeURIComponent(username) + '&password=' + encodeURIComponent(password);
+    
+    // Neues Fenster öffnen für Login
+    var loginWindow = window.open(loginUrl, '_blank');
+    
+    // Nach kurzer Verzögerung Hauptseite öffnen
+    setTimeout(function() {
+        window.open(matomoUrl, '_blank');
+        if (loginWindow) {
+            loginWindow.close();
+        }
+    }, 2000);
+}
+
 // Seite alle 5 Minuten automatisch aktualisieren
 setTimeout(function() {
     location.reload();
