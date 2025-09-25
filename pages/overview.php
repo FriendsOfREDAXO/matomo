@@ -23,8 +23,40 @@ if (!$matomo_ready) {
 
 // Auto-Login Fix verarbeiten
 if (rex_get('action') === 'fix_autologin' && $is_admin) {
-    $config_file = rex_path::frontend($matomo_path . '/config/config.ini.php');
-    echo rex_view::info('Debug: Versuche Datei zu bearbeiten: ' . $config_file);
+    // Host aus Matomo URL extrahieren
+    $host = parse_url($matomo_url, PHP_URL_HOST);
+    
+    // Verschiedene mögliche Pfade testen
+    $possible_config_files = [
+        // Standard REDAXO frontend Pfad
+        rex_path::frontend($matomo_path . '/config/config.ini.php'),
+        // Relative Pfade
+        rex_path::frontend('../' . $matomo_path . '/config/config.ini.php'),
+        // Absoluter vhosts Pfad (wahrscheinlichster für dein Setup)
+        '/var/www/vhosts/' . $host . '/httpdocs/' . $matomo_path . '/config/config.ini.php',
+        // Alternative vhosts Struktur
+        '/var/www/vhosts/' . $host . '/' . $matomo_path . '/config/config.ini.php',
+        // Direkt im Document Root
+        $_SERVER['DOCUMENT_ROOT'] . '/' . $matomo_path . '/config/config.ini.php',
+        // Ein Level höher vom Document Root
+        dirname($_SERVER['DOCUMENT_ROOT']) . '/' . $matomo_path . '/config/config.ini.php'
+    ];
+    
+    $config_file = '';
+    foreach ($possible_config_files as $test_file) {
+        echo rex_view::info('Debug: Teste Pfad: ' . $test_file . ' - Existiert: ' . (file_exists($test_file) ? 'Ja' : 'Nein'));
+        if (file_exists($test_file)) {
+            $config_file = $test_file;
+            break;
+        }
+    }
+    
+    if (!$config_file) {
+        echo rex_view::error('Keine Matomo config.ini.php gefunden. Getestete Pfade: ' . implode(', ', $possible_config_files));
+        return;
+    }
+    
+    echo rex_view::info('Debug: Verwende Konfigurationsdatei: ' . $config_file);
     
     if (file_exists($config_file)) {
         if (is_writable($config_file)) {
@@ -88,19 +120,50 @@ $matomo_user = rex_config::get('matomo', 'matomo_user', '');
 $matomo_password = rex_config::get('matomo', 'matomo_password', '');
 $auto_login_available = false;
 $auto_login_config_error = false;
+$debug_info = '';
 
 if ($matomo_user && $matomo_password && $matomo_path) {
-    // Prüfe ob Matomo config.ini.php existiert und bearbeitbar ist
-    $config_file = rex_path::frontend($matomo_path . '/config/config.ini.php');
-    if (file_exists($config_file)) {
+    // Host aus Matomo URL extrahieren für Status-Prüfung
+    $host = parse_url($matomo_url, PHP_URL_HOST);
+    
+    // Dieselben Pfade wie bei der Reparatur testen
+    $possible_config_files = [
+        rex_path::frontend($matomo_path . '/config/config.ini.php'),
+        rex_path::frontend('../' . $matomo_path . '/config/config.ini.php'),
+        '/var/www/vhosts/' . $host . '/httpdocs/' . $matomo_path . '/config/config.ini.php',
+        '/var/www/vhosts/' . $host . '/' . $matomo_path . '/config/config.ini.php',
+        $_SERVER['DOCUMENT_ROOT'] . '/' . $matomo_path . '/config/config.ini.php',
+        dirname($_SERVER['DOCUMENT_ROOT']) . '/' . $matomo_path . '/config/config.ini.php'
+    ];
+    
+    $config_file = '';
+    foreach ($possible_config_files as $test_file) {
+        if (file_exists($test_file)) {
+            $config_file = $test_file;
+            break;
+        }
+    }
+    
+    if ($config_file) {
+        $debug_info = "Config-Datei: $config_file | ";
+        $debug_info .= "Existiert: Ja | ";
+        $debug_info .= "Berechtigung: " . substr(sprintf('%o', fileperms($config_file)), -4) . " | ";
+        $debug_info .= "Beschreibbar: " . (is_writable($config_file) ? 'Ja' : 'Nein') . " | ";
+        
         $config_content = file_get_contents($config_file);
         if (strpos($config_content, 'login_allow_logme = 1') !== false) {
             $auto_login_available = true;
+            $debug_info .= "Status: Bereits konfiguriert";
         } elseif (is_writable($config_file)) {
             $auto_login_config_error = 'configurable';
+            $debug_info .= "Status: Kann repariert werden";
         } else {
             $auto_login_config_error = 'readonly';
+            $debug_info .= "Status: Readonly - manuelle Bearbeitung nötig";
         }
+    } else {
+        $debug_info = "Config-Datei: Nicht gefunden in: " . implode(', ', $possible_config_files);
+        $auto_login_config_error = 'configurable'; // Trotzdem reparierbar, da die Reparatur-Funktion möglicherweise einen Pfad findet
     }
 }
 
@@ -148,10 +211,17 @@ try {
     <div class="col-sm-12">
         
         <!-- Auto-Login Status Warnung (nur für Admins) -->
-        <?php if ($is_admin && $matomo_user && $matomo_password && $auto_login_config_error): ?>
+        <?php if ($is_admin && $matomo_user && $matomo_password && ($auto_login_config_error || $debug_info)): ?>
             <div class="alert alert-warning">
                 <h4><i class="fa fa-exclamation-triangle"></i> Auto-Login nicht verfügbar</h4>
                 <p><strong>Problem:</strong> Matomo Auto-Login ist nicht konfiguriert.</p>
+                
+                <!-- Debug-Info für Entwicklung -->
+                <?php if ($debug_info): ?>
+                    <div class="alert alert-info" style="margin: 10px 0;">
+                        <small><strong>Debug:</strong> <?= rex_escape($debug_info) ?></small>
+                    </div>
+                <?php endif; ?>
                 
                 <?php if ($auto_login_config_error === 'configurable'): ?>
                     <p><strong>Lösung:</strong> 
