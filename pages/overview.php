@@ -153,9 +153,16 @@ if ($matomo_user && $matomo_password && $matomo_path) {
         $debug_info .= "Beschreibbar: " . (is_writable($config_file) ? 'Ja' : 'Nein') . " | ";
         
         $config_content = file_get_contents($config_file);
-        if (strpos($config_content, 'login_allow_logme = 1') !== false) {
-            $auto_login_available = true;
-            $debug_info .= "Status: Bereits konfiguriert";
+        // Prüfe ob login_allow_logme existiert (egal welcher Wert)
+        if (strpos($config_content, 'login_allow_logme') !== false) {
+            // Prüfe ob es auf 1 gesetzt ist
+            if (preg_match('/login_allow_logme\s*=\s*1/i', $config_content)) {
+                $auto_login_available = true;
+                $debug_info .= "Status: Bereits konfiguriert (login_allow_logme = 1)";
+            } else {
+                $auto_login_config_error = 'configurable';
+                $debug_info .= "Status: login_allow_logme existiert aber ist nicht auf 1 gesetzt";
+            }
         } elseif (is_writable($config_file)) {
             $auto_login_config_error = 'configurable';
             $debug_info .= "Status: Kann repariert werden";
@@ -213,7 +220,7 @@ try {
     <div class="col-sm-12">
         
         <!-- Auto-Login Status Warnung (nur für Admins) -->
-        <?php if ($is_admin && $matomo_user && $matomo_password && ($auto_login_config_error || $debug_info)): ?>
+        <?php if ($is_admin && $matomo_user && $matomo_password && !$auto_login_available && $auto_login_config_error): ?>
             <div class="alert alert-warning">
                 <h4><i class="fa fa-exclamation-triangle"></i> Auto-Login nicht verfügbar</h4>
                 <p><strong>Problem:</strong> Matomo Auto-Login ist nicht konfiguriert.</p>
