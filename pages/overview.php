@@ -63,7 +63,17 @@ try {
         <!-- Gesamt-Statistiken -->
         <div class="panel panel-primary">
             <div class="panel-heading">
-                <h3 class="panel-title">📊 <?= $addon->i18n('matomo_overview_summary') ?></h3>
+                <h3 class="panel-title">
+                    <i class="fa fa-chart-bar"></i> <?= $addon->i18n('matomo_overview_summary') ?>
+                    <div class="btn-group pull-right">
+                        <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/dashboard']) ?>" class="btn btn-primary btn-sm">
+                            <i class="fa fa-tachometer-alt"></i> <?= $addon->i18n('matomo_goto_dashboard') ?>
+                        </a>
+                        <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-default btn-sm">
+                            <i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open_matomo') ?>
+                        </a>
+                    </div>
+                </h3>
             </div>
             <div class="panel-body">
                 <?php
@@ -96,16 +106,19 @@ try {
                             <div class="panel-body">
                                 <div class="row">
                                     <div class="col-xs-4 text-center">
+                                        <i class="fa fa-eye fa-2x text-primary"></i>
                                         <h3 class="text-primary"><?= number_format($total_visits_today) ?></h3>
-                                        <small><?= $addon->i18n('matomo_visits') ?></small>
+                                        <small class="text-muted"><?= $addon->i18n('matomo_visits') ?></small>
                                     </div>
                                     <div class="col-xs-4 text-center">
+                                        <i class="fa fa-mouse-pointer fa-2x text-success"></i>
                                         <h3 class="text-success"><?= number_format($total_actions_today) ?></h3>
-                                        <small><?= $addon->i18n('matomo_actions') ?></small>
+                                        <small class="text-muted"><?= $addon->i18n('matomo_actions') ?></small>
                                     </div>
                                     <div class="col-xs-4 text-center">
+                                        <i class="fa fa-users fa-2x text-info"></i>
                                         <h3 class="text-info"><?= number_format($total_users_today) ?></h3>
-                                        <small><?= $addon->i18n('matomo_users') ?></small>
+                                        <small class="text-muted"><?= $addon->i18n('matomo_users') ?></small>
                                     </div>
                                 </div>
                             </div>
@@ -120,16 +133,19 @@ try {
                             <div class="panel-body">
                                 <div class="row">
                                     <div class="col-xs-4 text-center">
+                                        <i class="fa fa-eye fa-2x text-primary"></i>
                                         <h3 class="text-primary"><?= number_format($total_visits_week) ?></h3>
-                                        <small><?= $addon->i18n('matomo_visits') ?></small>
+                                        <small class="text-muted"><?= $addon->i18n('matomo_visits') ?></small>
                                     </div>
                                     <div class="col-xs-4 text-center">
+                                        <i class="fa fa-mouse-pointer fa-2x text-success"></i>
                                         <h3 class="text-success"><?= number_format($total_actions_week) ?></h3>
-                                        <small><?= $addon->i18n('matomo_actions') ?></small>
+                                        <small class="text-muted"><?= $addon->i18n('matomo_actions') ?></small>
                                     </div>
                                     <div class="col-xs-4 text-center">
+                                        <i class="fa fa-users fa-2x text-info"></i>
                                         <h3 class="text-info"><?= number_format($total_users_week) ?></h3>
-                                        <small><?= $addon->i18n('matomo_users') ?></small>
+                                        <small class="text-muted"><?= $addon->i18n('matomo_users') ?></small>
                                     </div>
                                 </div>
                             </div>
@@ -142,7 +158,12 @@ try {
         <!-- Domain-spezifische Statistiken -->
         <div class="panel panel-default">
             <div class="panel-heading">
-                <h3 class="panel-title">🌐 <?= $addon->i18n('matomo_overview_by_domain') ?> (<?= count($sites) ?>)</h3>
+                <h3 class="panel-title">
+                    <i class="fa fa-globe"></i> <?= $addon->i18n('matomo_overview_by_domain') ?> (<?= count($sites) ?>)
+                    <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/domains']) ?>" class="btn btn-success btn-sm pull-right">
+                        <i class="fa fa-plus"></i> <?= $addon->i18n('matomo_add_domain') ?>
+                    </a>
+                </h3>
             </div>
             <div class="panel-body">
                 
@@ -173,38 +194,39 @@ try {
                                         <br><small class="text-muted">ID: <?= $site_id ?></small>
                                     </td>
                                     <td>
-                                        <a href="<?= rex_escape($site['main_url']) ?>" target="_blank" class="btn btn-xs btn-default">
-                                            🔗 <?= rex_escape(parse_url($site['main_url'], PHP_URL_HOST)) ?>
+                                        <a href="<?= rex_escape($site['main_url']) ?>" target="_blank" class="btn btn-link btn-sm">
+                                            <i class="fa fa-external-link-alt"></i> <?= rex_escape(parse_url($site['main_url'], PHP_URL_HOST)) ?>
                                         </a>
                                     </td>
                                     <td class="text-center">
-                                        <div class="stats-today">
-                                            <strong class="text-primary"><?= number_format($today['nb_visits'] ?? 0) ?></strong>
-                                            <small class="text-muted"><?= $addon->i18n('matomo_visits_short') ?></small>
-                                            <br>
-                                            <span class="text-info"><?= number_format($today['nb_users'] ?? 0) ?></span>
-                                            <small class="text-muted"><?= $addon->i18n('matomo_users_short') ?></small>
+                                        <span class="label label-primary" title="<?= $addon->i18n('matomo_visits') ?>">
+                                            <i class="fa fa-eye"></i> <?= number_format($today['nb_visits'] ?? 0) ?>
+                                        </span>
+                                        <br>
+                                        <span class="label label-info" title="<?= $addon->i18n('matomo_users') ?>">
+                                            <i class="fa fa-users"></i> <?= number_format($today['nb_users'] ?? 0) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="label label-primary" title="<?= $addon->i18n('matomo_visits') ?>">
+                                            <i class="fa fa-eye"></i> <?= number_format($week['nb_visits'] ?? 0) ?>
+                                        </span>
+                                        <br>
+                                        <span class="label label-info" title="<?= $addon->i18n('matomo_users') ?>">
+                                            <i class="fa fa-users"></i> <?= number_format($week['nb_users'] ?? 0) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group-vertical" role="group">
+                                            <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $site_id ?>&period=day&date=today" 
+                                               target="_blank" class="btn btn-primary btn-xs">
+                                                <i class="fa fa-chart-line"></i> <?= $addon->i18n('matomo_daily_stats') ?>
+                                            </a>
+                                            <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $site_id ?>&period=week&date=today" 
+                                               target="_blank" class="btn btn-info btn-xs">
+                                                <i class="fa fa-calendar-week"></i> <?= $addon->i18n('matomo_weekly_stats') ?>
+                                            </a>
                                         </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="stats-week">
-                                            <strong class="text-primary"><?= number_format($week['nb_visits'] ?? 0) ?></strong>
-                                            <small class="text-muted"><?= $addon->i18n('matomo_visits_short') ?></small>
-                                            <br>
-                                            <span class="text-info"><?= number_format($week['nb_users'] ?? 0) ?></span>
-                                            <small class="text-muted"><?= $addon->i18n('matomo_users_short') ?></small>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $site_id ?>&period=day&date=today" 
-                                           target="_blank" class="btn btn-primary btn-sm">
-                                            📊 <?= $addon->i18n('matomo_open_dashboard') ?>
-                                        </a>
-                                        <br><br>
-                                        <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $site_id ?>&period=week&date=today" 
-                                           target="_blank" class="btn btn-info btn-xs">
-                                            📅 <?= $addon->i18n('matomo_week_view') ?>
-                                        </a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -237,16 +259,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-.stats-today, .stats-week {
-    min-height: 40px;
-}
-
-.table > tbody > tr > td {
-    vertical-align: middle;
-}
-
-.text-center .btn {
-    margin-bottom: 5px;
-}
-</style>

@@ -1,5 +1,5 @@
 <?php
-
+use FriendsOfRedaxo\Matomo\MatomoApi;
 /**
  * Erweiterte Konfigurationsseite mit rex_config_form
  */

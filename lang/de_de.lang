@@ -248,3 +248,9 @@ matomo_track_groupPageTitlesByDomain = Gruppierung nach Domain
 matomo_track_DonotTrack = DoNotTrack-Erkennung
 matomo_track_disableCookies = Cookies deaktivieren
 matomo_track_mergeAliasUrls = Klicks auf Alias-Domains verbergen
+
+# Overview Buttons
+matomo_goto_dashboard = Dashboard öffnen
+matomo_add_domain = Domain hinzufügen
+matomo_daily_stats = Tagesstats
+matomo_weekly_stats = Wochenstats
