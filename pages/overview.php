@@ -21,6 +21,10 @@ if (!$matomo_ready) {
     return;
 }
 
+// User und Admin-Status früh definieren
+$user = rex::getUser();
+$is_admin = $user && $user->isAdmin();
+
 // Auto-Login Fix verarbeiten
 if (rex_get('action') === 'fix_autologin' && $is_admin) {
     // Host aus Matomo URL extrahieren
@@ -102,9 +106,7 @@ $sites = [];
 $stats_today = [];
 $stats_week = [];
 
-// User-spezifische Domain-Filter
-$user = rex::getUser();
-$is_admin = $user && $user->isAdmin();
+// User-spezifische Domain-Filter (bereits oben definiert)
 $show_all_domains = $is_admin;
 $user_allowed_domains = [];
 
