@@ -25,7 +25,6 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 ### ⚙️ **Erweiterte Konfiguration**
 - **Flexible API-Einstellungen** (Timeout, SSL-Verifikation)
 - **Datenschutz-Optionen** (IP-Anonymisierung, Cookie-freies Tracking)
-- **Dashboard-Domain Auswahl** für personalisierte Ansichten
 - **Multi-Token Support** (Admin + User Token)
 
 ### 🔒 **DSGVO-Konformität**
@@ -56,7 +55,6 @@ Unter **Matomo → Matomo-Setup**:
 Unter **Matomo → Konfiguration**:
 - API-Einstellungen (Timeout, SSL-Verifikation)
 - Tracking-Optionen (IP-Anonymisierung, Cookie-freies Tracking)
-- Dashboard-Domain auswählen
 - Datenschutz-Einstellungen konfigurieren
 
 ### 3. **Domains verwalten**
@@ -185,4 +183,4 @@ Dieses AddOn steht unter der MIT-Lizenz. Matomo selbst ist unter der GPL v3 Lize
 ---
 
 **Entwickelt von Friends Of REDAXO**  
-Für REDAXO 5.7+ | Matomo 4.x/5.x kompatibel
+Für REDAXO 5.16.1+ | Matomo 4.x/5.x kompatibel
