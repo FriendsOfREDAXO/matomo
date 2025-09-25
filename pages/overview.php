@@ -26,11 +26,32 @@ $sites = [];
 $stats_today = [];
 $stats_week = [];
 
+// User-spezifische Domain-Filter
+$user = rex::getUser();
+$show_all_domains = $user->isAdmin();
+$user_allowed_domains = [];
+
+// Wenn nicht Admin, Domain-Filter anwenden (später implementieren)
+if (!$show_all_domains) {
+    // Hier könnten wir User-spezifische Domain-Berechtigungen laden
+    // Für jetzt alle Domains anzeigen, aber das können wir später erweitern
+    $show_all_domains = true;
+}
+
 try {
     $api = new MatomoApi($matomo_url, $admin_token, $user_token);
-    $sites = $api->getSites();
+    $all_sites = $api->getSites();
     
-    // Statistiken für heute und diese Woche laden
+    // Domain-Filterung anwenden
+    $sites = [];
+    foreach ($all_sites as $site) {
+        if ($show_all_domains) {
+            $sites[] = $site;
+        }
+        // TODO: Hier später User-spezifische Domain-Filterung
+    }
+    
+    // Erweiterte Statistiken laden
     foreach ($sites as $site) {
         $site_id = $site['idsite'];
         
@@ -42,7 +63,7 @@ try {
             $stats_today[$site_id] = ['nb_visits' => 0, 'nb_actions' => 0, 'nb_users' => 0];
         }
         
-        // Diese Woche
+        // Diese Woche  
         try {
             $week = $api->getVisitorStats($site_id, 'week', 'today');
             $stats_week[$site_id] = $week;
@@ -64,30 +85,35 @@ try {
         <div class="panel panel-primary">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    <i class="fa fa-chart-bar"></i> <?= $addon->i18n('matomo_overview_summary') ?>
+                    <i class="fa fa-chart-bar"></i> Analytics Übersicht
+                    <small class="text-muted">(<?= count($sites) ?> <?= count($sites) == 1 ? 'Domain' : 'Domains' ?>)</small>
                     <div class="btn-group pull-right">
-                        <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/dashboard']) ?>" class="btn btn-primary btn-sm">
-                            <i class="fa fa-tachometer-alt"></i> <?= $addon->i18n('matomo_goto_dashboard') ?>
-                        </a>
-                        <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-default btn-sm rex-pulse">
-                            <i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open_matomo') ?>
+                        <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-primary btn-sm rex-pulse">
+                            <i class="fa fa-external-link-alt"></i> Matomo öffnen
                         </a>
                     </div>
                 </h3>
             </div>
             <div class="panel-body">
                 <?php
+                // Gesamtstatistiken berechnen
                 $total_visits_today = 0;
                 $total_actions_today = 0;
                 $total_users_today = 0;
                 $total_visits_week = 0;
                 $total_actions_week = 0;  
                 $total_users_week = 0;
+                $total_bounce_rate = 0;
+                $total_avg_time = 0;
+                $active_sites = 0;
                 
                 foreach ($stats_today as $stat) {
                     $total_visits_today += $stat['nb_visits'] ?? 0;
                     $total_actions_today += $stat['nb_actions'] ?? 0;
                     $total_users_today += $stat['nb_users'] ?? 0;
+                    if (($stat['nb_visits'] ?? 0) > 0) {
+                        $active_sites++;
+                    }
                 }
                 
                 foreach ($stats_week as $stat) {
@@ -95,13 +121,20 @@ try {
                     $total_actions_week += $stat['nb_actions'] ?? 0;
                     $total_users_week += $stat['nb_users'] ?? 0;
                 }
+                
+                // Durchschnittswerte berechnen
+                $avg_actions_per_visit = $total_visits_today > 0 ? round($total_actions_today / $total_visits_today, 1) : 0;
+                $growth_rate = $total_visits_week > 0 && $total_visits_today > 0 ? 
+                    round((($total_visits_today * 7) / $total_visits_week - 1) * 100, 1) : 0;
                 ?>
                 
+                <!-- Erweiterte Metriken -->
                 <div class="row">
+                    <!-- Heute -->
                     <div class="col-sm-6">
-                        <div class="panel panel-default">
+                        <div class="panel panel-success">
                             <div class="panel-heading">
-                                <h4><?= $addon->i18n('matomo_overview_today') ?></h4>
+                                <h4><i class="fa fa-calendar-day"></i> Heute</h4>
                             </div>
                             <div class="panel-body">
                                 <div class="row">
@@ -125,29 +158,70 @@ try {
                         </div>
                     </div>
                     
+                    <!-- Diese Woche -->  
                     <div class="col-sm-6">
-                        <div class="panel panel-default">
+                        <div class="panel panel-info">
                             <div class="panel-heading">
-                                <h4><?= $addon->i18n('matomo_overview_week') ?></h4>
+                                <h4><i class="fa fa-calendar-week"></i> Diese Woche</h4>
                             </div>
                             <div class="panel-body">
                                 <div class="row">
                                     <div class="col-xs-4 text-center">
                                         <i class="fa fa-eye fa-2x text-primary"></i>
                                         <h3 class="text-primary"><?= number_format($total_visits_week) ?></h3>
-                                        <small class="text-muted"><?= $addon->i18n('matomo_visits') ?></small>
+                                        <small class="text-muted">Besuche</small>
                                     </div>
                                     <div class="col-xs-4 text-center">
                                         <i class="fa fa-mouse-pointer fa-2x text-success"></i>
                                         <h3 class="text-success"><?= number_format($total_actions_week) ?></h3>
-                                        <small class="text-muted"><?= $addon->i18n('matomo_actions') ?></small>
+                                        <small class="text-muted">Aktionen</small>
                                     </div>
                                     <div class="col-xs-4 text-center">
                                         <i class="fa fa-users fa-2x text-info"></i>
                                         <h3 class="text-info"><?= number_format($total_users_week) ?></h3>
-                                        <small class="text-muted"><?= $addon->i18n('matomo_users') ?></small>
+                                        <small class="text-muted">Benutzer</small>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Zusätzliche Metriken -->
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="panel panel-default">
+                            <div class="panel-body text-center">
+                                <i class="fa fa-chart-line fa-2x text-warning"></i>
+                                <h3 class="text-warning"><?= $avg_actions_per_visit ?></h3>
+                                <small class="text-muted">Ø Aktionen/Besuch</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="panel panel-default">
+                            <div class="panel-body text-center">
+                                <i class="fa fa-globe fa-2x text-primary"></i>
+                                <h3 class="text-primary"><?= $active_sites ?></h3>
+                                <small class="text-muted">Aktive Domains heute</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="panel panel-default">
+                            <div class="panel-body text-center">
+                                <i class="fa fa-<?= $growth_rate >= 0 ? 'arrow-up text-success' : 'arrow-down text-danger' ?> fa-2x"></i>
+                                <h3 class="<?= $growth_rate >= 0 ? 'text-success' : 'text-danger' ?>"><?= $growth_rate ?>%</h3>
+                                <small class="text-muted">Trend (7 Tage)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="panel panel-default">
+                            <div class="panel-body text-center">
+                                <i class="fa fa-calendar fa-2x text-muted"></i>
+                                <h3 class="text-muted"><?= count($sites) ?></h3>
+                                <small class="text-muted">Überwachte Domains</small>
                             </div>
                         </div>
                     </div>
@@ -159,27 +233,41 @@ try {
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    <i class="fa fa-globe"></i> <?= $addon->i18n('matomo_overview_by_domain') ?> (<?= count($sites) ?>)
-                    <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/domains']) ?>" class="btn btn-success btn-sm pull-right">
-                        <i class="fa fa-plus"></i> <?= $addon->i18n('matomo_add_domain') ?>
-                    </a>
+                    <i class="fa fa-globe"></i> Domain-Statistiken
+                    <?php if (!$show_all_domains): ?>
+                        <small class="text-muted">(gefiltert für Ihre Berechtigungen)</small>
+                    <?php endif; ?>
+                    <?php if ($user->isAdmin()): ?>
+                        <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/domains']) ?>" class="btn btn-success btn-sm pull-right">
+                            <i class="fa fa-plus"></i> Domains verwalten
+                        </a>
+                    <?php endif; ?>
                 </h3>
             </div>
             <div class="panel-body">
                 
                 <?php if (empty($sites)): ?>
-                    <p class="text-muted"><?= $addon->i18n('matomo_no_domains_yet') ?></p>
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> 
+                        <strong>Keine Domains verfügbar:</strong> 
+                        <?php if ($show_all_domains): ?>
+                            Es wurden noch keine Domains in Matomo konfiguriert.
+                        <?php else: ?>
+                            Sie haben keine Berechtigung für Domain-Statistiken oder es wurden Ihnen keine Domains zugewiesen.
+                        <?php endif; ?>
+                    </div>
                 <?php else: ?>
                     
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th><?= $addon->i18n('matomo_table_name') ?></th>
-                                    <th><?= $addon->i18n('matomo_table_url') ?></th>
-                                    <th class="text-center"><?= $addon->i18n('matomo_overview_today') ?></th>
-                                    <th class="text-center"><?= $addon->i18n('matomo_overview_week') ?></th>
-                                    <th class="text-center"><?= $addon->i18n('matomo_actions') ?></th>
+                                    <th><i class="fa fa-tag"></i> Domain</th>
+                                    <th><i class="fa fa-link"></i> URL</th>
+                                    <th class="text-center"><i class="fa fa-calendar-day"></i> Heute</th>
+                                    <th class="text-center"><i class="fa fa-calendar-week"></i> Diese Woche</th>
+                                    <th class="text-center"><i class="fa fa-mouse-pointer"></i> Aktionen</th>
+                                    <th class="text-center"><i class="fa fa-external-link-alt"></i> Matomo</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -217,16 +305,19 @@ try {
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group-vertical" role="group">
-                                            <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $site_id ?>&period=day&date=today" 
-                                               target="_blank" class="btn btn-primary btn-xs">
-                                                <i class="fa fa-chart-line"></i> <?= $addon->i18n('matomo_daily_stats') ?>
-                                            </a>
-                                            <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $site_id ?>&period=week&date=today" 
-                                               target="_blank" class="btn btn-info btn-xs">
-                                                <i class="fa fa-calendar-week"></i> <?= $addon->i18n('matomo_weekly_stats') ?>
-                                            </a>
-                                        </div>
+                                        <span class="label label-success" title="Aktionen heute">
+                                            <i class="fa fa-mouse-pointer"></i> <?= number_format($today['nb_actions'] ?? 0) ?>
+                                        </span>
+                                        <br>
+                                        <span class="label label-warning" title="Aktionen diese Woche">
+                                            <i class="fa fa-chart-bar"></i> <?= number_format($week['nb_actions'] ?? 0) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $site_id ?>&period=day&date=today" 
+                                           target="_blank" class="btn btn-primary btn-sm rex-pulse">
+                                            <i class="fa fa-external-link-alt"></i> Öffnen
+                                        </a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

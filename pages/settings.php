@@ -125,7 +125,7 @@ if ($error) {
                     </div>
                     
                     <button type="submit" name="save_settings" value="1" class="btn btn-success">
-                        💾 Einstellungen speichern
+                        <i class="fa fa-save"></i> Einstellungen speichern
                     </button>
                 </form>
             </div>
@@ -138,12 +138,12 @@ if ($error) {
         <!-- Status -->
         <div class="panel panel-<?= $matomo_installed ? 'success' : 'warning' ?>">
             <div class="panel-heading">
-                <h3 class="panel-title">📊 Status</h3>
+                <h3 class="panel-title"><i class="fa fa-chart-bar"></i> Status</h3>
             </div>
             <div class="panel-body">
                 <p><strong>Matomo Installation:</strong></p>
                 <p class="text-<?= $matomo_installed ? 'success' : 'warning' ?>">
-                    <?= $matomo_installed ? '✅ Installiert' : '❌ Nicht gefunden' ?>
+                    <?= $matomo_installed ? '<i class="fa fa-check-circle text-success"></i> Installiert' : '<i class="fa fa-times-circle text-danger"></i> Nicht gefunden' ?>
                 </p>
                 
                 <?php if ($matomo_path): ?>
@@ -160,7 +160,7 @@ if ($error) {
                 
                 <?php if ($admin_token): ?>
                 <p><strong>Admin Token:</strong><br>
-                <span class="text-success">✅ Konfiguriert</span></p>
+                <span class="text-success"><i class="fa fa-check-circle"></i> Konfiguriert</span></p>
                 <?php endif; ?>
             </div>
         </div>
