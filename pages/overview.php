@@ -1,5 +1,7 @@
 <?php
 
+use FriendsOfRedaxo\Matomo\MatomoApi;
+
 $addon = rex_addon::get('matomo');
 
 // Prüfen ob Matomo konfiguriert ist
