@@ -9,6 +9,7 @@ page:
     pjax: true
     icon: rex-icon rex-icon-seo
     subpages:
+        overview: { title: 'translate:matomo_overview', icon: rex-icon rex-icon-template}
         dashboard: { title: 'translate:matomo_dashboard', icon: rex-icon rex-icon-seo}
         settings:
                 title: 'translate:matomo_settings'

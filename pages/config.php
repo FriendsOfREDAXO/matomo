@@ -50,6 +50,33 @@ $field->setLabel($addon->i18n('matomo_ssl_verify'));
 $field->addOption($addon->i18n('matomo_ssl_verify_option'), '1');
 $field->setNotice($addon->i18n('matomo_ssl_verify_help'));
 
+// Dashboard Einstellungen
+$form->addFieldset($addon->i18n('matomo_dashboard_section'));
+
+// Dashboard Domain dynamisch laden
+$dashboard_options = ['0' => $addon->i18n('matomo_dashboard_all_sites')];
+$matomo_url = rex_config::get('matomo', 'matomo_url', '');
+$admin_token = rex_config::get('matomo', 'admin_token', '');
+$user_token = rex_config::get('matomo', 'user_token', '');
+
+if ($matomo_url && $admin_token) {
+    try {
+        $api = new MatomoApi($matomo_url, $admin_token, $user_token);
+        $sites = $api->getSites();
+        foreach ($sites as $site) {
+            $dashboard_options[$site['idsite']] = $site['name'] . ' (' . $site['main_url'] . ')';
+        }
+    } catch (Exception $e) {
+        // Fehler ignorieren, zeige nur Standardoption
+    }
+}
+
+$field = $form->addSelectField('dashboard_site');
+$field->setLabel($addon->i18n('matomo_dashboard_site'));
+$field->setNotice($addon->i18n('matomo_dashboard_site_help'));
+$select = $field->getSelect();
+$select->addOptions($dashboard_options, true);
+
 // Tracking Optionen Sektion
 $form->addFieldset($addon->i18n('matomo_tracking_options'));
 

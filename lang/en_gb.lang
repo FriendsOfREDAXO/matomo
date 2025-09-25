@@ -161,6 +161,36 @@ matomo_cookie_notice_desc = Simple cookie notices for smaller websites
 matomo_consent_important = Important
 matomo_consent_manual_integration = The tracking code must be manually inserted into your templates - no automatic integration is performed.
 
+# Config page - Dashboard Settings
+matomo_dashboard_section = Dashboard Settings
+matomo_dashboard_site = Default Dashboard Domain
+matomo_dashboard_site_help = Select the domain for the main dashboard
+matomo_dashboard_all_sites = All websites (overview)
+
+# Overview page
+matomo_overview = Overview
+matomo_overview_title = Statistics Overview
+matomo_overview_summary = Total statistics for all domains
+matomo_overview_today = Today
+matomo_overview_week = This week
+matomo_overview_by_domain = Statistics by domain
+matomo_overview_load_error = Error loading statistics: {0}
+matomo_visits = Visits
+matomo_actions = Page views
+matomo_users = Users
+matomo_visits_short = Visits
+matomo_users_short = Users
+matomo_open_dashboard = Open dashboard
+matomo_week_view = Week view
+matomo_last_update = Last update
+
+# Dashboard page
+matomo_dashboard_load_error = Error loading dashboard: {0}
+matomo_dashboard_all_info = All sites mode
+matomo_dashboard_all_description = For an overview of all domains use the overview page or configure a specific domain for the dashboard.
+matomo_goto_overview = Go to statistics overview
+matomo_dashboard_configure = Configure dashboard
+
 # Help section
 matomo_help_first_steps = First steps
 matomo_help_step1 = Download Matomo from the <a href="{0}">download page</a>
