@@ -1,12 +1,212 @@
-matomo_Matomo = Matomo web statistics
+matomo_title = Matomo
+matomo_dashboard = Dashboard
+matomo_settings = Settings
+matomo_config = Configuration
+matomo_domains = Domains
 matomo_help = Help
-matomo_url = Matomo-URL with trailing /
+
+# Status Messages
+matomo_config_saved = Configuration saved!
+matomo_download_success = Matomo successfully downloaded and configured!
+matomo_download_failed = Download failed: {0}
+matomo_fill_all_fields = Please fill in all fields!
+matomo_domain_added = Domain '{0}' successfully added (Site ID: {1})
+matomo_domain_add_failed = Domain could not be created
+matomo_domain_add_error = Error adding domain: {0}
+matomo_sites_load_error = Error loading domains: {0}
+matomo_not_configured = Matomo is not fully configured. Please go to <a href="{0}">Settings</a> and configure Matomo first.
+
+# Forms & Labels
+matomo_url = Matomo URL
+matomo_url_help = Complete URL to Matomo installation (e.g. https://your-domain.com/matomo)
+matomo_path = Matomo Path  
+matomo_path_help = Path relative to web root (e.g. "matomo" for /path/to/webroot/matomo/)
+matomo_admin_token = Admin API Token
+matomo_admin_token_help = API token for admin functions (create, delete sites)
+matomo_user_token = User Token
+matomo_user_token_help = API token for dashboard access and statistics (optional)
+matomo_api_timeout = API Timeout
+matomo_api_timeout_help = Timeout for API requests in seconds
+matomo_ssl_verify = Verify SSL Certificate
+matomo_ssl_verify_help = Disable this only for self-signed certificates
+matomo_auto_tracking = Automatic Tracking
+matomo_auto_tracking_help = Automatically embed tracking code in templates
+matomo_tracking_position = Tracking Code Position
+matomo_tracking_position_help = Position of tracking code in HTML
+matomo_anonymize_ip = Anonymize IP Addresses
+matomo_anonymize_ip_help = Anonymize IP addresses before storage (GDPR compliant)
+matomo_cookie_consent = Cookie Consent
+matomo_cookie_consent_help = Activate tracking only after cookie consent
+matomo_privacy_text = Privacy Text
+matomo_privacy_text_help = Text for privacy notices (will be available in templates)
+
+# Download Section
+matomo_download_title = Matomo Download & Installation
+matomo_download_description = Download Matomo automatically and configure it in one step.
+matomo_installation_path = Installation Path (relative to web root)
+matomo_installation_path_placeholder = matomo
+matomo_installation_path_help = Folder will be created automatically if it doesn't exist
+matomo_installation_url = Matomo URL
+matomo_installation_url_help = Complete URL where Matomo should be accessible
+matomo_download_button = Download & configure Matomo
+
+# Configuration
+matomo_config_title = Matomo Configuration
+matomo_installation_section = Matomo Installation
+matomo_api_settings_section = API Settings
+matomo_advanced_options_section = Advanced Options
+matomo_privacy_section = Privacy
+matomo_manual_config_title = Manual Configuration
+
+# Status
+matomo_status_title = Status
+matomo_installation_status = Installation
+matomo_api_status = API Status
+matomo_error_status = Error
+matomo_path_label = Path
+matomo_url_label = URL
+matomo_open_matomo = Open Matomo
+matomo_connected = Connected
+matomo_found = Found
+matomo_not_found = Not found
+matomo_not_tested = Not tested
+matomo_sites_count = {0} Sites
+
+# Domains
+matomo_domains_title = Domains
+matomo_add_domain_title = Add New Domain
+matomo_domain_name = Domain Name
+matomo_domain_name_help = Descriptive name for this website
+matomo_domain_url = Domain URL  
+matomo_domain_url_help = Complete URL with http:// or https://
+matomo_add_domain_button = Add Domain
+matomo_existing_domains_title = Existing Domains ({0})
+matomo_no_domains = No domains configured yet.
+matomo_domain_id = ID
+matomo_domain_name_col = Name
+matomo_domain_url_col = URL
+matomo_domain_created = Created
+matomo_tracking_code = Tracking Code
+matomo_show_tracking_code = Show Code
+matomo_copy_tracking_code = Copy Code
+# Config page - API Settings
+matomo_api_section = API Settings
+matomo_api_timeout = API Timeout
+matomo_api_timeout_help = Timeout for API requests in seconds
+matomo_timeout_10s = 10 seconds
+matomo_timeout_30s = 30 seconds
+matomo_timeout_60s = 60 seconds
+matomo_timeout_120s = 120 seconds
+matomo_ssl_verify = Verify SSL certificate
+matomo_ssl_verify_option = Verify SSL certificates for HTTPS connections
+matomo_ssl_verify_help = Disable this only for self-signed certificates
+
+# Config page - Tracking Options
+matomo_tracking_options = Tracking Options
+matomo_anonymize_ip = Anonymize IP addresses
+matomo_anonymize_ip_option = Anonymize IP addresses before storage
+matomo_anonymize_ip_help = Complies with GDPR requirements - removes last bytes of IP addresses
+matomo_cookieless = Cookie-free tracking  
+matomo_cookieless_option = Enable tracking without cookies
+matomo_cookieless_help = Uses fingerprinting instead of cookies for visitor recognition
+matomo_privacy_section = Privacy Settings
+matomo_respect_dnt = Respect Do Not Track
+matomo_respect_dnt_option = Respect Do Not Track browser header
+matomo_respect_dnt_help = Disables tracking when browser sends DNT header
+matomo_cookie_lifetime = Cookie lifetime
+matomo_cookie_lifetime_help = How long tracking cookies are stored
+matomo_cookie_30min = 30 minutes
+matomo_cookie_1hour = 1 hour
+matomo_cookie_1day = 1 day
+matomo_cookie_1week = 1 week
+matomo_cookie_1month = 1 month
+matomo_cookie_1year = 1 year
+
+# Domains page
+matomo_add_domain_title = Add new domain
+matomo_domain_name_placeholder = My Website
+matomo_domain_url = Domain URL
+matomo_domain_url_placeholder = https://my-domain.com
+matomo_domain_url_help = Complete URL with http:// or https://
+matomo_add_domain_button = Add domain
+matomo_existing_domains = Existing domains ({0})
+matomo_no_domains_yet = No domains configured yet.
+matomo_table_id = ID
+matomo_table_name = Name
+matomo_table_url = URL
+matomo_table_created = Created
+matomo_table_tracking = Tracking Code
+matomo_show_code = Show code
+matomo_status_title = Matomo Status
+matomo_status_url = Matomo URL
+matomo_open_matomo = Open Matomo
+matomo_status_api = API Status
+matomo_status_connected = Connected
+matomo_status_domains = Domains
+matomo_tracking_code_title = Tracking Code
+matomo_tracking_site_id = Site ID
+matomo_copy_code = Copy code
+matomo_close = Close
+matomo_tracking_code_not_found = Tracking code not found
+matomo_tracking_code_label = Tracking code for your website
+matomo_tracking_note = Important note
+matomo_tracking_privacy_note = Please integrate a consent manager for GDPR compliance
+
+# Consent Manager
+matomo_consent_title = Consent Manager Recommendation
+matomo_consent_recommendation = For GDPR-compliant use of Matomo, you should use a consent manager.
+matomo_consent_addon_recommendation = Recommended REDAXO AddOns
+matomo_consent_manager_desc = Professional cookie management with Matomo integration
+matomo_cookie_notice_desc = Simple cookie notices for smaller websites
+matomo_consent_important = Important
+matomo_consent_manual_integration = The tracking code must be manually inserted into your templates - no automatic integration is performed.
+
+# Help section
+matomo_help_first_steps = First steps
+matomo_help_step1 = Download Matomo from the <a href="{0}">download page</a>
+matomo_help_step2 = Follow the installation wizard
+matomo_help_step3 = Copy the API tokens here
+matomo_help_step4 = Add your domains
+matomo_help_tokens = API Tokens explained
+matomo_help_admin_token = Admin Token
+matomo_help_admin_token_desc = Required for admin tasks like creating/deleting sites
+matomo_help_user_token = User Token (optional)
+matomo_help_user_token_desc = Required for dashboard access and statistics. Can be left empty, then admin token will be used.
+matomo_help_token_location = Find API token in Matomo
+
+# JavaScript
+matomo_copied = Copied
+matomo_close_tracking_code = Close
+matomo_current_site_id = Site ID
+
+# Help
+matomo_help_first_steps_title = First Steps
+matomo_help_api_token_title = Find API Token
+matomo_help_api_token_path = In Matomo under:<br><code>Administration → Platform → API → User Authentication</code>
+matomo_help_after_download_title = After Download
+
+# Options
+matomo_timeout_10s = 10 seconds
+matomo_timeout_30s = 30 seconds
+matomo_timeout_60s = 60 seconds
+matomo_timeout_120s = 120 seconds
+matomo_position_head = In &lt;head&gt; section
+matomo_position_body_start = At beginning of &lt;body&gt;
+matomo_position_body_end = At end of &lt;body&gt;
+
+# Buttons
+matomo_save = Save
+matomo_cancel = Cancel
+matomo_close = Close
+matomo_yes = Yes
+matomo_no = No
+
+# Legacy Support
+matomo_Matomo = Matomo web statistics
 matomo_id = Site-ID
 matomo_token = API-Token
 matomo_user = Username
 matomo_password = Password
-matomo_dashboard = Matomo Dashboard
-matomo_settings = Matomo settings
 matomo_link = Open Matomo
 matomo_settings_info = The Matomo add-on has not yet been configured yet.
 matomo_notfound = Matomo was not found
@@ -18,4 +218,3 @@ matomo_track_groupPageTitlesByDomain = Group page titles by domain
 matomo_track_DonotTrack = Accept client DoNotTrack setting
 matomo_track_disableCookies = Disable Cookies
 matomo_track_mergeAliasUrls = Merge Alias-Urls
-matomo_title = Matomo statistics

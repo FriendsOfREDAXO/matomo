@@ -12,7 +12,9 @@ page:
         dashboard: { title: 'translate:matomo_dashboard', icon: rex-icon rex-icon-seo}
         settings:
                 title: 'translate:matomo_settings'
-                perm: admin[] 
+                perm: admin[]
+        config: { title: 'Konfiguration', icon: rex-icon rex-icon-config, perm: admin[]}
+        domains: { title: 'Domains', icon: rex-icon rex-icon-structure}
         help: { title: 'translate:matomo_help', itemclass: pull-right, icon: rex-icon fa-question-circle, subPath: README.md}        
 
 requires:
