@@ -100,11 +100,19 @@ $user_token = rex_config::get('matomo', 'user_token', '');
 $matomo_path = rex_config::get('matomo', 'matomo_path', '');
 
 $matomo_ready = false;
+$is_external_matomo = false;
 $api_status = 'Nicht getestet';
 
-if ($matomo_url && $admin_token && $matomo_path) {
-    $full_path = rex_path::frontend($matomo_path . '/');
-    $matomo_ready = file_exists($full_path . 'index.php');
+if ($matomo_url && $admin_token) {
+    if ($matomo_path) {
+        // Lokale Matomo-Installation - prüfe ob verfügbar
+        $full_path = rex_path::frontend($matomo_path . '/');
+        $matomo_ready = file_exists($full_path . 'index.php');
+    } else {
+        // Externe Matomo-Installation - keine lokale Verfügbarkeitsprüfung möglich
+        $matomo_ready = true;
+        $is_external_matomo = true;
+    }
     
     if ($matomo_ready) {
         try {
@@ -130,7 +138,11 @@ if ($matomo_url && $admin_token && $matomo_path) {
                     <tr>
                         <td><strong>Installation:</strong></td>
                         <td class="text-<?= $matomo_ready ? 'success' : 'danger' ?>">
-                            <?= $matomo_ready ? '✅ Gefunden' : '❌ Nicht gefunden' ?>
+                            <?php if ($is_external_matomo): ?>
+                                🌐 Externe Installation
+                            <?php else: ?>
+                                <?= $matomo_ready ? '✅ Gefunden' : '❌ Nicht gefunden' ?>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <tr>

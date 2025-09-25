@@ -55,9 +55,18 @@ $matomo_password = rex_config::get('matomo', 'matomo_password', '');
 
 // Status prüfen
 $matomo_installed = false;
-if ($matomo_path) {
-    $full_path = rex_path::frontend($matomo_path . '/');
-    $matomo_installed = file_exists($full_path . 'index.php');
+$is_external_matomo = false;
+
+if ($matomo_url && $admin_token) {
+    if ($matomo_path) {
+        // Lokale Matomo-Installation - prüfe ob verfügbar
+        $full_path = rex_path::frontend($matomo_path . '/');
+        $matomo_installed = file_exists($full_path . 'index.php');
+    } else {
+        // Externe Matomo-Installation - keine lokale Verfügbarkeitsprüfung möglich
+        $matomo_installed = true;
+        $is_external_matomo = true;
+    }
 }
 
 // Nachrichten anzeigen
@@ -167,7 +176,11 @@ if ($error) {
             <div class="panel-body">
                 <p><strong>Matomo Installation:</strong></p>
                 <p class="text-<?= $matomo_installed ? 'success' : 'warning' ?>">
-                    <?= $matomo_installed ? '<i class="fa fa-check-circle text-success"></i> Installiert' : '<i class="fa fa-times-circle text-danger"></i> Nicht gefunden' ?>
+                    <?php if ($is_external_matomo): ?>
+                        <i class="fa fa-globe text-info"></i> Externe Installation
+                    <?php else: ?>
+                        <?= $matomo_installed ? '<i class="fa fa-check-circle text-success"></i> Installiert' : '<i class="fa fa-times-circle text-danger"></i> Nicht gefunden' ?>
+                    <?php endif; ?>
                 </p>
                 
                 <?php if ($matomo_path): ?>
