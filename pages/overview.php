@@ -21,6 +21,38 @@ if (!$matomo_ready) {
     return;
 }
 
+// Auto-Login Fix verarbeiten
+if (rex_get('action') === 'fix_autologin' && $user->isAdmin()) {
+    $config_file = rex_path::frontend($matomo_path . '/config/config.ini.php');
+    if (file_exists($config_file) && is_writable($config_file)) {
+        $config_content = file_get_contents($config_file);
+        
+        // Prüfe ob [General] Sektion existiert
+        if (strpos($config_content, '[General]') !== false) {
+            // Füge login_allow_logme zur [General] Sektion hinzu
+            $config_content = preg_replace(
+                '/(\[General\])/i',
+                '$1' . PHP_EOL . 'login_allow_logme = 1',
+                $config_content,
+                1
+            );
+        } else {
+            // Füge [General] Sektion am Anfang hinzu
+            $config_content = "[General]" . PHP_EOL . "login_allow_logme = 1" . PHP_EOL . PHP_EOL . $config_content;
+        }
+        
+        if (file_put_contents($config_file, $config_content)) {
+            echo rex_view::success('Auto-Login wurde erfolgreich aktiviert! Die Buttons funktionieren jetzt.');
+            $auto_login_available = true;
+            $auto_login_config_error = false;
+        } else {
+            echo rex_view::error('Fehler beim Schreiben der Konfigurationsdatei.');
+        }
+    } else {
+        echo rex_view::error('Konfigurationsdatei nicht gefunden oder nicht beschreibbar.');
+    }
+}
+
 // Domains und Statistiken laden
 $sites = [];
 $stats_today = [];
@@ -36,6 +68,27 @@ if (!$show_all_domains) {
     // Hier könnten wir User-spezifische Domain-Berechtigungen laden
     // Für jetzt alle Domains anzeigen, aber das können wir später erweitern
     $show_all_domains = true;
+}
+
+// Auto-Login Status prüfen
+$matomo_user = rex_config::get('matomo', 'matomo_user', '');
+$matomo_password = rex_config::get('matomo', 'matomo_password', '');
+$auto_login_available = false;
+$auto_login_config_error = false;
+
+if ($matomo_user && $matomo_password && $matomo_path) {
+    // Prüfe ob Matomo config.ini.php existiert und bearbeitbar ist
+    $config_file = rex_path::frontend($matomo_path . '/config/config.ini.php');
+    if (file_exists($config_file)) {
+        $config_content = file_get_contents($config_file);
+        if (strpos($config_content, 'login_allow_logme = 1') !== false) {
+            $auto_login_available = true;
+        } elseif (is_writable($config_file)) {
+            $auto_login_config_error = 'configurable';
+        } else {
+            $auto_login_config_error = 'readonly';
+        }
+    }
 }
 
 try {
@@ -80,6 +133,31 @@ try {
 
 <div class="row">
     <div class="col-sm-12">
+        
+        <!-- Auto-Login Status Warnung -->
+        <?php if ($matomo_user && $matomo_password && $auto_login_config_error): ?>
+            <div class="alert alert-warning">
+                <h4><i class="fa fa-exclamation-triangle"></i> Auto-Login nicht verfügbar</h4>
+                <p><strong>Problem:</strong> Matomo Auto-Login ist nicht konfiguriert.</p>
+                
+                <?php if ($auto_login_config_error === 'configurable'): ?>
+                    <p><strong>Lösung:</strong> 
+                        <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/overview', 'action' => 'fix_autologin']) ?>" 
+                           class="btn btn-success btn-sm">
+                            <i class="fa fa-wrench"></i> Automatisch reparieren
+                        </a>
+                        oder manuell in <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code> hinzufügen:
+                    </p>
+                    <pre>[General]
+login_allow_logme = 1</pre>
+                <?php else: ?>
+                    <p><strong>Manuelle Lösung erforderlich:</strong> Fügen Sie in <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code> hinzu:</p>
+                    <pre>[General]
+login_allow_logme = 1</pre>
+                    <p><small class="text-muted">Die Datei ist nicht beschreibbar - bitte manuell bearbeiten.</small></p>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
         
         <!-- Gesamt-Statistiken -->
         <div class="panel panel-primary">
