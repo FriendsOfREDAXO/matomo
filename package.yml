@@ -7,19 +7,18 @@ page:
     title: 'translate:matomo_title'
     perm: matomo[]
     pjax: true
-    icon: rex-icon rex-icon-seo
+    icon: 'rex-icon rex-icon-seo'
     subpages:
-        overview: { title: 'translate:matomo_overview', icon: rex-icon rex-icon-template, perm: matomo[overview]}
-        config: { title: 'Konfiguration', icon: rex-icon rex-icon-config, perm: admin[]}
-        domains: { title: 'Domains', icon: rex-icon rex-icon-structure, perm: admin[]}
+        overview: { title: 'translate:matomo_overview', icon: 'rex-icon rex-icon-template', perm: matomo[overview]}
+        config: { title: 'Konfiguration', icon: 'rex-icon rex-icon-config', perm: admin}
+        domains: { title: 'Domains', icon: 'rex-icon rex-icon-structure', perm: admin}
         settings:
                 title: 'translate:matomo_settings'
-                perm: admin[]
-        help: { title: 'translate:matomo_help', itemclass: pull-right, icon: rex-icon fa-question-circle, subPath: README.md}        
+                perm: admin
+        help: { title: 'translate:matomo_help', itemclass: pull-right, icon: 'rex-icon fa-question-circle', subPath: README.md}        
 
 requires:
     php:
-        extensions: [curl]
         version: '>=8.2'   
     redaxo: ^5.16.1
 
