@@ -297,7 +297,7 @@ login_allow_logme = 1</pre>
         <?php endif; ?>
         
         <!-- Gesamt-Statistiken -->
-        <div class="panel panel-primary">
+        <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
                     <i class="fa fa-chart-bar"></i> Analytics Übersicht
@@ -366,7 +366,7 @@ login_allow_logme = 1</pre>
                 <div class="row">
                     <!-- Heute -->
                     <div class="col-sm-6">
-                        <div class="panel panel-success">
+                        <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h4><i class="fa fa-calendar-day"></i> Heute</h4>
                             </div>
@@ -394,7 +394,7 @@ login_allow_logme = 1</pre>
                     
                     <!-- Diese Woche -->  
                     <div class="col-sm-6">
-                        <div class="panel panel-info">
+                        <div class="panel panel-default">
                             <div class="panel-heading">
                                 <h4><i class="fa fa-calendar-week"></i> Diese Woche</h4>
                             </div>
@@ -465,7 +465,7 @@ login_allow_logme = 1</pre>
 
         <!-- Top 5 Seiten (diese Woche) -->
         <?php if ($show_top_pages && !empty($sites)): ?>
-        <div class="panel panel-warning">
+        <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
                     <i class="fa fa-chart-line"></i> Top 5 Seiten dieser Woche
