@@ -22,7 +22,7 @@ if (!$matomo_ready) {
 }
 
 // Auto-Login Fix verarbeiten
-if (rex_get('action') === 'fix_autologin' && $user->isAdmin()) {
+if (rex_get('action') === 'fix_autologin' && $is_admin) {
     $config_file = rex_path::frontend($matomo_path . '/config/config.ini.php');
     if (file_exists($config_file) && is_writable($config_file)) {
         $config_content = file_get_contents($config_file);
@@ -60,7 +60,8 @@ $stats_week = [];
 
 // User-spezifische Domain-Filter
 $user = rex::getUser();
-$show_all_domains = $user->isAdmin();
+$is_admin = $user && $user->isAdmin();
+$show_all_domains = $is_admin;
 $user_allowed_domains = [];
 
 // Wenn nicht Admin, Domain-Filter anwenden (später implementieren)
@@ -135,7 +136,7 @@ try {
     <div class="col-sm-12">
         
         <!-- Auto-Login Status Warnung (nur für Admins) -->
-        <?php if ($user->isAdmin() && $matomo_user && $matomo_password && $auto_login_config_error): ?>
+        <?php if ($is_admin && $matomo_user && $matomo_password && $auto_login_config_error): ?>
             <div class="alert alert-warning">
                 <h4><i class="fa fa-exclamation-triangle"></i> Auto-Login nicht verfügbar</h4>
                 <p><strong>Problem:</strong> Matomo Auto-Login ist nicht konfiguriert.</p>
@@ -334,7 +335,7 @@ login_allow_logme = 1</pre>
                     <?php if (!$show_all_domains): ?>
                         <small class="text-muted">(gefiltert für Ihre Berechtigungen)</small>
                     <?php endif; ?>
-                    <?php if ($user->isAdmin()): ?>
+                    <?php if ($is_admin): ?>
                         <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/domains']) ?>" class="btn btn-success btn-sm pull-right">
                             <i class="fa fa-plus"></i> Domains verwalten
                         </a>
