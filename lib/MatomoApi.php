@@ -12,15 +12,33 @@ use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 
 /**
- * Einfache Matomo API Klasse mit rex_socket
+ * Matomo API Client mit rex_socket
+ * 
+ * Bietet Zugriff auf die Matomo HTTP API für Site-Management, 
+ * Statistiken und Download-Funktionalitäten.
+ * 
+ * @package FriendsOfRedaxo\Matomo
+ * @author Friends Of REDAXO
  */
 class MatomoApi
 {
-    private $matomo_url;
-    private $admin_token;
-    private $user_token;
+    /** @var string Basis-URL der Matomo-Installation */
+    private string $matomo_url;
+    
+    /** @var string Admin-Token für API-Zugriff */
+    private string $admin_token;
+    
+    /** @var string User-Token für Statistik-Zugriff */
+    private string $user_token;
 
-    public function __construct($matomo_url, $admin_token, $user_token = null)
+    /**
+     * Konstruktor
+     * 
+     * @param string $matomo_url Basis-URL der Matomo-Installation
+     * @param string $admin_token Admin-Token für API-Zugriff
+     * @param string|null $user_token Optional: User-Token, falls nicht gesetzt wird Admin-Token verwendet
+     */
+    public function __construct(string $matomo_url, string $admin_token, ?string $user_token = null)
     {
         $this->matomo_url = rtrim($matomo_url, '/');
         $this->admin_token = $admin_token;
@@ -29,8 +47,14 @@ class MatomoApi
 
     /**
      * API-Aufruf mit rex_socket
+     * 
+     * @param string $method API-Methode (z.B. 'SitesManager.getSites')
+     * @param array<string, mixed> $params zusätzliche Parameter für den API-Aufruf
+     * @param bool $use_user_token true = User-Token verwenden, false = Admin-Token verwenden
+     * @return mixed API-Antwort als Array oder skalarer Wert
+     * @throws Exception bei HTTP-Fehlern, JSON-Parsing-Fehlern oder API-Fehlern
      */
-    private function apiCall($method, $params = [], $use_user_token = false)
+    private function apiCall(string $method, array $params = [], bool $use_user_token = false)
     {
         $params['module'] = 'API';
         $params['method'] = $method;
@@ -84,41 +108,66 @@ class MatomoApi
 
     /**
      * Alle Websites abrufen
+     * 
+     * @return array<int, array<string, mixed>> Liste aller Websites mit Admin-Zugriff
+     * @throws Exception bei API-Fehlern
      */
-    public function getSites()
+    public function getSites(): array
     {
-        return $this->apiCall('SitesManager.getSitesWithAdminAccess');
+        $result = $this->apiCall('SitesManager.getSitesWithAdminAccess');
+        return is_array($result) ? $result : [];
     }
 
     /**
      * Website hinzufügen
+     * 
+     * @param string $name Name der Website
+     * @param string $url URL der Website
+     * @return int|null Site-ID der neu erstellten Website oder null bei Fehler
+     * @throws Exception bei API-Fehlern
      */
-    public function addSite($name, $url)
+    public function addSite(string $name, string $url): ?int
     {
         $result = $this->apiCall('SitesManager.addSite', [
             'siteName' => $name,
             'urls' => $url
         ]);
 
-        return $result['value'] ?? null;
+        if (is_array($result) && isset($result['value'])) {
+            return is_numeric($result['value']) ? (int) $result['value'] : null;
+        }
+        
+        return null;
     }
 
     /**
      * Tracking Code für eine Website abrufen
+     * 
+     * @param int $site_id Site-ID der Website
+     * @return string JavaScript Tracking-Code
+     * @throws Exception bei API-Fehlern
      */
-    public function getTrackingCode($site_id)
+    public function getTrackingCode(int $site_id): string
     {
         $result = $this->apiCall('SitesManager.getJavascriptTag', [
             'idSite' => $site_id
         ]);
 
-        return $result['value'] ?? '';
+        if (is_array($result) && isset($result['value']) && is_string($result['value'])) {
+            return $result['value'];
+        }
+        
+        return '';
     }
 
     /**
      * Matomo herunterladen und entpacken mit rex_socket
+     * 
+     * @param string $target_path Zielpfad für die Matomo-Installation
+     * @return bool true bei erfolgreichem Download und Installation
+     * @throws Exception bei Download-Fehlern, ZIP-Fehlern oder Dateisystem-Fehlern
      */
-    public static function downloadMatomo($target_path)
+    public static function downloadMatomo(string $target_path): bool
     {
         if (!is_dir($target_path)) {
             rex_dir::create($target_path);
@@ -214,9 +263,15 @@ class MatomoApi
     }
 
     /**
-     * Dashboard-Statistiken abrufen (benötigt User Token)
+     * Dashboard-Statistiken abrufen (verwendet User Token)
+     * 
+     * @param int $site_id Site-ID der Website
+     * @param string $period Zeitraum ('day', 'week', 'month', 'year')
+     * @param string $date Datum ('today', 'yesterday', 'YYYY-MM-DD')
+     * @return array<int, mixed> Bulk-Request Ergebnisse für verschiedene Metriken
+     * @throws Exception bei API-Fehlern
      */
-    public function getDashboardData($site_id, $period = 'day', $date = 'today')
+    public function getDashboardData(int $site_id, string $period = 'day', string $date = 'today'): array
     {
         $params = [
             'idSite' => $site_id,
@@ -234,13 +289,19 @@ class MatomoApi
             ]
         ], true); // User Token verwenden
         
-        return $result;
+        return is_array($result) ? $result : [];
     }
 
     /**
-     * Einfache Besucher-Statistiken
+     * Einfache Besucher-Statistiken abrufen
+     * 
+     * @param int $site_id Site-ID der Website
+     * @param string $period Zeitraum ('day', 'week', 'month', 'year')
+     * @param string $date Datum ('today', 'yesterday', 'YYYY-MM-DD')
+     * @return array<string, mixed> Besucher-Statistiken (nb_visits, nb_actions, nb_users, etc.)
+     * @throws Exception bei API-Fehlern
      */
-    public function getVisitorStats($site_id, $period = 'day', $date = 'today')
+    public function getVisitorStats(int $site_id, string $period = 'day', string $date = 'today'): array
     {
         $params = [
             'idSite' => $site_id,
@@ -248,13 +309,21 @@ class MatomoApi
             'date' => $date
         ];
         
-        return $this->apiCall('VisitsSummary.get', $params, true);
+        $result = $this->apiCall('VisitsSummary.get', $params, true);
+        return is_array($result) ? $result : [];
     }
 
     /**
      * Top Seiten abrufen
+     * 
+     * @param int $site_id Site-ID der Website
+     * @param string $period Zeitraum ('day', 'week', 'month', 'year')
+     * @param string $date Datum ('today', 'yesterday', 'YYYY-MM-DD')
+     * @param int $limit Maximale Anzahl Ergebnisse
+     * @return array<int, array<string, mixed>> Liste der Top-Seiten mit URLs und Statistiken
+     * @throws Exception bei API-Fehlern
      */
-    public function getTopPages($site_id, $period = 'week', $date = 'today', $limit = 5)
+    public function getTopPages(int $site_id, string $period = 'week', string $date = 'today', int $limit = 5): array
     {
         $params = [
             'idSite' => $site_id,
@@ -265,6 +334,7 @@ class MatomoApi
             'expanded' => 1
         ];
         
-        return $this->apiCall('Actions.getPageUrls', $params, true);
+        $result = $this->apiCall('Actions.getPageUrls', $params, true);
+        return is_array($result) ? $result : [];
     }
 }

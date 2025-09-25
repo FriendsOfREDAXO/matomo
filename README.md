@@ -38,14 +38,7 @@ The **Matomo AddOn** provides complete integration of the open-source web analyt
 - **REDAXO i18n system** integration
 - **Consistent terminology** across all pages
 
-## 📋 System Requirements
-
-- **REDAXO**: Version 5.7.0 or higher
-- **PHP**: Version 7.1 or higher
-- **PHP Extensions**: cURL
-- **Matomo**: Compatible with Matomo 4.x and 5.x
-
-## 🛠️ Installation
+## ️ Installation
 
 1. **Install AddOn** via REDAXO installer or manually
 2. **Activate AddOn** in REDAXO backend
@@ -158,7 +151,7 @@ All HTTP requests are made via `rex_socket` with configurable timeouts and SSL o
 
 ## 📝 Changelog
 
-### Version 1.3.0
+### Version 2.0
 - **Auto-Login System**: Seamless Matomo access without manual login
 - **Top 5 Pages Feature**: Shows most visited pages of the current week
 - **External Matomo Support**: Full integration of external Matomo installations
