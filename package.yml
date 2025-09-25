@@ -9,7 +9,7 @@ page:
     pjax: true
     icon: rex-icon rex-icon-seo
     subpages:
-        overview: { title: 'translate:matomo_overview', icon: rex-icon rex-icon-template}
+        overview: { title: 'translate:matomo_overview', icon: rex-icon rex-icon-template, perm: matomo[overview]}
         dashboard: { title: 'translate:matomo_dashboard', icon: rex-icon rex-icon-seo}
         config: { title: 'Konfiguration', icon: rex-icon rex-icon-config, perm: admin[]}
         domains: { title: 'Domains', icon: rex-icon rex-icon-structure}

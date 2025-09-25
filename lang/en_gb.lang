@@ -1,4 +1,5 @@
 matomo_title = Matomo
+matomo_overview = Overview
 matomo_dashboard = Dashboard
 matomo_settings = Matomo Setup
 matomo_config = Configuration
