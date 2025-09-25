@@ -48,7 +48,6 @@ if (rex_get('action') === 'fix_autologin' && $is_admin) {
     
     $config_file = '';
     foreach ($possible_config_files as $test_file) {
-        echo rex_view::info('Debug: Teste Pfad: ' . $test_file . ' - Existiert: ' . (file_exists($test_file) ? 'Ja' : 'Nein'));
         if (file_exists($test_file)) {
             $config_file = $test_file;
             break;
@@ -60,7 +59,7 @@ if (rex_get('action') === 'fix_autologin' && $is_admin) {
         return;
     }
     
-    echo rex_view::info('Debug: Verwende Konfigurationsdatei: ' . $config_file);
+
     
     if (file_exists($config_file)) {
         if (is_writable($config_file)) {
@@ -271,9 +270,7 @@ login_allow_logme = 1</pre>
                             <a href="<?= rex_escape($login_url) ?>" target="_blank" class="btn btn-primary btn-sm rex-pulse">
                                 <i class="fa fa-sign-in-alt"></i> Automatisch anmelden
                             </a>
-                            <?php if ($is_admin): ?>
-                                <br><small class="text-muted">Debug: <code><?= rex_escape($login_url) ?></code></small>
-                            <?php endif; ?>
+
                         <?php else: ?>
                             <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-primary btn-sm rex-pulse">
                                 <i class="fa fa-external-link-alt"></i> Matomo öffnen
