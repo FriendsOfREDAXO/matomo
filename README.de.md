@@ -9,10 +9,11 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 - **Automatische Konfiguration** von URL und Pfad
 - **REDAXO-native Implementierung** mit `rex_socket`, `rex_file` und `rex_dir`
 
-### 📊 **Dashboard & Übersichten**
-- **Konfigurierbare Dashboard-Seite** mit Matomo iframe Integration
+### 📊 **Übersichten & Analytics**
 - **Kompakte Übersichtsseite** mit Statistiken aller Domains
-- **Echtzeitdaten** mit automatischem Refresh
+- **Top 5 Seiten Feature** - zeigt meistbesuchte Seiten der aktuellen Woche
+- **Echtzeitdaten** mit automatischem Refresh (alle 5 Minuten)
+- **Automatisches Login-System** für nahtlosen Matomo-Zugang
 - **Direkte Links** zu spezifischen Matomo-Dashboards
 
 ### 🌐 **Domain-Management**
@@ -72,8 +73,9 @@ Unter **Matomo → Domains**:
 - Consent-Manager Empfehlungen beachten
 
 ### 4. **Statistiken ansehen**
-- **Matomo → Übersicht**: Kompakte Statistiken aller Domains
-- **Matomo → Dashboard**: Detailansicht der konfigurierten Domain
+- **Matomo → Übersicht**: Kompakte Statistiken aller Domains mit optionalen Top 5 Seiten
+- **Automatisch anmelden**: Nahtloser Zugang zu Matomo ohne manuelle Anmeldung
+- **Direkte Domain-Links**: Schneller Zugriff auf spezifische Domain-Statistiken
 
 ## 🔐 API-Token einrichten
 
@@ -84,9 +86,19 @@ Für Verwaltungsaufgaben wie Domain-Erstellung:
 3. **Admin Token** kopieren und in REDAXO einfügen
 
 ### User Token (optional)
-Für Dashboard-Zugriff und Statistiken:
+Für Statistik-Zugriff:
 1. **User Authentication** in Matomo öffnen
 2. **User Token** kopieren (falls nicht vorhanden, wird Admin Token verwendet)
+
+### Auto-Login Setup (optional)
+Für automatischen Login über "Automatisch anmelden" Buttons:
+1. **Matomo Username und Passwort** in den Einstellungen hinterlegen
+2. **Automatische Konfiguration**: Das AddOn kann `login_allow_logme = 1` automatisch in der Matomo `config.ini.php` setzen
+3. **Manuelle Konfiguration**: Falls automatisch nicht möglich, manuell in `config/config.ini.php` hinzufügen:
+   ```ini
+   [General]
+   login_allow_logme = 1
+   ```
 
 ## 🎯 Tracking-Code Integration
 
@@ -115,8 +127,12 @@ Für Dashboard-Zugriff und Statistiken:
 - `respect_dnt`: Do Not Track Header beachten
 - `cookie_lifetime`: Cookie-Lebensdauer
 
-### Dashboard
-- `dashboard_site`: Standard-Domain für Dashboard (0 = Alle Sites)
+### Statistik-Features
+- `show_top_pages`: Top 5 Seiten Feature aktivieren/deaktivieren
+
+### Auto-Login
+- `matomo_user`: Matomo Benutzername für automatischen Login
+- `matomo_password`: Matomo Passwort für automatischen Login
 
 ## 🔄 API-Integration
 
@@ -146,12 +162,15 @@ Alle HTTP-Requests erfolgen über `rex_socket` mit konfigurierbaren Timeouts und
 
 ## 📝 Changelog
 
-### Version 1.2.2
-- Dashboard-Domain Konfiguration
-- Übersichtsseite mit Statistiken
-- User Token Support
-- DSGVO-Optionen erweitert
-- Vollständige Mehrsprachigkeit
+### Version 1.3.0
+- **Auto-Login System**: Nahtloser Matomo-Zugang ohne manuelle Anmeldung
+- **Top 5 Seiten Feature**: Zeigt meistbesuchte Seiten der aktuellen Woche
+- **Externe Matomo Unterstützung**: Vollständige Integration externer Matomo-Installationen
+- **Enhanced Overview Page**: Erweiterte Statistiken mit Trend-Anzeige
+- **Automatische Konfiguration**: Auto-Login kann automatisch in Matomo konfiguriert werden
+- **Verbessertes UI**: Einheitliches Panel-Design und bessere Benutzerführung
+- **Namespace Migration**: Vollständige Migration zu FriendsOfRedaxo\Matomo Namespace
+- **Dashboard Entfernung**: Fokus auf streamlined Overview-basierte Ansätze
 
 ## Credits
 

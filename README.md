@@ -11,8 +11,10 @@ The **Matomo AddOn** provides complete integration of the open-source web analyt
 
 ### 📊 **Statistics Overview**
 - **Compact overview page** with statistics for all domains
-- **Real-time data** with automatic refresh
-- **Direct links** to Matomo for detailed analysis
+- **Top 5 Pages Feature** - shows most visited pages of the current week
+- **Real-time data** with automatic refresh (every 5 minutes)
+- **Automatic Login System** for seamless Matomo access
+- **Direct links** to specific Matomo dashboards
 
 ### 🌐 **Domain Management**
 - **API-based domain management** via Matomo API
@@ -69,8 +71,9 @@ Under **Matomo → Domains**:
 - Follow consent manager recommendations
 
 ### 4. **View Statistics**
-- **Matomo → Overview**: Compact statistics for all domains
-- **Open Matomo directly**: For detailed analysis and full features
+- **Matomo → Overview**: Compact statistics for all domains with optional Top 5 pages
+- **Auto Login**: Seamless access to Matomo without manual login
+- **Direct Domain Links**: Quick access to specific domain statistics
 
 ## 🔐 Setting up API Tokens
 
@@ -84,6 +87,16 @@ For administrative tasks like domain creation:
 For statistics access:
 1. Open **User Authentication** in Matomo
 2. **Copy User Token** (if not available, Admin Token will be used)
+
+### Auto-Login Setup (optional)
+For automatic login via "Auto Login" buttons:
+1. **Enter Matomo username and password** in settings
+2. **Automatic configuration**: The AddOn can automatically set `login_allow_logme = 1` in Matomo's `config.ini.php`
+3. **Manual configuration**: If automatic setup fails, manually add to `config/config.ini.php`:
+   ```ini
+   [General]
+   login_allow_logme = 1
+   ```
 
 ## 🎯 Tracking Code Integration
 
@@ -112,6 +125,13 @@ For statistics access:
 - `respect_dnt`: Respect Do Not Track header
 - `cookie_lifetime`: Cookie lifetime
 
+### Statistics Features
+- `show_top_pages`: Enable/disable Top 5 Pages feature
+
+### Auto-Login
+- `matomo_user`: Matomo username for automatic login
+- `matomo_password`: Matomo password for automatic login
+
 
 
 ## 🔄 API Integration
@@ -138,11 +158,15 @@ All HTTP requests are made via `rex_socket` with configurable timeouts and SSL o
 
 ## 📝 Changelog
 
-### Version 1.2.2
-- Enhanced overview page with comprehensive statistics
-- User Token support
-- Extended GDPR options
-- Complete multi-language support
+### Version 1.3.0
+- **Auto-Login System**: Seamless Matomo access without manual login
+- **Top 5 Pages Feature**: Shows most visited pages of the current week
+- **External Matomo Support**: Full integration of external Matomo installations
+- **Enhanced Overview Page**: Extended statistics with trend indicators
+- **Automatic Configuration**: Auto-login can be automatically configured in Matomo
+- **Improved UI**: Consistent panel design and better user guidance
+- **Namespace Migration**: Complete migration to FriendsOfRedaxo\Matomo namespace
+- **Dashboard Removal**: Focus on streamlined overview-based approaches
 
 ## Credits
 
