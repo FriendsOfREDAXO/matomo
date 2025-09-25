@@ -9,11 +9,10 @@ The **Matomo AddOn** provides complete integration of the open-source web analyt
 - **Automatic configuration** of URL and path
 - **REDAXO-native implementation** using `rex_socket`, `rex_file`, and `rex_dir`
 
-### 📊 **Dashboard & Overviews**
-- **Configurable dashboard page** with Matomo iframe integration
+### 📊 **Statistics Overview**
 - **Compact overview page** with statistics for all domains
 - **Real-time data** with automatic refresh
-- **Direct links** to specific Matomo dashboards
+- **Direct links** to Matomo for detailed analysis
 
 ### 🌐 **Domain Management**
 - **API-based domain management** via Matomo API
@@ -24,7 +23,6 @@ The **Matomo AddOn** provides complete integration of the open-source web analyt
 ### ⚙️ **Advanced Configuration**
 - **Flexible API settings** (timeout, SSL verification)
 - **Privacy options** (IP anonymization, cookie-free tracking)
-- **Dashboard domain selection** for personalized views
 - **Multi-token support** (Admin + User Token)
 
 ### 🔒 **GDPR Compliance**
@@ -62,7 +60,6 @@ Under **Matomo → Matomo Setup**:
 Under **Matomo → Configuration**:
 - API settings (timeout, SSL verification)
 - Tracking options (IP anonymization, cookie-free tracking)
-- Select dashboard domain
 - Configure privacy settings
 
 ### 3. **Manage Domains**
@@ -73,7 +70,7 @@ Under **Matomo → Domains**:
 
 ### 4. **View Statistics**
 - **Matomo → Overview**: Compact statistics for all domains
-- **Matomo → Dashboard**: Detailed view of configured domain
+- **Open Matomo directly**: For detailed analysis and full features
 
 ## 🔐 Setting up API Tokens
 
@@ -84,7 +81,7 @@ For administrative tasks like domain creation:
 3. **Copy Admin Token** and paste into REDAXO
 
 ### User Token (optional)
-For dashboard access and statistics:
+For statistics access:
 1. Open **User Authentication** in Matomo
 2. **Copy User Token** (if not available, Admin Token will be used)
 
@@ -115,8 +112,7 @@ For dashboard access and statistics:
 - `respect_dnt`: Respect Do Not Track header
 - `cookie_lifetime`: Cookie lifetime
 
-### Dashboard
-- `dashboard_site`: Default domain for dashboard (0 = All Sites)
+
 
 ## 🔄 API Integration
 
@@ -124,7 +120,6 @@ The AddOn uses the **Matomo HTTP API** for:
 - Site management (create, list)
 - Statistics queries (visitors, page views)
 - Tracking code generation
-- Dashboard widget integration
 
 All HTTP requests are made via `rex_socket` with configurable timeouts and SSL options.
 
@@ -139,26 +134,21 @@ All HTTP requests are made via `rex_socket` with configurable timeouts and SSL o
 - Test Matomo URL in browser
 - Check SSL settings for HTTPS
 
-### Dashboard won't load
-- Configure User Token or use Admin Token
-- Check browser console for errors
-- Verify CORS settings in Matomo
+
 
 ## 📝 Changelog
 
 ### Version 1.2.2
-- Dashboard domain configuration
-- Overview page with statistics
+- Enhanced overview page with comprehensive statistics
 - User Token support
 - Extended GDPR options
 - Complete multi-language support
 
 ## Credits
 
-**Project Lead**  
+**Project Leads**  
 [Daniel Springer](https://github.com/danspringer)
 
-**Project Initiator**  
 [Thomas Skerbis](https://github.com/skerbis)
 
 ## 🤝 Support
