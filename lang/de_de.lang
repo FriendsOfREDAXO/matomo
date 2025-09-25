@@ -1,12 +1,235 @@
-matomo_Matomo = Matomo Web-Statistiken
+matomo_title = Matomo
+matomo_overview = Übersicht
+
+matomo_settings = Matomo-Setup
+matomo_config = Konfiguration
+matomo_domains = Domains
 matomo_help = Hilfe
-matomo_url = Matomo-URL mit abschließendem /
+
+# Status-Meldungen
+matomo_config_saved = Konfiguration gespeichert!
+matomo_download_success = Matomo erfolgreich heruntergeladen und konfiguriert!
+matomo_download_failed = Download fehlgeschlagen: {0}
+matomo_fill_all_fields = Bitte alle Felder ausfüllen!
+matomo_domain_added = Domain '{0}' erfolgreich hinzugefügt (Site ID: {1})
+matomo_domain_add_failed = Domain konnte nicht erstellt werden
+matomo_domain_add_error = Fehler beim Hinzufügen: {0}
+matomo_sites_load_error = Fehler beim Laden der Domains: {0}
+matomo_not_configured = Matomo ist nicht vollständig konfiguriert. Bitte gehen Sie zu den <a href="{0}">Einstellungen</a> und konfigurieren Sie Matomo zuerst.
+
+# Formulare & Labels
+matomo_url = Matomo URL
+matomo_url_help = Vollständige URL zur Matomo-Installation (z.B. https://ihre-domain.de/matomo)
+matomo_path = Matomo Pfad  
+matomo_path_help = Pfad relativ zum Web-Root (z.B. "matomo" für /pfad/zu/webroot/matomo/)
+matomo_admin_token = Admin API Token
+matomo_admin_token_help = API Token für Admin-Funktionen (Sites anlegen, löschen)
+matomo_user_token = User Token
+matomo_user_token_help = API Token für Statistiken (optional)
+matomo_api_timeout = API Timeout
+matomo_api_timeout_help = Timeout für API-Requests in Sekunden
+matomo_ssl_verify = SSL Zertifikat verifizieren
+matomo_ssl_verify_help = Deaktivieren Sie dies nur bei selbstsignierten Zertifikaten
+matomo_auto_tracking = Automatisches Tracking
+matomo_auto_tracking_help = Tracking Code automatisch in Templates einbinden
+matomo_tracking_position = Tracking Code Position
+matomo_tracking_position_help = Position des Tracking Codes im HTML
+matomo_anonymize_ip = IP-Adressen anonymisieren
+matomo_anonymize_ip_help = IP-Adressen vor der Speicherung anonymisieren (DSGVO-konform)
+matomo_cookie_consent = Cookie Consent
+matomo_cookie_consent_help = Tracking nur nach Cookie-Zustimmung aktivieren
+matomo_privacy_text = Datenschutz-Text
+matomo_privacy_text_help = Text für Datenschutz-Hinweise (wird in Templates verfügbar gemacht)
+
+# Download-Sektion
+matomo_download_title = Matomo Download & Installation
+matomo_download_description = Laden Sie Matomo automatisch herunter und konfigurieren Sie es in einem Schritt.
+matomo_installation_path = Installationspfad (relativ zum Web-Root)
+matomo_installation_path_placeholder = matomo
+matomo_installation_path_help = Ordner wird automatisch erstellt falls nicht vorhanden
+matomo_installation_url = Matomo URL
+matomo_installation_url_help = Vollständige URL unter der Matomo erreichbar sein soll
+matomo_download_button = Matomo herunterladen & konfigurieren
+
+# Konfiguration
+matomo_config_title = Matomo Konfiguration
+matomo_installation_section = Matomo Installation
+matomo_api_settings_section = API Einstellungen
+matomo_advanced_options_section = Erweiterte Optionen
+matomo_privacy_section = Datenschutz
+matomo_manual_config_title = Manuelle Konfiguration
+
+# Status
+matomo_status_title = Status
+matomo_installation_status = Installation
+matomo_api_status = API Status
+matomo_error_status = Fehler
+matomo_path_label = Pfad
+matomo_url_label = URL
+matomo_open_matomo = Matomo öffnen
+matomo_connected = Verbunden
+matomo_found = Gefunden
+matomo_not_found = Nicht gefunden
+matomo_not_tested = Nicht getestet
+matomo_sites_count = {0} Sites
+
+# Domains
+matomo_domains_title = Domains
+matomo_add_domain_title = Neue Domain hinzufügen
+matomo_domain_name = Domain Name
+matomo_domain_name_help = Beschreibender Name für diese Website
+matomo_domain_url = Domain URL
+matomo_domain_url_help = Vollständige URL mit http:// oder https://
+matomo_add_domain_button = Domain hinzufügen
+matomo_existing_domains_title = Vorhandene Domains ({0})
+matomo_no_domains = Noch keine Domains konfiguriert.
+matomo_domain_id = ID
+matomo_domain_name_col = Name
+matomo_domain_url_col = URL
+matomo_domain_created = Erstellt
+matomo_tracking_code = Tracking Code
+matomo_show_tracking_code = Code anzeigen
+matomo_copy_tracking_code = Code kopieren
+# Config page - API Settings
+matomo_api_section = API Einstellungen
+matomo_api_timeout = API Timeout
+matomo_api_timeout_help = Timeout für API-Requests in Sekunden
+matomo_timeout_10s = 10 Sekunden
+matomo_timeout_30s = 30 Sekunden
+matomo_timeout_60s = 60 Sekunden
+matomo_timeout_120s = 120 Sekunden
+matomo_ssl_verify = SSL Zertifikat verifizieren
+matomo_ssl_verify_option = SSL-Zertifikate bei HTTPS-Verbindungen prüfen
+matomo_ssl_verify_help = Deaktivieren Sie dies nur bei selbstsignierten Zertifikaten
+
+# Config page - Tracking Options
+matomo_tracking_options = Tracking Optionen
+matomo_anonymize_ip = IP-Adressen anonymisieren
+matomo_anonymize_ip_option = IP-Adressen vor der Speicherung anonymisieren
+matomo_anonymize_ip_help = Entspricht den DSGVO-Anforderungen - die letzten Bytes der IP werden entfernt
+matomo_cookieless = Cookie-freies Tracking
+matomo_cookieless_option = Tracking ohne Cookies aktivieren
+matomo_cookieless_help = Verwendet Fingerprinting statt Cookies für die Besuchererkennung
+matomo_privacy_section = Datenschutz Einstellungen
+matomo_respect_dnt = Do Not Track respektieren
+matomo_respect_dnt_option = Do Not Track Browser-Header beachten
+matomo_respect_dnt_help = Deaktiviert Tracking wenn der Browser DNT sendet
+matomo_cookie_lifetime = Cookie Lebensdauer
+matomo_cookie_lifetime_help = Wie lange Tracking-Cookies gespeichert werden
+matomo_cookie_30min = 30 Minuten
+matomo_cookie_1hour = 1 Stunde
+matomo_cookie_1day = 1 Tag
+matomo_cookie_1week = 1 Woche
+matomo_cookie_1month = 1 Monat
+matomo_cookie_1year = 1 Jahr
+
+# Domains page
+matomo_add_domain_title = Neue Domain hinzufügen
+matomo_domain_name_placeholder = Meine Website
+matomo_domain_url = Domain URL
+matomo_domain_url_placeholder = https://meine-domain.de
+matomo_domain_url_help = Vollständige URL mit http:// oder https://
+matomo_add_domain_button = Domain hinzufügen
+matomo_existing_domains = Vorhandene Domains ({0})
+matomo_no_domains_yet = Noch keine Domains konfiguriert.
+matomo_table_id = ID
+matomo_table_name = Name
+matomo_table_url = URL
+matomo_table_created = Erstellt
+matomo_table_tracking = Tracking Code
+matomo_show_code = Code anzeigen
+matomo_status_title = Matomo Status
+matomo_status_url = Matomo URL
+matomo_open_matomo = Matomo öffnen
+matomo_status_api = API Status
+matomo_status_connected = Verbunden
+matomo_status_domains = Domains
+matomo_tracking_code_title = Tracking Code
+matomo_tracking_site_id = Site ID
+matomo_copy_code = Code kopieren
+matomo_close = Schließen
+matomo_tracking_code_not_found = Tracking Code nicht gefunden
+matomo_tracking_code_label = Tracking Code für Ihre Website
+matomo_tracking_note = Wichtiger Hinweis
+matomo_tracking_privacy_note = Bitte integrieren Sie einen Consent-Manager für DSGVO-Konformität
+
+# Consent Manager
+matomo_consent_title = Consent Manager Empfehlung
+matomo_consent_recommendation = Für eine DSGVO-konforme Nutzung von Matomo sollten Sie einen Consent-Manager verwenden.
+matomo_consent_addon_recommendation = Empfohlene REDAXO AddOns
+matomo_consent_manager_desc = Professionelle Cookie-Verwaltung mit Matomo-Integration
+matomo_cookie_notice_desc = Einfache Cookie-Hinweise für kleinere Websites
+matomo_consent_important = Wichtig
+matomo_consent_manual_integration = Der Tracking Code muss manuell in Ihre Templates eingefügt werden - eine automatische Einbindung erfolgt nicht.
+
+
+
+# Overview page
+matomo_overview = Übersicht
+matomo_overview_title = Statistik Übersicht
+matomo_overview_summary = Gesamt-Statistiken aller Domains
+matomo_overview_today = Heute
+matomo_overview_week = Diese Woche
+matomo_overview_by_domain = Statistiken pro Domain
+matomo_overview_load_error = Fehler beim Laden der Statistiken: {0}
+matomo_visits = Besuche
+matomo_actions = Seitenaufrufe
+matomo_users = Benutzer
+matomo_visits_short = Besuche 
+matomo_users_short = Nutzer
+
+matomo_week_view = Wochenansicht
+matomo_last_update = Letzte Aktualisierung
+
+# Dashboard page
+matomo_goto_overview = Zur Statistik Übersicht
+
+# Help section
+matomo_help_first_steps = Erste Schritte
+matomo_help_step1 = Laden Sie Matomo auf der <a href="{0}">Download-Seite</a> herunter
+matomo_help_step2 = Folgen Sie dem Installationsassistenten
+matomo_help_step3 = Kopieren Sie die API Tokens hierher
+matomo_help_step4 = Fügen Sie Ihre Domains hinzu
+matomo_help_tokens = API Tokens erklärt
+matomo_help_admin_token = Admin Token
+matomo_help_admin_token_desc = Benötigt für Verwaltungsaufgaben wie Sites anlegen/löschen
+matomo_help_user_token = User Token (optional)
+matomo_help_user_token_desc = Benötigt für Statistiken. Kann leer bleiben, dann wird der Admin Token verwendet.
+matomo_help_token_location = API Token finden in Matomo
+
+# JavaScript
+matomo_copied = Kopiert
+matomo_close_tracking_code = Schließen
+matomo_current_site_id = Site ID
+
+# Hilfe
+matomo_help_first_steps_title = Erste Schritte
+matomo_help_api_token_title = API Token finden
+matomo_help_api_token_path = In Matomo unter:<br><code>Administration → Platform → API → User Authentication</code>
+matomo_help_after_download_title = Nach dem Download
+
+# Optionen
+matomo_timeout_10s = 10 Sekunden
+matomo_timeout_30s = 30 Sekunden
+matomo_timeout_60s = 60 Sekunden
+matomo_timeout_120s = 120 Sekunden
+matomo_position_head = Im &lt;head&gt; Bereich
+matomo_position_body_start = Am Anfang von &lt;body&gt;
+matomo_position_body_end = Am Ende von &lt;body&gt;
+
+# Buttons
+matomo_save = Speichern
+matomo_cancel = Abbrechen
+matomo_close = Schließen
+matomo_yes = Ja
+matomo_no = Nein
+
+# Legacy Support
+matomo_Matomo = Matomo Web-Statistiken
 matomo_id = Seiten-ID
 matomo_token = API-Token
 matomo_user = Benutzername
 matomo_password = Passwort
-matomo_dashboard = Matomo Dashboard
-matomo_settings = Matomo Einstellungen
 matomo_link = Matomo aufrufen
 matomo_settings_info = Das Matomo-AddOn wurde noch nicht konfiguriert.
 matomo_notfound = Matomo wurde nicht gefunden
@@ -18,4 +241,9 @@ matomo_track_groupPageTitlesByDomain = Gruppierung nach Domain
 matomo_track_DonotTrack = DoNotTrack-Erkennung
 matomo_track_disableCookies = Cookies deaktivieren
 matomo_track_mergeAliasUrls = Klicks auf Alias-Domains verbergen
-matomo_title = Matomo-Statistik
+
+# Overview Buttons
+matomo_goto_dashboard = Dashboard öffnen
+matomo_add_domain = Domain hinzufügen
+matomo_daily_stats = Tagesstats
+matomo_weekly_stats = Wochenstats
