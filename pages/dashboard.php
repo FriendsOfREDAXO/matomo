@@ -48,7 +48,7 @@ if ($dashboard_site != '0') {
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <i class="fa fa-chart-bar"></i> <?= $addon->i18n('matomo_dashboard_all_sites') ?>
-                        <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-primary btn-sm pull-right rex-icon-heartbeat">
+                        <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-primary btn-sm pull-right rex-pulse">
                             <i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open_matomo') ?>
                         </a>
                     </h3>
@@ -79,7 +79,7 @@ if ($dashboard_site != '0') {
                         <i class="fa fa-tachometer-alt"></i> <?= $selected_site ? rex_escape($selected_site['name']) : $addon->i18n('matomo_dashboard') ?>
                         <div class="pull-right">
                             <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $dashboard_site ?>&period=day&date=today" 
-                               target="_blank" class="btn btn-primary btn-sm rex-icon-heartbeat">
+                               target="_blank" class="btn btn-primary btn-sm rex-pulse">
                                 <i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open_matomo') ?>
                             </a>
                             <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/config']) ?>" class="btn btn-default btn-sm">

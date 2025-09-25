@@ -69,7 +69,7 @@ try {
                         <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/dashboard']) ?>" class="btn btn-primary btn-sm">
                             <i class="fa fa-tachometer-alt"></i> <?= $addon->i18n('matomo_goto_dashboard') ?>
                         </a>
-                        <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-default btn-sm rex-icon-heartbeat">
+                        <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-default btn-sm rex-pulse">
                             <i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open_matomo') ?>
                         </a>
                     </div>
