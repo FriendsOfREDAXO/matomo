@@ -1,5 +1,16 @@
 <?php
 
+namespace FriendsOfRedaxo\Matomo;
+
+use rex_socket;
+use rex_socket_exception;
+use rex_dir;
+use rex_file;
+use Exception;
+use ZipArchive;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+
 /**
  * Einfache Matomo API Klasse mit rex_socket
  */
