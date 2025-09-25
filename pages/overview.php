@@ -11,9 +11,18 @@ $user_token = rex_config::get('matomo', 'user_token', '');
 $matomo_path = rex_config::get('matomo', 'matomo_path', '');
 
 $matomo_ready = false;
-if ($matomo_url && $admin_token && $matomo_path) {
-    $full_path = rex_path::frontend($matomo_path . '/');
-    $matomo_ready = file_exists($full_path . 'index.php');
+$is_external_matomo = false;
+
+if ($matomo_url && $admin_token) {
+    if ($matomo_path) {
+        // Lokale Matomo-Installation - prüfe ob verfügbar
+        $full_path = rex_path::frontend($matomo_path . '/');
+        $matomo_ready = file_exists($full_path . 'index.php');
+    } else {
+        // Externe Matomo-Installation - keine lokale Verfügbarkeitsprüfung möglich
+        $matomo_ready = true;
+        $is_external_matomo = true;
+    }
 }
 
 if (!$matomo_ready) {
@@ -25,8 +34,8 @@ if (!$matomo_ready) {
 $user = rex::getUser();
 $is_admin = $user && $user->isAdmin();
 
-// Auto-Login Fix verarbeiten
-if (rex_get('action') === 'fix_autologin' && $is_admin) {
+// Auto-Login Fix verarbeiten (nur für lokale Installationen)
+if (rex_get('action') === 'fix_autologin' && $is_admin && !$is_external_matomo && $matomo_path) {
     // Host aus Matomo URL extrahieren
     $host = parse_url($matomo_url, PHP_URL_HOST);
     
@@ -123,7 +132,12 @@ $auto_login_available = false;
 $auto_login_config_error = false;
 $debug_info = '';
 
-if ($matomo_user && $matomo_password && $matomo_path) {
+if ($matomo_user && $matomo_password) {
+    if ($is_external_matomo || !$matomo_path) {
+        // Externe Matomo-Installation - Auto-Login verfügbar, aber keine Konfigurationsprüfung möglich
+        $auto_login_available = true;
+        $debug_info = "Externe Matomo-Installation - Auto-Login ohne lokale Konfigurationsprüfung";
+    } elseif ($matomo_path) {
     // Host aus Matomo URL extrahieren für Status-Prüfung
     $host = parse_url($matomo_url, PHP_URL_HOST);
     
@@ -173,6 +187,7 @@ if ($matomo_user && $matomo_password && $matomo_path) {
         $debug_info = "Config-Datei: Nicht gefunden in: " . implode(', ', $possible_config_files);
         $auto_login_config_error = 'configurable'; // Trotzdem reparierbar, da die Reparatur-Funktion möglicherweise einen Pfad findet
     }
+    }
 }
 
 try {
@@ -218,8 +233,8 @@ try {
 <div class="row">
     <div class="col-sm-12">
         
-        <!-- Auto-Login Status Warnung (nur für Admins) -->
-        <?php if ($is_admin && $matomo_user && $matomo_password && !$auto_login_available && $auto_login_config_error): ?>
+        <!-- Auto-Login Status Warnung (nur für Admins und lokale Installationen) -->
+        <?php if ($is_admin && $matomo_user && $matomo_password && !$auto_login_available && $auto_login_config_error && !$is_external_matomo): ?>
             <div class="alert alert-warning">
                 <h4><i class="fa fa-exclamation-triangle"></i> Auto-Login nicht verfügbar</h4>
                 <p><strong>Problem:</strong> Matomo Auto-Login ist nicht konfiguriert.</p>
@@ -233,19 +248,35 @@ try {
                 
                 <?php if ($auto_login_config_error === 'configurable'): ?>
                     <p><strong>Lösung:</strong> 
-                        <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/overview', 'action' => 'fix_autologin']) ?>" 
-                           class="btn btn-success btn-sm">
-                            <i class="fa fa-wrench"></i> Automatisch reparieren
-                        </a>
-                        oder manuell in <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code> hinzufügen:
+                        <?php if ($matomo_path): ?>
+                            <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/overview', 'action' => 'fix_autologin']) ?>" 
+                               class="btn btn-success btn-sm">
+                                <i class="fa fa-wrench"></i> Automatisch reparieren
+                            </a>
+                            oder manuell in <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code> hinzufügen:
+                        <?php else: ?>
+                            Manuelle Konfiguration in Ihrer Matomo-Installation erforderlich:
+                        <?php endif; ?>
                     </p>
                     <pre>[General]
 login_allow_logme = 1</pre>
                 <?php else: ?>
-                    <p><strong>Manuelle Lösung erforderlich:</strong> Fügen Sie in <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code> hinzu:</p>
+                    <p><strong>Manuelle Lösung erforderlich:</strong> 
+                        <?php if ($matomo_path): ?>
+                            Fügen Sie in <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code> hinzu:
+                        <?php else: ?>
+                            Fügen Sie in Ihrer Matomo <code>config/config.ini.php</code> hinzu:
+                        <?php endif; ?>
+                    </p>
                     <pre>[General]
 login_allow_logme = 1</pre>
-                    <p><small class="text-muted">Die Datei ist nicht beschreibbar - bitte manuell bearbeiten.</small></p>
+                    <p><small class="text-muted">
+                        <?php if ($matomo_path): ?>
+                            Die Datei ist nicht beschreibbar - bitte manuell bearbeiten.
+                        <?php else: ?>
+                            Externe Matomo-Installation - Bearbeitung nur auf dem Matomo-Server möglich.
+                        <?php endif; ?>
+                    </small></p>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
