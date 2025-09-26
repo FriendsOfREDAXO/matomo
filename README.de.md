@@ -18,6 +18,9 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 
 ### 🌐 **Domain-Management**
 - **API-basierte Domain-Verwaltung** über Matomo API
+- **YRewrite Integration** - automatische Filterung und Import von YRewrite-Domains
+- **Intelligente Duplikatserkennung** - verhindert Import bereits vorhandener Domains
+- **Domain-Löschung** - Entfernung von Domains aus Matomo mit Bestätigung
 - **Tracking-Code Generierung** für jede Domain
 - **Copy-to-Clipboard Funktionalität** für Tracking-Codes
 - **Consent-Manager Integration** Empfehlungen
@@ -58,10 +61,18 @@ Unter **Matomo → Konfiguration**:
 - Datenschutz-Einstellungen konfigurieren
 
 ### 3. **Domains verwalten**
-Unter **Matomo → Domains**:
-- Neue Domains zu Matomo hinzufügen
+Under **Matomo → Domains**:
+- Neue Domains manuell zu Matomo hinzufügen
+- **YRewrite-Domains importieren** - Domains aus YRewrite-Konfiguration auswählen und importieren
+- **Domains löschen** aus Matomo mit Sicherheitsbestätigung
 - Tracking-Codes anzeigen und kopieren
 - Consent-Manager Empfehlungen beachten
+
+#### **YRewrite Integration:**
+- **Automatische Filterung**: Übersicht zeigt nur YRewrite-Domains (+ Standard-Domain)
+- **Intelligenter Import**: YRewrite-Domains auswählen und in Matomo importieren
+- **Duplikatsverhinderung**: Bereits vorhandene Domains werden markiert und übersprungen
+- **Domain-Synchronisation**: Matomo und YRewrite-Domains synchron halten
 
 ### 4. **Statistiken ansehen**
 - **Matomo → Übersicht**: Kompakte Statistiken aller Domains mit optionalen Top 5 Seiten
@@ -157,7 +168,9 @@ Alle HTTP-Requests erfolgen über `rex_socket` mit konfigurierbaren Timeouts und
 - **Auto-Login System**: Nahtloser Matomo-Zugang ohne manuelle Anmeldung
 - **Top 5 Seiten Feature**: Zeigt meistbesuchte Seiten der aktuellen Woche
 - **Externe Matomo Unterstützung**: Vollständige Integration externer Matomo-Installationen
-- **Enhanced Overview Page**: Erweiterte Statistiken mit Trend-Anzeige
+- **YRewrite Integration**: Automatische Filterung und Import von YRewrite-Domains
+- **Domain-Management**: Hinzufügen, Importieren und Löschen von Domains mit intelligenter Duplikatserkennung
+- **Enhanced Overview Page**: Erweiterte Statistiken mit Trend-Anzeige und YRewrite-Filterung
 - **Automatische Konfiguration**: Auto-Login kann automatisch in Matomo konfiguriert werden
 - **Verbessertes UI**: Einheitliches Panel-Design und bessere Benutzerführung
 - **Namespace Migration**: Vollständige Migration zu FriendsOfRedaxo\Matomo Namespace

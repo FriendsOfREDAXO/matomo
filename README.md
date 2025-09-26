@@ -18,6 +18,9 @@ The **Matomo AddOn** provides complete integration of the open-source web analyt
 
 ### 🌐 **Domain Management**
 - **API-based domain management** via Matomo API
+- **YRewrite Integration** - automatic filtering and import of YRewrite domains
+- **Smart duplicate detection** - prevents importing existing domains
+- **Domain deletion** - remove domains from Matomo with confirmation
 - **Tracking code generation** for each domain
 - **Copy-to-clipboard functionality** for tracking codes
 - **Consent manager integration** recommendations
@@ -59,9 +62,17 @@ Under **Matomo → Configuration**:
 
 ### 3. **Manage Domains**
 Under **Matomo → Domains**:
-- Add new domains to Matomo
+- Add new domains to Matomo manually
+- **Import YRewrite domains** - select and import domains from YRewrite configuration
+- **Delete domains** from Matomo with safety confirmation
 - Display and copy tracking codes
 - Follow consent manager recommendations
+
+#### **YRewrite Integration:**
+- **Automatic filtering**: Overview shows only YRewrite domains (+ default domain)
+- **Smart import**: Select YRewrite domains to import into Matomo
+- **Duplicate prevention**: Already existing domains are marked and skipped
+- **Domain synchronization**: Keep Matomo and YRewrite domains in sync
 
 ### 4. **View Statistics**
 - **Matomo → Overview**: Compact statistics for all domains with optional Top 5 pages
@@ -155,7 +166,9 @@ All HTTP requests are made via `rex_socket` with configurable timeouts and SSL o
 - **Auto-Login System**: Seamless Matomo access without manual login
 - **Top 5 Pages Feature**: Shows most visited pages of the current week
 - **External Matomo Support**: Full integration of external Matomo installations
-- **Enhanced Overview Page**: Extended statistics with trend indicators
+- **YRewrite Integration**: Automatic filtering and import of YRewrite domains
+- **Domain Management**: Add, import, and delete domains with smart duplicate detection
+- **Enhanced Overview Page**: Extended statistics with trend indicators and YRewrite filtering
 - **Automatic Configuration**: Auto-login can be automatically configured in Matomo
 - **Improved UI**: Consistent panel design and better user guidance
 - **Namespace Migration**: Complete migration to FriendsOfRedaxo\Matomo namespace

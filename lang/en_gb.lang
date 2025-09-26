@@ -258,5 +258,32 @@ matomo_track_mergeAliasUrls = Hide clicks on alias domains
 # Overview Buttons
 matomo_goto_dashboard = Open Dashboard
 matomo_add_domain = Add Domain
+
+# YRewrite Integration
+matomo_yrewrite_import_title = Import YRewrite Domains
+matomo_yrewrite_import_description = Select the YRewrite domains you want to import into Matomo. Existing domains will be skipped.
+matomo_yrewrite_import_button = Import Selected Domains
+matomo_yrewrite_not_available = YRewrite AddOn is not available.
+matomo_yrewrite_domains_available = available
+matomo_yrewrite_already_exists = already exists
+
+# Domain Import/Delete Messages
+matomo_domain_import_success = {0} domain(s) successfully imported
+matomo_domain_import_skipped = {0} domain(s) skipped (already exists)
+matomo_domain_import_error = Error importing {0}
+matomo_domain_import_error_details = Error importing {0}: {1}
+matomo_domain_import_general_error = Import error: {0}
+matomo_domain_delete_success = Domain "{0}" (ID: {1}) was successfully removed from Matomo.
+matomo_domain_delete_error = Error deleting domain "{0}".
+matomo_domain_delete_error_details = Error deleting domain: {0}
+matomo_domain_delete_invalid_id = Invalid domain ID.
+matomo_domain_delete_button = Delete
+matomo_domain_actions = Actions
+
+# JavaScript Confirmations
+matomo_delete_confirm_title = Delete Domain
+matomo_delete_confirm_message = Are you sure you want to delete the domain "{0}" (ID: {1}) from Matomo?
+matomo_delete_confirm_warning = WARNING: This action cannot be undone!
+matomo_delete_confirm_data_loss = All statistics and data for this domain will be lost.
 matomo_daily_stats = Daily Stats
 matomo_weekly_stats = Weekly Stats

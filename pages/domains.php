@@ -88,10 +88,10 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && !empty(rex_post('
                         if ($site_id) {
                             $imported_count++;
                         } else {
-                            $import_errors[] = 'Fehler beim Importieren von ' . $domain_name;
+                            $import_errors[] = $addon->i18n('matomo_domain_import_error', $domain_name);
                         }
                     } catch (Exception $e) {
-                        $import_errors[] = 'Fehler beim Importieren von ' . $domain_name . ': ' . $e->getMessage();
+                        $import_errors[] = $addon->i18n('matomo_domain_import_error_details', $domain_name, $e->getMessage());
                     }
                 }
             }
@@ -99,10 +99,10 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && !empty(rex_post('
             // Erfolgsmeldung zusammenstellen
             $success_parts = [];
             if ($imported_count > 0) {
-                $success_parts[] = $imported_count . ' Domain(s) erfolgreich importiert';
+                $success_parts[] = $addon->i18n('matomo_domain_import_success', $imported_count);
             }
             if ($skipped_count > 0) {
-                $success_parts[] = $skipped_count . ' Domain(s) übersprungen (bereits vorhanden)';
+                $success_parts[] = $addon->i18n('matomo_domain_import_skipped', $skipped_count);
             }
             
             if (!empty($success_parts)) {
@@ -114,10 +114,10 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && !empty(rex_post('
             }
             
         } catch (Exception $e) {
-            $error = 'Import-Fehler: ' . $e->getMessage();
+            $error = $addon->i18n('matomo_domain_import_general_error', $e->getMessage());
         }
     } else {
-        $error = 'YRewrite AddOn ist nicht verfügbar.';
+        $error = $addon->i18n('matomo_yrewrite_not_available');
     }
 }
 
@@ -132,15 +132,15 @@ if (rex_post('delete_domain', 'boolean') && $matomo_ready) {
             $success = $api->deleteSite($site_id);
             
             if ($success) {
-                $message = 'Domain "' . rex_escape($site_name) . '" (ID: ' . $site_id . ') wurde erfolgreich aus Matomo entfernt.';
+                $message = $addon->i18n('matomo_domain_delete_success', rex_escape($site_name), $site_id);
             } else {
-                $error = 'Fehler beim Löschen der Domain "' . rex_escape($site_name) . '".';
+                $error = $addon->i18n('matomo_domain_delete_error', rex_escape($site_name));
             }
         } catch (Exception $e) {
-            $error = 'Fehler beim Löschen der Domain: ' . $e->getMessage();
+            $error = $addon->i18n('matomo_domain_delete_error_details', $e->getMessage());
         }
     } else {
-        $error = 'Ungültige Domain-ID.';
+        $error = $addon->i18n('matomo_domain_delete_invalid_id');
     }
 }
 
@@ -233,15 +233,14 @@ try {
             <div class="panel panel-success">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <i class="fa fa-download"></i> YRewrite Domains importieren
-                        <small class="text-muted">(<?= count($yrewrite_domains) ?> verfügbar)</small>
+                        <i class="fa fa-download"></i> <?= $addon->i18n('matomo_yrewrite_import_title') ?>
+                        <small class="text-muted">(<?= count($yrewrite_domains) ?> <?= $addon->i18n('matomo_yrewrite_domains_available') ?>)</small>
                     </h3>
                 </div>
                 <div class="panel-body">
                     <p class="help-block">
                         <i class="fa fa-info-circle"></i> 
-                        Wählen Sie die YRewrite-Domains aus, die Sie in Matomo importieren möchten. 
-                        Bereits vorhandene Domains werden übersprungen.
+                        <?= $addon->i18n('matomo_yrewrite_import_description') ?>
                     </p>
                     
                     <form method="post">
@@ -258,7 +257,7 @@ try {
                                                <?= $already_exists ? 'disabled' : '' ?>>
                                         <strong><?= rex_escape($domain['name']) ?></strong>
                                         <?php if ($already_exists): ?>
-                                            <span class="label label-warning">bereits vorhanden</span>
+                                            <span class="label label-warning"><?= $addon->i18n('matomo_yrewrite_already_exists') ?></span>
                                         <?php endif; ?>
                                         <br>
                                         <small class="text-muted">
@@ -273,7 +272,7 @@ try {
                         </div>
                         
                         <button type="submit" name="import_yrewrite" value="1" class="btn btn-success">
-                            <i class="fa fa-download"></i> Ausgewählte Domains importieren
+                            <i class="fa fa-download"></i> <?= $addon->i18n('matomo_yrewrite_import_button') ?>
                         </button>
                     </form>
                 </div>
@@ -298,8 +297,8 @@ try {
                                     <th>Name</th>
                                     <th>URL</th>
                                     <th>Erstellt</th>
-                                    <th>Tracking Code</th>
-                                    <th>Aktionen</th>
+                                    <th><?= $addon->i18n('matomo_table_tracking') ?></th>
+                                    <th><?= $addon->i18n('matomo_domain_actions') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -321,7 +320,7 @@ try {
                                     <td>
                                         <button class="btn btn-danger btn-sm" 
                                                 onclick="confirmDeleteDomain(<?= $site['idsite'] ?>, '<?= rex_escape($site['name']) ?>')">
-                                            <i class="fa fa-trash"></i> Löschen
+                                            <i class="fa fa-trash"></i> <?= $addon->i18n('matomo_domain_delete_button') ?>
                                         </button>
                                     </td>
                                 </tr>
@@ -444,9 +443,9 @@ function copyTrackingCode() {
 }
 
 function confirmDeleteDomain(siteId, siteName) {
-    var message = 'Sind Sie sicher, dass Sie die Domain "' + siteName + '" (ID: ' + siteId + ') aus Matomo löschen möchten?\n\n';
-    message += 'ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden!\n';
-    message += 'Alle Statistiken und Daten für diese Domain gehen verloren.';
+    var message = '<?= $addon->i18n('matomo_delete_confirm_message', '', '') ?>'.replace('{0}', siteName).replace('{1}', siteId) + '\n\n';
+    message += '<?= $addon->i18n('matomo_delete_confirm_warning') ?>\n';
+    message += '<?= $addon->i18n('matomo_delete_confirm_data_loss') ?>';
     
     if (confirm(message)) {
         // Formular-Werte setzen und absenden
