@@ -142,6 +142,22 @@ class MatomoApi
     }
 
     /**
+     * Website löschen
+     * 
+     * @param int $site_id Site-ID der zu löschenden Website
+     * @return bool true bei erfolgreichem Löschen
+     * @throws Exception bei API-Fehlern
+     */
+    public function deleteSite(int $site_id): bool
+    {
+        $result = $this->apiCall('SitesManager.deleteSite', [
+            'idSite' => $site_id
+        ]);
+
+        return is_array($result) && isset($result['result']) && $result['result'] === 'success';
+    }
+
+    /**
      * Tracking Code für eine Website abrufen
      * 
      * @param int $site_id Site-ID der Website

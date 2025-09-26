@@ -121,6 +121,29 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && !empty(rex_post('
     }
 }
 
+// Domain löschen
+if (rex_post('delete_domain', 'boolean') && $matomo_ready) {
+    $site_id = rex_post('site_id', 'int', 0);
+    $site_name = rex_post('site_name', 'string', '');
+    
+    if ($site_id > 0) {
+        try {
+            $api = new MatomoApi($matomo_url, $admin_token, $user_token);
+            $success = $api->deleteSite($site_id);
+            
+            if ($success) {
+                $message = 'Domain "' . rex_escape($site_name) . '" (ID: ' . $site_id . ') wurde erfolgreich aus Matomo entfernt.';
+            } else {
+                $error = 'Fehler beim Löschen der Domain "' . rex_escape($site_name) . '".';
+            }
+        } catch (Exception $e) {
+            $error = 'Fehler beim Löschen der Domain: ' . $e->getMessage();
+        }
+    } else {
+        $error = 'Ungültige Domain-ID.';
+    }
+}
+
 // Nachrichten anzeigen
 if ($message) {
     echo rex_view::success($message);
@@ -276,6 +299,7 @@ try {
                                     <th>URL</th>
                                     <th>Erstellt</th>
                                     <th>Tracking Code</th>
+                                    <th>Aktionen</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -292,6 +316,12 @@ try {
                                     <td>
                                         <button class="btn btn-info btn-sm" onclick="showTrackingCode(<?= $site['idsite'] ?>)">
                                             📋 Code anzeigen
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-danger btn-sm" 
+                                                onclick="confirmDeleteDomain(<?= $site['idsite'] ?>, '<?= rex_escape($site['name']) ?>')">
+                                            <i class="fa fa-trash"></i> Löschen
                                         </button>
                                     </td>
                                 </tr>
@@ -372,6 +402,13 @@ try {
     </div>
 </div>
 
+<!-- Verstecktes Form für Domain-Löschung -->
+<form id="delete-form" method="post" style="display: none;">
+    <input type="hidden" name="delete_domain" value="1">
+    <input type="hidden" name="site_id" id="delete-site-id">
+    <input type="hidden" name="site_name" id="delete-site-name">
+</form>
+
 <!-- JavaScript für Tracking Code -->
 <script>
 var trackingCodes = <?= json_encode($tracking_codes) ?>;
@@ -404,5 +441,18 @@ function copyTrackingCode() {
         btn.textContent = originalText;
         btn.className = btn.className.replace('btn-info', 'btn-success');
     }, 2000);
+}
+
+function confirmDeleteDomain(siteId, siteName) {
+    var message = 'Sind Sie sicher, dass Sie die Domain "' + siteName + '" (ID: ' + siteId + ') aus Matomo löschen möchten?\n\n';
+    message += 'ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden!\n';
+    message += 'Alle Statistiken und Daten für diese Domain gehen verloren.';
+    
+    if (confirm(message)) {
+        // Formular-Werte setzen und absenden
+        document.getElementById('delete-site-id').value = siteId;
+        document.getElementById('delete-site-name').value = siteName;
+        document.getElementById('delete-form').submit();
+    }
 }
 </script>
