@@ -274,3 +274,17 @@ matomo_delete_confirm_title = Domain löschen
 matomo_delete_confirm_message = Sind Sie sicher, dass Sie die Domain "{0}" (ID: {1}) aus Matomo löschen möchten?
 matomo_delete_confirm_warning = ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden!
 matomo_delete_confirm_data_loss = Alle Statistiken und Daten für diese Domain gehen verloren.
+
+# Info-Center Widget
+matomo_widget_title = Matomo
+matomo_widget_not_configured = Matomo nicht konfiguriert
+matomo_widget_configure_help = Bitte konfigurieren Sie erst die Matomo-Verbindung.
+matomo_configure = Konfigurieren
+matomo_widget_no_sites = Keine Websites
+matomo_widget_add_sites_help = Fügen Sie Websites für die Analyse hinzu.
+matomo_add_domain = Domain hinzufügen
+matomo_sites = Websites
+matomo_full_stats = Vollständige Statistiken
+matomo_manage_domains = Domains verwalten
+matomo_widget_error = Verbindungsfehler
+matomo_check_settings = Einstellungen prüfen

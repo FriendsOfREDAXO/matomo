@@ -8,7 +8,25 @@ matomo_help = Help
 
 # Status Messages
 matomo_config_saved = Configuration saved!
-matomo_download_success = Matomo successfully downloaded and configured!
+matomo_download_success = Matomo succ# JavaScript Confirmations
+matomo_delete_confirm_title = Delete domain
+matomo_delete_confirm_message = Are you sure you want to delete the domain "{0}" (ID: {1}) from Matomo?
+matomo_delete_confirm_warning = WARNING: This action cannot be undone!
+matomo_delete_confirm_data_loss = All statistics and data for this domain will be lost.
+
+# Info-Center Widget
+matomo_widget_title = Matomo
+matomo_widget_not_configured = Matomo not configured
+matomo_widget_configure_help = Please configure the Matomo connection first.
+matomo_configure = Configure
+matomo_widget_no_sites = No websites
+matomo_widget_add_sites_help = Add websites for analysis.
+matomo_add_domain = Add domain
+matomo_sites = Websites
+matomo_full_stats = Full statistics
+matomo_manage_domains = Manage domains
+matomo_widget_error = Connection error
+matomo_check_settings = Check settingslly downloaded and configured!
 matomo_download_failed = Download failed: {0}
 matomo_fill_all_fields = Please fill in all fields!
 matomo_domain_added = Domain '{0}' successfully added (Site ID: {1})

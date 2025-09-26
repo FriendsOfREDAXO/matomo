@@ -331,6 +331,19 @@ class MatomoApi
     }
 
     /**
+     * Heutige Besucher abrufen (Convenience-Methode)
+     * 
+     * @param int $site_id Site-ID der Website
+     * @return int Anzahl der heutigen Besucher
+     * @throws Exception bei API-Fehlern
+     */
+    public function getVisitorsToday(int $site_id): int
+    {
+        $stats = $this->getVisitorStats($site_id, 'day', 'today');
+        return (int) ($stats['nb_visits'] ?? 0);
+    }
+
+    /**
      * Top Seiten abrufen
      * 
      * @param int $site_id Site-ID der Website
