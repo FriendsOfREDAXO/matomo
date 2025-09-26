@@ -162,13 +162,21 @@ All HTTP requests are made via `rex_socket` with configurable timeouts and SSL o
 
 ## 📝 Changelog
 
+### Version 2.1
+- **YRewrite Integration**: Full integration with YRewrite AddOn (now required)
+- **Automatic Domain Filtering**: Shows only YRewrite domains in overview (+ default domain)
+- **Smart Domain Import**: Import YRewrite domains into Matomo with selection interface
+- **Domain Deletion**: Remove domains from Matomo with safety confirmation
+- **Smart Duplicate Detection**: Prevents importing existing domains
+- **Complete Internationalization**: All texts professionally translated
+- **Improved UX**: User-friendly dialogs and informative status messages
+- **Clean Architecture**: YRewrite as dependency for consistent multi-domain management
+
 ### Version 2.0
 - **Auto-Login System**: Seamless Matomo access without manual login
 - **Top 5 Pages Feature**: Shows most visited pages of the current week
 - **External Matomo Support**: Full integration of external Matomo installations
-- **YRewrite Integration**: Automatic filtering and import of YRewrite domains
-- **Domain Management**: Add, import, and delete domains with smart duplicate detection
-- **Enhanced Overview Page**: Extended statistics with trend indicators and YRewrite filtering
+- **Enhanced Overview Page**: Extended statistics with trend indicators
 - **Automatic Configuration**: Auto-login can be automatically configured in Matomo
 - **Improved UI**: Consistent panel design and better user guidance
 - **Namespace Migration**: Complete migration to FriendsOfRedaxo\Matomo namespace

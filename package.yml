@@ -1,5 +1,5 @@
 package: matomo
-version: '2.0.0'
+version: '2.1.0'
 author: 'Friends Of REDAXO'
 supportpage: https://github.com/FriendsOfREDAXO/matomo
 
@@ -19,8 +19,11 @@ page:
 
 requires:
     php:
+        extensions: [curl]
         version: '>=8.2'   
     redaxo: ^5.16.1
+    packages:
+        yrewrite: ^2.7
 
 default_config:
     matomo_url: ''
