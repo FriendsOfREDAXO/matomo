@@ -247,3 +247,46 @@ matomo_goto_dashboard = Dashboard öffnen
 matomo_add_domain = Domain hinzufügen
 matomo_daily_stats = Tagesstats
 matomo_weekly_stats = Wochenstats
+
+# YRewrite Integration
+matomo_yrewrite_import_title = YRewrite Domains importieren
+matomo_yrewrite_import_description = Wählen Sie die YRewrite-Domains aus, die Sie in Matomo importieren möchten. Bereits vorhandene Domains werden übersprungen.
+matomo_yrewrite_import_button = Ausgewählte Domains importieren
+matomo_yrewrite_not_available = YRewrite AddOn ist nicht verfügbar.
+matomo_yrewrite_domains_available = verfügbar
+matomo_yrewrite_already_exists = bereits vorhanden
+
+# Domain Import/Delete Messages
+matomo_domain_import_success = {0} Domain(s) erfolgreich importiert
+matomo_domain_import_skipped = {0} Domain(s) übersprungen (bereits vorhanden)
+matomo_domain_import_error = Fehler beim Importieren von {0}
+matomo_domain_import_error_details = Fehler beim Importieren von {0}: {1}
+matomo_domain_import_general_error = Import-Fehler: {0}
+matomo_domain_delete_success = Domain "{0}" (ID: {1}) wurde erfolgreich aus Matomo entfernt.
+matomo_domain_delete_error = Fehler beim Löschen der Domain "{0}".
+matomo_domain_delete_error_details = Fehler beim Löschen der Domain: {0}
+matomo_domain_delete_invalid_id = Ungültige Domain-ID.
+matomo_domain_delete_button = Löschen
+matomo_domain_actions = Aktionen
+
+# JavaScript Confirmations
+matomo_delete_confirm_title = Domain löschen
+matomo_delete_confirm_message = Sind Sie sicher, dass Sie die Domain "{0}" (ID: {1}) aus Matomo löschen möchten?
+matomo_delete_confirm_warning = ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden!
+matomo_delete_confirm_data_loss = Alle Statistiken und Daten für diese Domain gehen verloren.
+
+# Info-Center Widget
+matomo_widget_title = Matomo
+matomo_widget_not_configured = Matomo nicht konfiguriert
+matomo_widget_configure_help = Bitte konfigurieren Sie erst die Matomo-Verbindung.
+matomo_configure = Konfigurieren
+matomo_widget_no_sites = Keine Websites
+matomo_widget_add_sites_help = Fügen Sie Websites für die Analyse hinzu.
+matomo_add_domain = Domain hinzufügen
+matomo_sites = Websites
+matomo_full_stats = Vollständige Statistiken
+matomo_manage_domains = Domains verwalten
+matomo_widget_error = Verbindungsfehler
+matomo_check_settings = Einstellungen prüfen
+matomo_site = Website
+matomo_visitors_today = Besucher heute

@@ -6,6 +6,7 @@ use rex_socket;
 use rex_socket_exception;
 use rex_dir;
 use rex_file;
+use rex_addon;
 use Exception;
 use ZipArchive;
 use RecursiveIteratorIterator;
@@ -138,6 +139,22 @@ class MatomoApi
         }
         
         return null;
+    }
+
+    /**
+     * Website löschen
+     * 
+     * @param int $site_id Site-ID der zu löschenden Website
+     * @return bool true bei erfolgreichem Löschen
+     * @throws Exception bei API-Fehlern
+     */
+    public function deleteSite(int $site_id): bool
+    {
+        $result = $this->apiCall('SitesManager.deleteSite', [
+            'idSite' => $site_id
+        ]);
+
+        return is_array($result) && isset($result['result']) && $result['result'] === 'success';
     }
 
     /**
@@ -314,6 +331,19 @@ class MatomoApi
     }
 
     /**
+     * Heutige Besucher abrufen (Convenience-Methode)
+     * 
+     * @param int $site_id Site-ID der Website
+     * @return int Anzahl der heutigen Besucher
+     * @throws Exception bei API-Fehlern
+     */
+    public function getVisitorsToday(int $site_id): int
+    {
+        $stats = $this->getVisitorStats($site_id, 'day', 'today');
+        return (int) ($stats['nb_visits'] ?? 0);
+    }
+
+    /**
      * Top Seiten abrufen
      * 
      * @param int $site_id Site-ID der Website
@@ -336,5 +366,116 @@ class MatomoApi
         
         $result = $this->apiCall('Actions.getPageUrls', $params, true);
         return is_array($result) ? $result : [];
+    }
+}
+
+/**
+ * YRewrite Integration Helper
+ * 
+ * Hilfsfunktionen für die Integration mit dem YRewrite AddOn
+ */
+class YRewriteHelper
+{
+    /**
+     * Prüft ob YRewrite AddOn verfügbar ist
+     * 
+     * @return bool
+     */
+    public static function isAvailable(): bool
+    {
+        return rex_addon::exists('yrewrite') && rex_addon::get('yrewrite')->isAvailable();
+    }
+    
+    /**
+     * Holt alle YRewrite Domains (außer Default)
+     * 
+     * @return array<string, array{name: string, url: string, title: string, host: string}>
+     */
+    public static function getAvailableDomains(): array
+    {
+        if (!self::isAvailable()) {
+            return [];
+        }
+        
+        $domains = [];
+        $yrewrite_domains = \rex_yrewrite::getDomains();
+        
+        foreach ($yrewrite_domains as $name => $domain) {
+            // Skip default domain
+            if ($name === 'default') {
+                continue;
+            }
+            
+            $domains[$name] = [
+                'name' => $name,
+                'url' => $domain->getUrl(),
+                'title' => $domain->getTitle() ?: $name,
+                'host' => $domain->getHost()
+            ];
+        }
+        
+        return $domains;
+    }
+    
+    /**
+     * Filtert Matomo Sites nach YRewrite Domains
+     * 
+     * @param array<int, array<string, mixed>> $matomo_sites
+     * @return array<int, array<string, mixed>> gefilterte Sites
+     */
+    public static function filterMatomoSitesByYRewrite(array $matomo_sites): array
+    {
+        if (!self::isAvailable()) {
+            return $matomo_sites;
+        }
+        
+        $yrewrite_domains = self::getAvailableDomains();
+        $yrewrite_hosts = array_column($yrewrite_domains, 'host');
+        
+        // Default Domain auch erlauben
+        $default_domain = \rex_yrewrite::getDomainByName('default');
+        if ($default_domain) {
+            $yrewrite_hosts[] = $default_domain->getHost();
+        }
+        
+        $filtered_sites = [];
+        
+        foreach ($matomo_sites as $site) {
+            $site_url = $site['main_url'] ?? '';
+            $site_host = parse_url($site_url, PHP_URL_HOST);
+            
+            // Prüfe ob Site-Host in YRewrite Domains enthalten ist
+            if (in_array($site_host, $yrewrite_hosts, true)) {
+                $filtered_sites[] = $site;
+            }
+        }
+        
+        return $filtered_sites;
+    }
+    
+    /**
+     * Holt YRewrite Domain Info für einen Host
+     * 
+     * @param string $host
+     * @return array{name: string, title: string}|null
+     */
+    public static function getDomainInfoByHost(string $host): ?array
+    {
+        if (!self::isAvailable()) {
+            return null;
+        }
+        
+        $yrewrite_domains = \rex_yrewrite::getDomains();
+        
+        foreach ($yrewrite_domains as $name => $domain) {
+            if ($domain->getHost() === $host) {
+                return [
+                    'name' => $name,
+                    'title' => $domain->getTitle() ?: $name
+                ];
+            }
+        }
+        
+        return null;
     }
 }

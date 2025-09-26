@@ -1,6 +1,25 @@
 # Matomo AddOn for REDAXO 5
 
-The **Matomo AddOn** provides complete integration of the open-source web analytics platform Matomo into REDAXO 5. It enables easy downloading, installing, and managing of Matomo directly from the REDAXO backend.
+The **Matomo AddOn** provides complete integrat### 4. **View Statistics**
+- **Matomo → Overview**: Compact statistics for all domains with optional top 5 pages
+- **Auto-login**: Seamless access to Matomo without manual login
+- **Direct Domain Links**: Quick access to specific domain statistics
+
+### 5. **Dashboard & Info-Center Widgets** 📊
+
+#### **Info-Center Widget** (compact)
+- **Automatic Integration**: If Info-Center AddOn is installed
+- **Permission-based**: Only visible for users with `matomo[overview]` permission
+- **Live Statistics**: Shows today's visitors for top 3 websites
+- **YRewrite-Synced**: Automatically filters to YRewrite domains
+- **Direct Access**: One-click access to full Matomo overview
+
+#### **Dashboard Widget** (extended)
+- **Automatic Integration**: If Dashboard AddOn is installed
+- **Permission-based**: Only visible for users with `matomo[overview]` permission
+- **Extended Statistics**: Top 5 websites with today's visitor counts in table format
+- **Larger Format**: 2-column layout for more information
+- **YRewrite Integration**: Automatic filtering to YRewrite domainsof the open-source web analytics platform Matomo into REDAXO 5. It enables easy downloading, installing, and managing of Matomo directly from the REDAXO backend.
 
 ## 🚀 Features
 
@@ -18,6 +37,9 @@ The **Matomo AddOn** provides complete integration of the open-source web analyt
 
 ### 🌐 **Domain Management**
 - **API-based domain management** via Matomo API
+- **YRewrite Integration** - automatic filtering and import of YRewrite domains
+- **Smart duplicate detection** - prevents importing existing domains
+- **Domain deletion** - remove domains from Matomo with confirmation
 - **Tracking code generation** for each domain
 - **Copy-to-clipboard functionality** for tracking codes
 - **Consent manager integration** recommendations
@@ -59,9 +81,17 @@ Under **Matomo → Configuration**:
 
 ### 3. **Manage Domains**
 Under **Matomo → Domains**:
-- Add new domains to Matomo
+- Add new domains to Matomo manually
+- **Import YRewrite domains** - select and import domains from YRewrite configuration
+- **Delete domains** from Matomo with safety confirmation
 - Display and copy tracking codes
 - Follow consent manager recommendations
+
+#### **YRewrite Integration:**
+- **Automatic filtering**: Overview shows only YRewrite domains (+ default domain)
+- **Smart import**: Select YRewrite domains to import into Matomo
+- **Duplicate prevention**: Already existing domains are marked and skipped
+- **Domain synchronization**: Keep Matomo and YRewrite domains in sync
 
 ### 4. **View Statistics**
 - **Matomo → Overview**: Compact statistics for all domains with optional Top 5 pages
@@ -150,6 +180,18 @@ All HTTP requests are made via `rex_socket` with configurable timeouts and SSL o
 
 
 ## 📝 Changelog
+
+### Version 2.1
+- **YRewrite Integration**: Full integration with YRewrite AddOn (now required)
+- **Automatic Domain Filtering**: Shows only YRewrite domains in overview (+ default domain)
+- **Smart Domain Import**: Import YRewrite domains into Matomo with selection interface
+- **Info-Center Widget**: Compact Matomo statistics in REDAXO Info-Center (only for users with `matomo[overview]` permission)
+- **Dashboard Widget**: Extended Matomo statistics in REDAXO Dashboard AddOn (Top 5 websites, table view)
+- **Domain Deletion**: Remove domains from Matomo with safety confirmation
+- **Smart Duplicate Detection**: Prevents importing existing domains
+- **Complete Internationalization**: All texts professionally translated
+- **Improved UX**: User-friendly dialogs and informative status messages
+- **Clean Architecture**: YRewrite as dependency for consistent multi-domain management
 
 ### Version 2.0
 - **Auto-Login System**: Seamless Matomo access without manual login

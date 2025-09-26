@@ -18,6 +18,9 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 
 ### 🌐 **Domain-Management**
 - **API-basierte Domain-Verwaltung** über Matomo API
+- **YRewrite Integration** - automatische Filterung und Import von YRewrite-Domains
+- **Intelligente Duplikatserkennung** - verhindert Import bereits vorhandener Domains
+- **Domain-Löschung** - Entfernung von Domains aus Matomo mit Bestätigung
 - **Tracking-Code Generierung** für jede Domain
 - **Copy-to-Clipboard Funktionalität** für Tracking-Codes
 - **Consent-Manager Integration** Empfehlungen
@@ -58,15 +61,39 @@ Unter **Matomo → Konfiguration**:
 - Datenschutz-Einstellungen konfigurieren
 
 ### 3. **Domains verwalten**
-Unter **Matomo → Domains**:
-- Neue Domains zu Matomo hinzufügen
+Under **Matomo → Domains**:
+- Neue Domains manuell zu Matomo hinzufügen
+- **YRewrite-Domains importieren** - Domains aus YRewrite-Konfiguration auswählen und importieren
+- **Domains löschen** aus Matomo mit Sicherheitsbestätigung
 - Tracking-Codes anzeigen und kopieren
 - Consent-Manager Empfehlungen beachten
+
+#### **YRewrite Integration:**
+- **Automatische Filterung**: Übersicht zeigt nur YRewrite-Domains (+ Standard-Domain)
+- **Intelligenter Import**: YRewrite-Domains auswählen und in Matomo importieren
+- **Duplikatsverhinderung**: Bereits vorhandene Domains werden markiert und übersprungen
+- **Domain-Synchronisation**: Matomo und YRewrite-Domains synchron halten
 
 ### 4. **Statistiken ansehen**
 - **Matomo → Übersicht**: Kompakte Statistiken aller Domains mit optionalen Top 5 Seiten
 - **Automatisch anmelden**: Nahtloser Zugang zu Matomo ohne manuelle Anmeldung
 - **Direkte Domain-Links**: Schneller Zugriff auf spezifische Domain-Statistiken
+
+### 5. **Dashboard & Info-Center Widgets** 📊
+
+#### **Info-Center Widget** (kompakt)
+- **Automatische Integration**: Falls Info-Center AddOn installiert ist
+- **Berechtigungsbasiert**: Nur sichtbar für Benutzer mit `matomo[overview]` Berechtigung
+- **Live-Statistiken**: Zeigt heutige Besucher der Top 3 Websites
+- **YRewrite-Synchron**: Filtert automatisch auf YRewrite-Domains
+- **Direktzugang**: Ein-Klick-Zugang zur vollständigen Matomo-Übersicht
+
+#### **Dashboard Widget** (erweitert)
+- **Automatische Integration**: Falls Dashboard AddOn installiert ist
+- **Berechtigungsbasiert**: Nur sichtbar für Benutzer mit `matomo[overview]` Berechtigung
+- **Erweiterte Statistiken**: Top 5 Websites mit heutigen Besucherzahlen in Tabellenform
+- **Größeres Format**: 2-spaltig für mehr Informationen
+- **YRewrite-Integration**: Automatische Filterung auf YRewrite-Domains
 
 ## 🔐 API-Token einrichten
 
@@ -152,6 +179,18 @@ Alle HTTP-Requests erfolgen über `rex_socket` mit konfigurierbaren Timeouts und
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.1
+- **YRewrite Integration**: Vollständige Integration mit YRewrite AddOn (nun erforderlich)
+- **Automatische Domain-Filterung**: Zeigt nur YRewrite-Domains in der Übersicht (+ Standard-Domain)
+- **Smart Domain Import**: Import von YRewrite-Domains in Matomo mit Auswahl-Interface
+- **Info-Center Widget**: Kompakte Matomo-Statistiken im REDAXO Info-Center (nur für Benutzer mit `matomo[overview]` Berechtigung)
+- **Dashboard Widget**: Erweiterte Matomo-Statistiken im REDAXO Dashboard AddOn (Top 5 Websites, Tabellen-View)
+- **Domain-Löschung**: Entfernung von Domains aus Matomo mit Sicherheitsbestätigung
+- **Intelligente Duplikatserkennung**: Verhindert Import bereits vorhandener Domains
+- **Vollständige Internationalisierung**: Alle Texte professionell übersetzt
+- **Verbesserte UX**: Benutzerfreundliche Dialoge und aussagekräftige Statusmeldungen
+- **Saubere Architektur**: YRewrite als Dependency für konsistente Multi-Domain-Verwaltung
 
 ### Version 2.0
 - **Auto-Login System**: Nahtloser Matomo-Zugang ohne manuelle Anmeldung
