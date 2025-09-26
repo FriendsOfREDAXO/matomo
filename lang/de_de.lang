@@ -288,3 +288,5 @@ matomo_full_stats = Vollständige Statistiken
 matomo_manage_domains = Domains verwalten
 matomo_widget_error = Verbindungsfehler
 matomo_check_settings = Einstellungen prüfen
+matomo_site = Website
+matomo_visitors_today = Besucher heute

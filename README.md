@@ -5,12 +5,21 @@ The **Matomo AddOn** provides complete integrat### 4. **View Statistics**
 - **Auto-login**: Seamless access to Matomo without manual login
 - **Direct Domain Links**: Quick access to specific domain statistics
 
-### 5. **Info-Center Widget** 📊
+### 5. **Dashboard & Info-Center Widgets** 📊
+
+#### **Info-Center Widget** (compact)
 - **Automatic Integration**: If Info-Center AddOn is installed
 - **Permission-based**: Only visible for users with `matomo[overview]` permission
 - **Live Statistics**: Shows today's visitors for top 3 websites
 - **YRewrite-Synced**: Automatically filters to YRewrite domains
-- **Direct Access**: One-click access to full Matomo overviewof the open-source web analytics platform Matomo into REDAXO 5. It enables easy downloading, installing, and managing of Matomo directly from the REDAXO backend.
+- **Direct Access**: One-click access to full Matomo overview
+
+#### **Dashboard Widget** (extended)
+- **Automatic Integration**: If Dashboard AddOn is installed
+- **Permission-based**: Only visible for users with `matomo[overview]` permission
+- **Extended Statistics**: Top 5 websites with today's visitor counts in table format
+- **Larger Format**: 2-column layout for more information
+- **YRewrite Integration**: Automatic filtering to YRewrite domainsof the open-source web analytics platform Matomo into REDAXO 5. It enables easy downloading, installing, and managing of Matomo directly from the REDAXO backend.
 
 ## 🚀 Features
 
@@ -177,6 +186,7 @@ All HTTP requests are made via `rex_socket` with configurable timeouts and SSL o
 - **Automatic Domain Filtering**: Shows only YRewrite domains in overview (+ default domain)
 - **Smart Domain Import**: Import YRewrite domains into Matomo with selection interface
 - **Info-Center Widget**: Compact Matomo statistics in REDAXO Info-Center (only for users with `matomo[overview]` permission)
+- **Dashboard Widget**: Extended Matomo statistics in REDAXO Dashboard AddOn (Top 5 websites, table view)
 - **Domain Deletion**: Remove domains from Matomo with safety confirmation
 - **Smart Duplicate Detection**: Prevents importing existing domains
 - **Complete Internationalization**: All texts professionally translated

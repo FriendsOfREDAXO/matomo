@@ -79,12 +79,21 @@ Under **Matomo → Domains**:
 - **Automatisch anmelden**: Nahtloser Zugang zu Matomo ohne manuelle Anmeldung
 - **Direkte Domain-Links**: Schneller Zugriff auf spezifische Domain-Statistiken
 
-### 5. **Info-Center Widget** 📊
+### 5. **Dashboard & Info-Center Widgets** 📊
+
+#### **Info-Center Widget** (kompakt)
 - **Automatische Integration**: Falls Info-Center AddOn installiert ist
 - **Berechtigungsbasiert**: Nur sichtbar für Benutzer mit `matomo[overview]` Berechtigung
 - **Live-Statistiken**: Zeigt heutige Besucher der Top 3 Websites
 - **YRewrite-Synchron**: Filtert automatisch auf YRewrite-Domains
 - **Direktzugang**: Ein-Klick-Zugang zur vollständigen Matomo-Übersicht
+
+#### **Dashboard Widget** (erweitert)
+- **Automatische Integration**: Falls Dashboard AddOn installiert ist
+- **Berechtigungsbasiert**: Nur sichtbar für Benutzer mit `matomo[overview]` Berechtigung
+- **Erweiterte Statistiken**: Top 5 Websites mit heutigen Besucherzahlen in Tabellenform
+- **Größeres Format**: 2-spaltig für mehr Informationen
+- **YRewrite-Integration**: Automatische Filterung auf YRewrite-Domains
 
 ## 🔐 API-Token einrichten
 
@@ -176,6 +185,7 @@ Alle HTTP-Requests erfolgen über `rex_socket` mit konfigurierbaren Timeouts und
 - **Automatische Domain-Filterung**: Zeigt nur YRewrite-Domains in der Übersicht (+ Standard-Domain)
 - **Smart Domain Import**: Import von YRewrite-Domains in Matomo mit Auswahl-Interface
 - **Info-Center Widget**: Kompakte Matomo-Statistiken im REDAXO Info-Center (nur für Benutzer mit `matomo[overview]` Berechtigung)
+- **Dashboard Widget**: Erweiterte Matomo-Statistiken im REDAXO Dashboard AddOn (Top 5 Websites, Tabellen-View)
 - **Domain-Löschung**: Entfernung von Domains aus Matomo mit Sicherheitsbestätigung
 - **Intelligente Duplikatserkennung**: Verhindert Import bereits vorhandener Domains
 - **Vollständige Internationalisierung**: Alle Texte professionell übersetzt
