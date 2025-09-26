@@ -119,14 +119,11 @@ class MatomoInfoCenterWidget extends AbstractWidget
             }
         }
         
-        // Action Buttons
+        // Action Button
         $content .= '
         <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; text-align: center;">
-            <a href="' . rex_url::currentBackendPage(['page' => 'matomo/overview']) . '" class="btn btn-primary btn-xs">
+            <a href="' . rex_url::currentBackendPage(['page' => 'matomo/overview']) . '" class="btn btn-primary btn-sm">
                 <i class="fa fa-bar-chart"></i> ' . rex_i18n::msg('matomo_full_stats') . '
-            </a>
-            <a href="' . rex_url::currentBackendPage(['page' => 'matomo/domains']) . '" class="btn btn-default btn-xs">
-                <i class="fa fa-cog"></i> ' . rex_i18n::msg('matomo_manage_domains') . '
             </a>
         </div>';
         
