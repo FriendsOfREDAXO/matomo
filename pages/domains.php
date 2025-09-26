@@ -1,6 +1,7 @@
 <?php
 
 use FriendsOfRedaxo\Matomo\MatomoApi;
+use FriendsOfRedaxo\Matomo\YRewriteHelper;
 
 $addon = rex_addon::get('matomo');
 
@@ -48,6 +49,75 @@ if (rex_post('add_domain', 'boolean') && $matomo_ready) {
         }
     } else {
         $error = $addon->i18n('matomo_fill_all_fields');
+    }
+}
+
+// YRewrite Domain Import
+if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && !empty(rex_post('import_domains', 'array'))) {
+    $import_domains = rex_post('import_domains', 'array');
+    
+    if (class_exists('FriendsOfRedaxo\Matomo\YRewriteHelper') && YRewriteHelper::isAvailable()) {
+        $yrewrite_domains = YRewriteHelper::getAvailableDomains();
+        $imported_count = 0;
+        $skipped_count = 0;
+        $import_errors = [];
+        
+        try {
+            $api = new MatomoApi($matomo_url, $admin_token, $user_token);
+            
+            // Erst alle existierenden Matomo-Sites laden um Duplikate zu vermeiden
+            $existing_sites = $api->getSites();
+            $existing_urls = [];
+            foreach ($existing_sites as $site) {
+                $existing_urls[] = rtrim($site['main_url'], '/');
+            }
+            
+            foreach ($import_domains as $domain_name) {
+                if (isset($yrewrite_domains[$domain_name])) {
+                    $domain = $yrewrite_domains[$domain_name];
+                    $domain_url = rtrim($domain['url'], '/');
+                    
+                    // Prüfen ob Domain bereits existiert
+                    if (in_array($domain_url, $existing_urls)) {
+                        $skipped_count++;
+                        continue;
+                    }
+                    
+                    try {
+                        $site_id = $api->addSite($domain['title'] ?: $domain['name'], $domain['url']);
+                        if ($site_id) {
+                            $imported_count++;
+                        } else {
+                            $import_errors[] = 'Fehler beim Importieren von ' . $domain_name;
+                        }
+                    } catch (Exception $e) {
+                        $import_errors[] = 'Fehler beim Importieren von ' . $domain_name . ': ' . $e->getMessage();
+                    }
+                }
+            }
+            
+            // Erfolgsmeldung zusammenstellen
+            $success_parts = [];
+            if ($imported_count > 0) {
+                $success_parts[] = $imported_count . ' Domain(s) erfolgreich importiert';
+            }
+            if ($skipped_count > 0) {
+                $success_parts[] = $skipped_count . ' Domain(s) übersprungen (bereits vorhanden)';
+            }
+            
+            if (!empty($success_parts)) {
+                $message = implode(', ', $success_parts) . '.';
+            }
+            
+            if (!empty($import_errors)) {
+                $error = implode('<br>', $import_errors);
+            }
+            
+        } catch (Exception $e) {
+            $error = 'Import-Fehler: ' . $e->getMessage();
+        }
+    } else {
+        $error = 'YRewrite AddOn ist nicht verfügbar.';
     }
 }
 
@@ -125,6 +195,68 @@ try {
                 </form>
             </div>
         </div>
+
+        <!-- YRewrite Domains Import -->
+        <?php if (class_exists('FriendsOfRedaxo\Matomo\YRewriteHelper') && YRewriteHelper::isAvailable()): ?>
+            <?php 
+            $yrewrite_domains = YRewriteHelper::getAvailableDomains();
+            if (!empty($yrewrite_domains)):
+                // Bereits vorhandene URLs sammeln um Duplikate zu markieren
+                $existing_urls = [];
+                foreach ($sites as $site) {
+                    $existing_urls[] = rtrim($site['main_url'], '/');
+                }
+            ?>
+            <div class="panel panel-success">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <i class="fa fa-download"></i> YRewrite Domains importieren
+                        <small class="text-muted">(<?= count($yrewrite_domains) ?> verfügbar)</small>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p class="help-block">
+                        <i class="fa fa-info-circle"></i> 
+                        Wählen Sie die YRewrite-Domains aus, die Sie in Matomo importieren möchten. 
+                        Bereits vorhandene Domains werden übersprungen.
+                    </p>
+                    
+                    <form method="post">
+                        <div class="form-group">
+                            <?php foreach ($yrewrite_domains as $domain): 
+                                $domain_url = rtrim($domain['url'], '/');
+                                $already_exists = in_array($domain_url, $existing_urls);
+                            ?>
+                                <div class="checkbox <?= $already_exists ? 'text-muted' : '' ?>">
+                                    <label>
+                                        <input type="checkbox" 
+                                               name="import_domains[]" 
+                                               value="<?= rex_escape($domain['name']) ?>"
+                                               <?= $already_exists ? 'disabled' : '' ?>>
+                                        <strong><?= rex_escape($domain['name']) ?></strong>
+                                        <?php if ($already_exists): ?>
+                                            <span class="label label-warning">bereits vorhanden</span>
+                                        <?php endif; ?>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fa fa-link"></i> <?= rex_escape($domain['url']) ?>
+                                            <?php if ($domain['title'] && $domain['title'] !== $domain['name']): ?>
+                                                <br><i class="fa fa-tag"></i> <?= rex_escape($domain['title']) ?>
+                                            <?php endif; ?>
+                                        </small>
+                                    </label>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        
+                        <button type="submit" name="import_yrewrite" value="1" class="btn btn-success">
+                            <i class="fa fa-download"></i> Ausgewählte Domains importieren
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <?php endif; ?>
+        <?php endif; ?>
 
         <!-- Domain Liste -->
         <div class="panel panel-default">
@@ -204,7 +336,6 @@ try {
                 <p><strong><?= $addon->i18n('matomo_consent_addon_recommendation') ?>:</strong></p>
                 <ul>
                     <li><strong>Consent Manager</strong> - <?= $addon->i18n('matomo_consent_manager_desc') ?></li>
-                    <li><strong>Cookie Notice</strong> - <?= $addon->i18n('matomo_cookie_notice_desc') ?></li>
                 </ul>
                 <div class="alert alert-info">
                     <strong><?= $addon->i18n('matomo_consent_important') ?>:</strong> <?= $addon->i18n('matomo_consent_manual_integration') ?>

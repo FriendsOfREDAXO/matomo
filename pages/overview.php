@@ -1,6 +1,7 @@
 <?php
 
 use FriendsOfRedaxo\Matomo\MatomoApi;
+use FriendsOfRedaxo\Matomo\YRewriteHelper;
 
 $addon = rex_addon::get('matomo');
 
@@ -195,9 +196,16 @@ try {
     $api = new MatomoApi($matomo_url, $admin_token, $user_token);
     $all_sites = $api->getSites();
     
+    // YRewrite-Filter anwenden (zeigt nur YRewrite-Domains + Default)
+    if (class_exists('FriendsOfRedaxo\Matomo\YRewriteHelper') && YRewriteHelper::isAvailable()) {
+        $filtered_sites = YRewriteHelper::filterMatomoSitesByYRewrite($all_sites);
+    } else {
+        $filtered_sites = $all_sites;
+    }
+    
     // Domain-Filterung anwenden
     $sites = [];
-    foreach ($all_sites as $site) {
+    foreach ($filtered_sites as $site) {
         if ($show_all_domains) {
             $sites[] = $site;
         }
