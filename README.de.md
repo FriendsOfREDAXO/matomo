@@ -79,6 +79,13 @@ Under **Matomo → Domains**:
 - **Automatisch anmelden**: Nahtloser Zugang zu Matomo ohne manuelle Anmeldung
 - **Direkte Domain-Links**: Schneller Zugriff auf spezifische Domain-Statistiken
 
+### 5. **Info-Center Widget** 📊
+- **Automatische Integration**: Falls Info-Center AddOn installiert ist
+- **Berechtigungsbasiert**: Nur sichtbar für Benutzer mit `matomo[overview]` Berechtigung
+- **Live-Statistiken**: Zeigt heutige Besucher der Top 3 Websites
+- **YRewrite-Synchron**: Filtert automatisch auf YRewrite-Domains
+- **Direktzugang**: Ein-Klick-Zugang zur vollständigen Matomo-Übersicht
+
 ## 🔐 API-Token einrichten
 
 ### Admin Token (erforderlich)

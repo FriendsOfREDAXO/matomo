@@ -1,6 +1,16 @@
 # Matomo AddOn for REDAXO 5
 
-The **Matomo AddOn** provides complete integration of the open-source web analytics platform Matomo into REDAXO 5. It enables easy downloading, installing, and managing of Matomo directly from the REDAXO backend.
+The **Matomo AddOn** provides complete integrat### 4. **View Statistics**
+- **Matomo → Overview**: Compact statistics for all domains with optional top 5 pages
+- **Auto-login**: Seamless access to Matomo without manual login
+- **Direct Domain Links**: Quick access to specific domain statistics
+
+### 5. **Info-Center Widget** 📊
+- **Automatic Integration**: If Info-Center AddOn is installed
+- **Permission-based**: Only visible for users with `matomo[overview]` permission
+- **Live Statistics**: Shows today's visitors for top 3 websites
+- **YRewrite-Synced**: Automatically filters to YRewrite domains
+- **Direct Access**: One-click access to full Matomo overviewof the open-source web analytics platform Matomo into REDAXO 5. It enables easy downloading, installing, and managing of Matomo directly from the REDAXO backend.
 
 ## 🚀 Features
 
