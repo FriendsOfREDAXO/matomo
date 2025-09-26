@@ -166,7 +166,7 @@ All HTTP requests are made via `rex_socket` with configurable timeouts and SSL o
 - **YRewrite Integration**: Full integration with YRewrite AddOn (now required)
 - **Automatic Domain Filtering**: Shows only YRewrite domains in overview (+ default domain)
 - **Smart Domain Import**: Import YRewrite domains into Matomo with selection interface
-- **Info-Center Widget**: Matomo statistics directly in REDAXO Info-Center (if installed)
+- **Info-Center Widget**: Compact Matomo statistics in REDAXO Info-Center (only for users with `matomo[overview]` permission)
 - **Domain Deletion**: Remove domains from Matomo with safety confirmation
 - **Smart Duplicate Detection**: Prevents importing existing domains
 - **Complete Internationalization**: All texts professionally translated
