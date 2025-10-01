@@ -8,8 +8,8 @@ matomo_help = Help
 
 # Status Messages
 matomo_config_saved = Configuration saved!
-matomo_download_success = Matomo succ# JavaScript Confirmations
-matomo_delete_confirm_title = Delete domain
+matomo_download_success = Matomo successfully downloaded and configured!
+matomo_download_failed = Download failed: {0}
 matomo_delete_confirm_message = Are you sure you want to delete the domain "{0}" (ID: {1}) from Matomo?
 matomo_delete_confirm_warning = WARNING: This action cannot be undone!
 matomo_delete_confirm_data_loss = All statistics and data for this domain will be lost.
@@ -29,7 +29,6 @@ matomo_widget_error = Connection error
 matomo_check_settings = Check settings
 matomo_site = Website
 matomo_visitors_today = Visitors today
-matomo_download_failed = Download failed: {0}
 matomo_fill_all_fields = Please fill in all fields!
 matomo_domain_added = Domain '{0}' successfully added (Site ID: {1})
 matomo_domain_add_failed = Domain could not be created
