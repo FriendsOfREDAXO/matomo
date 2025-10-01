@@ -10,8 +10,8 @@ page:
     icon: 'rex-icon rex-icon-seo'
     subpages:
         overview: { title: 'translate:matomo_overview', icon: 'rex-icon rex-icon-template', perm: matomo[overview]}
-        config: { title: 'Konfiguration', icon: 'rex-icon rex-icon-config', perm: admin}
-        domains: { title: 'Domains', icon: 'rex-icon rex-icon-structure', perm: admin}
+        config: { title: 'translate:matomo_config', icon: 'rex-icon rex-icon-config', perm: admin}
+        domains: { title: 'translate:matomo_domains', icon: 'rex-icon rex-icon-structure', perm: admin}
         settings:
                 title: 'translate:matomo_settings'
                 perm: admin

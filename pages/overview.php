@@ -259,45 +259,45 @@ try {
         <!-- Auto-Login Status Warnung (nur für Admins und lokale Installationen) -->
         <?php if ($is_admin && $matomo_user && $matomo_password && !$auto_login_available && $auto_login_config_error && !$is_external_matomo): ?>
             <div class="alert alert-warning">
-                <h4><i class="fa fa-exclamation-triangle"></i> Auto-Login nicht verfügbar</h4>
-                <p><strong>Problem:</strong> Matomo Auto-Login ist nicht konfiguriert.</p>
+                <h4><i class="fa fa-exclamation-triangle"></i> <?= $addon->i18n('matomo_auto_login_not_available') ?></h4>
+                <p><strong><?= $addon->i18n('matomo_problem') ?>:</strong> <?= $addon->i18n('matomo_auto_login_not_configured') ?></p>
                 
                 <!-- Debug-Info für Entwicklung -->
                 <?php if ($debug_info): ?>
                     <div class="alert alert-info" style="margin: 10px 0;">
-                        <small><strong>Debug:</strong> <?= rex_escape($debug_info) ?></small>
+                        <small><strong><?= $addon->i18n('matomo_debug') ?>:</strong> <?= rex_escape($debug_info) ?></small>
                     </div>
                 <?php endif; ?>
                 
                 <?php if ($auto_login_config_error === 'configurable'): ?>
-                    <p><strong>Lösung:</strong> 
+                    <p><strong><?= $addon->i18n('matomo_solution') ?>:</strong> 
                         <?php if ($matomo_path): ?>
                             <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/overview', 'action' => 'fix_autologin']) ?>" 
                                class="btn btn-success btn-sm">
-                                <i class="fa fa-wrench"></i> Automatisch reparieren
+                                <i class="fa fa-wrench"></i> <?= $addon->i18n('matomo_auto_repair') ?>
                             </a>
-                            oder manuell in <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code> hinzufügen:
+                            <?= $addon->i18n('matomo_or_manually_add_to') ?> <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code>:
                         <?php else: ?>
-                            Manuelle Konfiguration in Ihrer Matomo-Installation erforderlich:
+                            <?= $addon->i18n('matomo_manual_config_required') ?>
                         <?php endif; ?>
                     </p>
                     <pre>[General]
 login_allow_logme = 1</pre>
                 <?php else: ?>
-                    <p><strong>Manuelle Lösung erforderlich:</strong> 
+                    <p><strong><?= $addon->i18n('matomo_manual_solution_required') ?>:</strong> 
                         <?php if ($matomo_path): ?>
-                            Fügen Sie in <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code> hinzu:
+                            <?= $addon->i18n('matomo_add_to') ?> <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code>:
                         <?php else: ?>
-                            Fügen Sie in Ihrer Matomo <code>config/config.ini.php</code> hinzu:
+                            <?= $addon->i18n('matomo_add_to_your_matomo') ?> <code>config/config.ini.php</code>:
                         <?php endif; ?>
                     </p>
                     <pre>[General]
 login_allow_logme = 1</pre>
                     <p><small class="text-muted">
                         <?php if ($matomo_path): ?>
-                            Die Datei ist nicht beschreibbar - bitte manuell bearbeiten.
+                            <?= $addon->i18n('matomo_file_not_writable') ?>
                         <?php else: ?>
-                            Externe Matomo-Installation - Bearbeitung nur auf dem Matomo-Server möglich.
+                            <?= $addon->i18n('matomo_external_installation_edit_on_server') ?>
                         <?php endif; ?>
                     </small></p>
                 <?php endif; ?>
@@ -308,8 +308,8 @@ login_allow_logme = 1</pre>
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    <i class="fa fa-chart-bar"></i> Analytics Übersicht
-                    <small class="text-muted">(<?= count($sites) ?> <?= count($sites) == 1 ? 'Domain' : 'Domains' ?>)</small>
+                    <i class="fa fa-chart-bar"></i> <?= $addon->i18n('matomo_analytics_overview') ?>
+                    <small class="text-muted">(<?= count($sites) ?> <?= count($sites) == 1 ? $addon->i18n('matomo_domain') : $addon->i18n('matomo_domains') ?>)</small>
                     <div class="btn-group pull-right">
                         <?php
                         $matomo_user = rex_config::get('matomo', 'matomo_user', '');
@@ -322,15 +322,15 @@ login_allow_logme = 1</pre>
                                         urlencode($matomo_user) . '&password=' . urlencode($password_hash);
                         ?>
                             <a href="<?= rex_escape($login_url) ?>" target="_blank" class="btn btn-primary btn-sm rex-pulse">
-                                <i class="fa fa-sign-in-alt"></i> Automatisch anmelden
+                                <i class="fa fa-sign-in-alt"></i> <?= $addon->i18n('matomo_auto_login') ?>
                             </a>
 
                         <?php else: ?>
                             <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-primary btn-sm rex-pulse">
-                                <i class="fa fa-external-link-alt"></i> Matomo öffnen
+                                <i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open_matomo') ?>
                             </a>
                             <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/settings']) ?>" class="btn btn-warning btn-sm">
-                                <i class="fa fa-cog"></i> Login konfigurieren
+                                <i class="fa fa-cog"></i> <?= $addon->i18n('matomo_configure_login') ?>
                             </a>
                         <?php endif; ?>
                     </div>
@@ -376,7 +376,7 @@ login_allow_logme = 1</pre>
                     <div class="col-sm-6">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h4><i class="fa fa-calendar-day"></i> Heute</h4>
+                                <h4><i class="fa fa-calendar-day"></i> <?= $addon->i18n('matomo_today') ?></h4>
                             </div>
                             <div class="panel-body">
                                 <div class="row">
@@ -404,24 +404,24 @@ login_allow_logme = 1</pre>
                     <div class="col-sm-6">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h4><i class="fa fa-calendar-week"></i> Diese Woche</h4>
+                                <h4><i class="fa fa-calendar-week"></i> <?= $addon->i18n('matomo_this_week') ?></h4>
                             </div>
                             <div class="panel-body">
                                 <div class="row">
                                     <div class="col-xs-4 text-center">
                                         <i class="fa fa-eye fa-2x text-primary"></i>
                                         <h3 class="text-primary"><?= number_format($total_visits_week) ?></h3>
-                                        <small class="text-muted">Besuche</small>
+                                        <small class="text-muted"><?= $addon->i18n('matomo_visits') ?></small>
                                     </div>
                                     <div class="col-xs-4 text-center">
                                         <i class="fa fa-mouse-pointer fa-2x text-success"></i>
                                         <h3 class="text-success"><?= number_format($total_actions_week) ?></h3>
-                                        <small class="text-muted">Aktionen</small>
+                                        <small class="text-muted"><?= $addon->i18n('matomo_actions') ?></small>
                                     </div>
                                     <div class="col-xs-4 text-center">
                                         <i class="fa fa-users fa-2x text-info"></i>
                                         <h3 class="text-info"><?= number_format($total_users_week) ?></h3>
-                                        <small class="text-muted">Benutzer</small>
+                                        <small class="text-muted"><?= $addon->i18n('matomo_users') ?></small>
                                     </div>
                                 </div>
                             </div>
@@ -436,7 +436,7 @@ login_allow_logme = 1</pre>
                             <div class="panel-body text-center">
                                 <i class="fa fa-chart-line fa-2x text-warning"></i>
                                 <h3 class="text-warning"><?= $avg_actions_per_visit ?></h3>
-                                <small class="text-muted">Ø Aktionen/Besuch</small>
+                                <small class="text-muted"><?= $addon->i18n('matomo_avg_actions_per_visit') ?></small>
                             </div>
                         </div>
                     </div>
@@ -445,7 +445,7 @@ login_allow_logme = 1</pre>
                             <div class="panel-body text-center">
                                 <i class="fa fa-globe fa-2x text-primary"></i>
                                 <h3 class="text-primary"><?= $active_sites ?></h3>
-                                <small class="text-muted">Aktive Domains heute</small>
+                                <small class="text-muted"><?= $addon->i18n('matomo_active_domains_today') ?></small>
                             </div>
                         </div>
                     </div>
@@ -454,7 +454,7 @@ login_allow_logme = 1</pre>
                             <div class="panel-body text-center">
                                 <i class="fa fa-<?= $growth_rate >= 0 ? 'arrow-up text-success' : 'arrow-down text-danger' ?> fa-2x"></i>
                                 <h3 class="<?= $growth_rate >= 0 ? 'text-success' : 'text-danger' ?>"><?= $growth_rate ?>%</h3>
-                                <small class="text-muted">Trend (7 Tage)</small>
+                                <small class="text-muted"><?= $addon->i18n('matomo_trend_7_days') ?></small>
                             </div>
                         </div>
                     </div>
@@ -463,7 +463,7 @@ login_allow_logme = 1</pre>
                             <div class="panel-body text-center">
                                 <i class="fa fa-calendar fa-2x text-muted"></i>
                                 <h3 class="text-muted"><?= count($sites) ?></h3>
-                                <small class="text-muted">Überwachte Domains</small>
+                                <small class="text-muted"><?= $addon->i18n('matomo_monitored_domains') ?></small>
                             </div>
                         </div>
                     </div>
@@ -476,8 +476,8 @@ login_allow_logme = 1</pre>
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    <i class="fa fa-chart-line"></i> Top 5 Seiten dieser Woche
-                    <small class="text-muted">(meistbesuchte Seiten)</small>
+                    <i class="fa fa-chart-line"></i> <?= $addon->i18n('matomo_top_5_pages_this_week') ?>
+                    <small class="text-muted">(<?= $addon->i18n('matomo_most_visited_pages') ?>)</small>
                 </h3>
             </div>
             <div class="panel-body">
@@ -521,19 +521,19 @@ login_allow_logme = 1</pre>
                 <?php if (empty($all_top_pages)): ?>
                     <div class="alert alert-info">
                         <i class="fa fa-info-circle"></i> 
-                        <strong>Keine Daten verfügbar:</strong> Es wurden noch keine Seitenaufrufe in dieser Woche erfasst.
+                        <strong><?= $addon->i18n('matomo_no_data_available') ?>:</strong> <?= $addon->i18n('matomo_no_page_views_recorded') ?>
                     </div>
                 <?php else: ?>
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th><i class="fa fa-trophy"></i> Rang</th>
-                                    <th><i class="fa fa-file-alt"></i> Seite</th>
-                                    <th><i class="fa fa-globe"></i> Domain</th>
-                                    <th class="text-center"><i class="fa fa-eye"></i> Besuche</th>
-                                    <th class="text-center"><i class="fa fa-mouse-pointer"></i> Aktionen</th>
-                                    <th class="text-center"><i class="fa fa-clock"></i> Ø Zeit</th>
+                                    <th><i class="fa fa-trophy"></i> <?= $addon->i18n('matomo_rank') ?></th>
+                                    <th><i class="fa fa-file-alt"></i> <?= $addon->i18n('matomo_page') ?></th>
+                                    <th><i class="fa fa-globe"></i> <?= $addon->i18n('matomo_domain') ?></th>
+                                    <th class="text-center"><i class="fa fa-eye"></i> <?= $addon->i18n('matomo_visits') ?></th>
+                                    <th class="text-center"><i class="fa fa-mouse-pointer"></i> <?= $addon->i18n('matomo_actions') ?></th>
+                                    <th class="text-center"><i class="fa fa-clock"></i> <?= $addon->i18n('matomo_avg_time') ?></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -585,13 +585,13 @@ login_allow_logme = 1</pre>
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    <i class="fa fa-globe"></i> Domain-Statistiken
+                    <i class="fa fa-globe"></i> <?= $addon->i18n('matomo_domain_statistics') ?>
                     <?php if (!$show_all_domains): ?>
-                        <small class="text-muted">(gefiltert für Ihre Berechtigungen)</small>
+                        <small class="text-muted">(<?= $addon->i18n('matomo_filtered_permissions') ?>)</small>
                     <?php endif; ?>
                     <?php if ($is_admin): ?>
                         <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/domains']) ?>" class="btn btn-success btn-sm pull-right">
-                            <i class="fa fa-plus"></i> Domains verwalten
+                            <i class="fa fa-plus"></i> <?= $addon->i18n('matomo_manage_domains') ?>
                         </a>
                     <?php endif; ?>
                 </h3>
@@ -601,11 +601,11 @@ login_allow_logme = 1</pre>
                 <?php if (empty($sites)): ?>
                     <div class="alert alert-info">
                         <i class="fa fa-info-circle"></i> 
-                        <strong>Keine Domains verfügbar:</strong> 
+                        <strong><?= $addon->i18n('matomo_no_domains_available') ?>:</strong> 
                         <?php if ($show_all_domains): ?>
-                            Es wurden noch keine Domains in Matomo konfiguriert.
+                            <?= $addon->i18n('matomo_no_domains_configured') ?>
                         <?php else: ?>
-                            Sie haben keine Berechtigung für Domain-Statistiken oder es wurden Ihnen keine Domains zugewiesen.
+                            <?= $addon->i18n('matomo_no_domain_permissions') ?>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
@@ -614,11 +614,11 @@ login_allow_logme = 1</pre>
                         <table class="table table-striped">
                             <thead>
                                 <tr>
-                                    <th><i class="fa fa-tag"></i> Domain</th>
+                                    <th><i class="fa fa-tag"></i> <?= $addon->i18n('matomo_domain') ?></th>
                                     <th><i class="fa fa-link"></i> URL</th>
-                                    <th class="text-center"><i class="fa fa-calendar-day"></i> Heute</th>
-                                    <th class="text-center"><i class="fa fa-calendar-week"></i> Diese Woche</th>
-                                    <th class="text-center"><i class="fa fa-mouse-pointer"></i> Aktionen</th>
+                                    <th class="text-center"><i class="fa fa-calendar-day"></i> <?= $addon->i18n('matomo_today') ?></th>
+                                    <th class="text-center"><i class="fa fa-calendar-week"></i> <?= $addon->i18n('matomo_this_week') ?></th>
+                                    <th class="text-center"><i class="fa fa-mouse-pointer"></i> <?= $addon->i18n('matomo_actions') ?></th>
                                     <th class="text-center"><i class="fa fa-external-link-alt"></i> Matomo</th>
                                 </tr>
                             </thead>
@@ -657,11 +657,11 @@ login_allow_logme = 1</pre>
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <span class="label label-success" title="Aktionen heute">
+                                        <span class="label label-success" title="<?= $addon->i18n('matomo_actions_today') ?>">
                                             <i class="fa fa-mouse-pointer"></i> <?= number_format($today['nb_actions'] ?? 0) ?>
                                         </span>
                                         <br>
-                                        <span class="label label-warning" title="Aktionen diese Woche">
+                                        <span class="label label-warning" title="<?= $addon->i18n('matomo_actions_this_week') ?>">
                                             <i class="fa fa-chart-bar"></i> <?= number_format($week['nb_actions'] ?? 0) ?>
                                         </span>
                                     </td>
@@ -675,12 +675,12 @@ login_allow_logme = 1</pre>
                                                             '&url=' . urlencode($site_url);
                                         ?>
                                             <a href="<?= rex_escape($site_login_url) ?>" target="_blank" class="btn btn-primary btn-sm">
-                                                <i class="fa fa-sign-in-alt"></i> Öffnen
+                                                <i class="fa fa-sign-in-alt"></i> <?= $addon->i18n('matomo_open') ?>
                                             </a>
                                         <?php else: ?>
                                             <a href="<?= rex_escape($matomo_url) ?>/index.php?module=CoreHome&action=index&idSite=<?= $site_id ?>&period=day&date=today" 
                                                target="_blank" class="btn btn-primary btn-sm">
-                                                <i class="fa fa-external-link-alt"></i> Öffnen
+                                                <i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open') ?>
                                             </a>
                                         <?php endif; ?>
                                     </td>
