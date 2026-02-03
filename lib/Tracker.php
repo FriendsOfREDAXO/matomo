@@ -6,8 +6,6 @@ use rex;
 use rex_addon;
 use rex_config;
 use rex_logger;
-use rex_socket;
-use rex_socket_exception;
 
 /**
  * Matomo Tracker Class for Server-Side Tracking.
@@ -44,9 +42,6 @@ class Tracker
     
     /** @var array<string, mixed> */
     private array $customParameters = [];
-    
-    /** @var bool */
-    private bool $sslVerify = false;
 
     /**
      * @param int $siteId
@@ -104,21 +99,7 @@ class Tracker
         }
 
         $tracker = new self($siteId, $url, (string) $token);
-        
-        // Set SSL Verify from config
-        $sslVerify = (bool) $addon->getConfig('ssl_verify');
-        $tracker->setSslVerify($sslVerify);
-        
         return $tracker;
-    }
-
-    /**
-     * Sets whether SSL certificate verification should be enabled.
-     */
-    public function setSslVerify(bool $verify): self
-    {
-        $this->sslVerify = $verify;
-        return $this;
     }
 
     /**
@@ -530,9 +511,12 @@ class Tracker
     }
 
     /**
-     * Sends the request to Matomo using rex_socket.
+     * Sends the request to Matomo using fire-and-forget method.
+     * Uses curl in background process (Unix/Linux/macOS) or fsockopen as fallback.
+     * This ensures minimal impact on page load time.
      * 
      * @param array<string, mixed> $params
+     * @return bool
      */
     private function sendRequest(array $params): bool
     {
@@ -575,32 +559,78 @@ class Tracker
         
         // Merge with specific action params
         $finalParams = array_merge($finalParams, $params);
-
+        
         try {
-            $socket = rex_socket::factoryUrl($this->matomoUrl . '/matomo.php');
+            // True fire-and-forget using curl in background process
+            // This executes curl in a separate process that immediately detaches
+            // The parent process continues without waiting
+            if (function_exists('exec') && !$this->isWindowsOS()) {
+                // Build POST data - explicitly use & as separator (not &amp;)
+                $postData = http_build_query($finalParams, '', '&');
+                $trackingUrl = $this->matomoUrl . '/matomo.php';
+                
+                // Unix/Linux/macOS: Use curl with proper POST data in background
+                // -d sends POST data, -s silent mode, -o /dev/null discards output
+                $curlCmd = sprintf(
+                    'curl -X POST -s -o /dev/null --max-time 5 -d %s %s > /dev/null 2>&1 &',
+                    escapeshellarg($postData),
+                    escapeshellarg($trackingUrl)
+                );
+                
+                @exec($curlCmd);
+                return true;
+            }
             
-            // Set SSL options (allow self-signed if needed, or use strict verification)
-            // Following the pattern in MatomoApi.php which disabled verification
-            $socket->setOptions([
-                'ssl' => [
-                    'verify_peer' => $this->sslVerify,
-                    'verify_peer_name' => $this->sslVerify
-                ]
-            ]);
+            // Fallback: Ultra-fast fsockopen with minimal timeout
+            // Parse URL to extract host, port, and path
+            $urlParts = parse_url($this->matomoUrl . '/matomo.php');
+            $host = $urlParts['host'] ?? 'localhost';
+            $port = $urlParts['port'] ?? (($urlParts['scheme'] ?? 'http') === 'https' ? 443 : 80);
+            $path = $urlParts['path'] ?? '/matomo.php';
             
-            // Short timeout, we don't want to block page load
-            $socket->setTimeout(3); 
+            // Use SSL/TLS for HTTPS connections
+            $scheme = (($urlParts['scheme'] ?? 'http') === 'https') ? 'ssl://' : '';
             
-            $socket->doPost($finalParams);
+            // Fire-and-forget: Open non-blocking socket with minimal timeout (0.01s = 10ms)
+            // Using @ to suppress warnings, we handle errors via return value
+            $fp = @fsockopen($scheme . $host, $port, $errno, $errstr, 0.01);
             
-            // We don't really care about the response body for tracking
-            // but status code should be 200
+            if ($fp) {
+                // Set non-blocking mode immediately for fire-and-forget behavior
+                stream_set_blocking($fp, false);
+                stream_set_timeout($fp, 0, 1000); // 1ms timeout
+                
+                // Build POST request body - explicitly use & as separator
+                $postData = http_build_query($finalParams, '', '&');
+                
+                // Build minimal HTTP POST request
+                $request = "POST " . $path . " HTTP/1.1\r\n";
+                $request .= "Host: " . $host . "\r\n";
+                $request .= "Content-Type: application/x-www-form-urlencoded\r\n";
+                $request .= "Content-Length: " . strlen($postData) . "\r\n";
+                $request .= "Connection: Close\r\n\r\n";
+                $request .= $postData;
+                
+                // Send request without waiting for response (fire-and-forget)
+                @fwrite($fp, $request);
+                @fclose($fp);
+                
+                return true;
+            }
             
-            return true;
-        } catch (rex_socket_exception $e) {
+            return false;
+        } catch (\Exception $e) {
             // Log error silently, don't break the page
             rex_logger::logException($e);
             return false;
         }
+    }
+    
+    /**
+     * Check if running on Windows OS
+     */
+    private function isWindowsOS(): bool
+    {
+        return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
     }
 }
