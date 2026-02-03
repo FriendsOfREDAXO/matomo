@@ -162,6 +162,87 @@ Das AddOn nutzt die **Matomo HTTP API** für:
 
 Alle HTTP-Requests erfolgen über `rex_socket` mit konfigurierbaren Timeouts und SSL-Optionen.
 
+## 💻 PHP Tracking API (Serverseitig)
+
+Das AddOn bringt eine leistungsfähige PHP-Klasse `Tracker` für Server-Side Tracking mit (z.B. für API-Endpunkte, Cronjobs oder Headless-Anwendungen). Diese nutzt `rex_socket` und verwaltet die Verbindung automatisch.
+
+### Einfache Verwendung
+
+```php
+use FriendsOfRedaxo\Matomo\Tracker;
+
+// 1. Tracker initialisieren (zieht sich URL & Token automatisch aus der Config)
+// Die Site ID muss jedoch übergeben werden (z.B. 1)
+$tracker = Tracker::factory(1);
+
+if ($tracker) {
+    // 2. Einfachen PageView erfassen
+    // URL ist optional (nimmt die aktuelle, falls leer)
+    $tracker->trackPageView('Startseite', 'https://beispiel.de/');
+    
+    // 3. Event tracken
+    // Kategorie, Aktion, Name (optional), Wert (optional)
+    $tracker->trackEvent('Kontaktformular', 'Absenden', 'Allgemeine Anfrage', 1);
+    
+    // 4. Ziel (Goal) erfassen
+    // Goal ID, Umsatz (optional)
+    $tracker->trackGoal(1, 49.90);
+    
+    // 5. Interne Suche (Site Search)
+    // Suchbegriff, Kategorie (optional), Anzahl Treffer (optional)
+    $tracker->trackSiteSearch('redaxo', 'CMS', 12);
+}
+```
+
+### Erweiterte Features
+
+#### User ID & Custom Dimensions
+```php
+// User ID setzen (für Cross-Device Tracking)
+$tracker->setUserId('user_123');
+
+// Custom Dimension setzen (muss in Matomo angelegt sein)
+$tracker->setCustomDimension(1, 'premium-user'); // Dimension ID 1
+```
+
+#### E-Commerce Tracking
+```php
+// 1. Artikel zum Warenkorb/Bestellung hinzufügen
+$tracker->addEcommerceItem(
+    'SKU12345',      // SKU
+    'Rotes T-Shirt', // Produktname
+    ['Kleidung', 'Shirts'], // Kategorie (String oder Array)
+    19.99,           // Preis
+    1                // Menge
+);
+
+// 2. Bestellung abschließen
+$tracker->trackEcommerceOrder(
+    'ORDER-2024-001', // Bestell-ID
+    19.99,            // Gesamtsumme (Revenue)
+    16.80,            // Zwischensumme (optional)
+    3.19,             // Steuer (optional)
+    0.00,             // Versandkosten (optional)
+    false             // Rabatt (optional)
+);
+```
+
+### Automatische Daten
+Der Tracker ermittelt automatisch:
+- **IP-Adresse**: Wird an Matomo übergeben (benötigt Admin-Token in der Config)
+- **User Agent**: Wird aus dem aktuellen Request übernommen
+- **Visitor ID**: Wird aus IP/UA Hash oder Cookie generiert
+- **Zeit/Datum**: Aktuelle Serverzeit
+
+### ⚙️ Voraussetzungen in Matomo
+
+Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matomo nötig:
+
+1.  **Admin Token**: Damit Matomo die User-IP (`cip`) akzeptiert, benötigt der Request einen Token mit **Write**- oder **Admin**-Rechten. Das erledigt die Klasse automatisch, wenn im AddOn der Admin-Token hinterlegt ist.
+2.  **E-Commerce**: Falls `trackEcommerceOrder()` genutzt wird, muss für die Webseite in Matomo E-Commerce aktiviert sein (**Einstellungen > Messgrößen > Verwalten > Webseite bearbeiten**).
+3.  **Custom Dimensions**: Vor Nutzung von `setCustomDimension()` muss die Dimension in Matomo angelegt sein.
+4.  **Site Search**: Die interne Suche muss in den Webseiten-Einstellungen aktiviert sein, damit sie in den Berichten auftaucht.
+
 ## 🆘 Troubleshooting
 
 ### Matomo nicht gefunden
