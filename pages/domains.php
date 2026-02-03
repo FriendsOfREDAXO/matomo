@@ -153,7 +153,7 @@ if ($error) {
 }
 
 if (!$matomo_ready) {
-    echo rex_view::warning($addon->i18n('matomo_not_configured', rex_url::currentBackendPage(['page' => 'matomo/settings'])));
+    echo html_entity_decode(rex_view::warning($addon->i18n('matomo_not_configured', rex_url::currentBackendPage(['page' => 'matomo/settings']))));
     return;
 }
 
