@@ -51,10 +51,10 @@ if (rex_get('action') === 'fix_autologin' && $is_admin && !$is_external_matomo &
         '/var/www/vhosts/' . $host . '/httpdocs/' . $matomo_path . '/config/config.ini.php',
         // Alternative vhosts Struktur
         '/var/www/vhosts/' . $host . '/' . $matomo_path . '/config/config.ini.php',
-        // Direkt im Document Root
-        $_SERVER['DOCUMENT_ROOT'] . '/' . $matomo_path . '/config/config.ini.php',
-        // Ein Level höher vom Document Root
-        dirname($_SERVER['DOCUMENT_ROOT']) . '/' . $matomo_path . '/config/config.ini.php'
+        // REDAXO Base-Pfad
+        rex_path::base($matomo_path . '/config/config.ini.php'),
+        // Ein Level höher vom Base-Pfad
+        dirname(rex_path::base()) . '/' . $matomo_path . '/config/config.ini.php'
     ];
     
     $config_file = '';
@@ -149,8 +149,8 @@ if ($matomo_user && $matomo_password) {
         rex_path::frontend('../' . $matomo_path . '/config/config.ini.php'),
         '/var/www/vhosts/' . $host . '/httpdocs/' . $matomo_path . '/config/config.ini.php',
         '/var/www/vhosts/' . $host . '/' . $matomo_path . '/config/config.ini.php',
-        $_SERVER['DOCUMENT_ROOT'] . '/' . $matomo_path . '/config/config.ini.php',
-        dirname($_SERVER['DOCUMENT_ROOT']) . '/' . $matomo_path . '/config/config.ini.php'
+        rex_path::base($matomo_path . '/config/config.ini.php'),
+        dirname(rex_path::base()) . '/' . $matomo_path . '/config/config.ini.php'
     ];
     
     $config_file = '';

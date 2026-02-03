@@ -4,6 +4,103 @@ use FriendsOfRedaxo\Matomo\MatomoApi;
 
 $addon = rex_addon::get('matomo');
 
+// Test-Connection Handler
+if (rex_request('func', 'string') === 'test_connection') {
+    rex_response::cleanOutputBuffers();
+    header('Content-Type: application/json');
+    
+    $test_url = rex_request('matomo_url', 'string', '');
+    $verify_ssl = rex_request('verify_ssl', 'boolean', true);
+    
+    if ('' === $test_url) {
+        echo json_encode(['success' => false, 'message' => 'Keine URL angegeben']);
+        exit;
+    }
+    
+    try {
+        $socket = rex_socket::factoryUrl($test_url);
+        
+        if (false === $verify_ssl) {
+            $socket->setOptions([
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false
+                ]
+            ]);
+        }
+        
+        $socket->setTimeout(5);
+        $response = $socket->doGet();
+        
+        if ($response->isOk()) {
+            $body = $response->getBody();
+            $version = '';
+            
+            // Versuche Matomo-Version zu extrahieren
+            if (preg_match('/Matomo\s+(?:Analytics\s+)?(\d+\.\d+\.\d+)/', $body, $matches)) {
+                $version = $matches[1];
+            }
+            
+            $message = 'Verbindung erfolgreich';
+            if ($version) {
+                $message .= ' (Matomo ' . $version . ')';
+            }
+            
+            echo json_encode(['success' => true, 'message' => $message]);
+        } else {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'HTTP ' . $response->getStatusCode() . ' - ' . $response->getStatusMessage()
+            ]);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Fehler: ' . $e->getMessage()]);
+    }
+    
+    exit;
+}
+
+// Test-Proxy Handler
+if (rex_request('func', 'string') === 'test_proxy') {
+    rex_response::cleanOutputBuffers();
+    header('Content-Type: application/json');
+    
+    try {
+        // Proxy-URL aufrufen
+        $proxy_url = rex_url::frontend('index.php', ['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js']);
+        $socket = rex_socket::factoryUrl($proxy_url);
+        $socket->setTimeout(5);
+        $response = $socket->doGet();
+        
+        if ($response->isOk()) {
+            $body = $response->getBody();
+            $size = strlen($body);
+            
+            // Prüfe ob es valides JavaScript ist
+            if (strpos($body, 'Matomo') !== false || strpos($body, 'Piwik') !== false) {
+                echo json_encode([
+                    'success' => true, 
+                    'message' => 'Proxy funktioniert (' . number_format($size / 1024, 1) . ' KB geladen)'
+                ]);
+            } else {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Proxy antwortet, aber Inhalt scheint kein Matomo JavaScript zu sein'
+                ]);
+            }
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'HTTP ' . $response->getStatusCode() . ' - ' . $response->getStatusMessage()
+            ]);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Fehler: ' . $e->getMessage()]);
+    }
+    
+    exit;
+}
+
 // Form-Verarbeitung
 $message = '';
 $error = '';
@@ -15,6 +112,8 @@ if (rex_post('save_settings', 'boolean')) {
     $matomo_user = rex_post('matomo_user', 'string', '');
     $matomo_password = rex_post('matomo_password', 'string', '');
     $show_top_pages = rex_post('show_top_pages', 'boolean', false);
+    $verify_ssl = rex_post('verify_ssl', 'boolean', true);
+    $proxy_enabled = rex_post('proxy_enabled', 'boolean', false);
 
     rex_config::set('matomo', 'matomo_path', $matomo_path);
     rex_config::set('matomo', 'matomo_url', $matomo_url);
@@ -22,6 +121,8 @@ if (rex_post('save_settings', 'boolean')) {
     rex_config::set('matomo', 'matomo_user', $matomo_user);
     rex_config::set('matomo', 'matomo_password', $matomo_password);
     rex_config::set('matomo', 'show_top_pages', $show_top_pages);
+    rex_config::set('matomo', 'verify_ssl', $verify_ssl);
+    rex_config::set('matomo', 'proxy_enabled', $proxy_enabled);
 
     $message = $addon->i18n('matomo_config_saved');
 }
@@ -55,6 +156,8 @@ $admin_token = rex_config::get('matomo', 'admin_token', '');
 $matomo_user = rex_config::get('matomo', 'matomo_user', '');
 $matomo_password = rex_config::get('matomo', 'matomo_password', '');
 $show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
+$verify_ssl = rex_config::get('matomo', 'verify_ssl', true);
+$proxy_enabled = rex_config::get('matomo', 'proxy_enabled', false);
 
 // Status prüfen
 $matomo_installed = false;
@@ -131,8 +234,16 @@ if ($error) {
                     
                     <div class="form-group">
                         <label for="matomo_url">Matomo URL:</label>
-                        <input type="url" class="form-control" id="matomo_url" name="matomo_url" 
-                               value="<?= rex_escape($matomo_url) ?>" placeholder="https://ihre-domain.de/matomo">
+                        <div class="input-group">
+                            <input type="url" class="form-control" id="matomo_url" name="matomo_url" 
+                                   value="<?= rex_escape($matomo_url) ?>" placeholder="https://ihre-domain.de/matomo">
+                            <span class="input-group-btn">
+                                <button type="button" id="test-connection" class="btn btn-default" title="Verbindung testen">
+                                    <i class="fa fa-plug"></i> Test
+                                </button>
+                            </span>
+                        </div>
+                        <div id="test-result" style="margin-top: 10px;"></div>
                     </div>
                     
                     <div class="form-group">
@@ -140,6 +251,14 @@ if ($error) {
                         <input type="text" class="form-control" id="admin_token" name="admin_token" 
                                value="<?= rex_escape($admin_token) ?>" placeholder="">
                         <small class="text-muted">Finden Sie in Matomo unter: Administration → Platform → API → User Authentication</small>
+                    </div>
+                    
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="verify_ssl" value="1" <?= $verify_ssl ? 'checked' : '' ?>>
+                            <strong><?= $addon->i18n('matomo_verify_ssl') ?></strong>
+                        </label>
+                        <p class="text-muted"><?= $addon->i18n('matomo_verify_ssl_help') ?></p>
                     </div>
                     
                     <hr>
@@ -170,6 +289,26 @@ if ($error) {
                         </label>
                         <p class="text-muted">Zeigt die 5 meistbesuchten Seiten der aktuellen Woche in der Übersicht an</p>
                     </div>
+                    
+                    <hr>
+                    <h4><i class="fa fa-shield"></i> Tracking-Proxy (Anti-Adblocker)</h4>
+                    
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="proxy_enabled" value="1" <?= $proxy_enabled ? 'checked' : '' ?>>
+                            <strong><?= $addon->i18n('matomo_proxy_enabled') ?></strong>
+                        </label>
+                        <p class="text-muted"><?= $addon->i18n('matomo_proxy_enabled_help') ?></p>
+                    </div>
+                    
+                    <?php if ($matomo_url): ?>
+                    <div style="margin: 15px 0;">
+                        <button type="button" id="test-proxy" class="btn btn-default">
+                            <i class="fa fa-shield"></i> Proxy testen
+                        </button>
+                        <div id="test-proxy-result" style="margin-top: 10px;"></div>
+                    </div>
+                    <?php endif; ?>
                     
                     <button type="submit" name="save_settings" value="1" class="btn btn-success">
                         <i class="fa fa-save"></i> Einstellungen speichern
@@ -239,3 +378,72 @@ if ($error) {
         
     </div>
 </div>
+
+<script nonce="<?= rex_response::getNonce() ?>">
+jQuery(function($) {
+    $('#test-connection').on('click', function() {
+        var $btn = $(this);
+        var $result = $('#test-result');
+        var url = $('#matomo_url').val();
+        var verifySsl = $('input[name="verify_ssl"]').is(':checked');
+        
+        if (!url) {
+            $result.html('<div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> Bitte eine URL eingeben</div>');
+            return;
+        }
+        
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Teste...');
+        $result.html('');
+        
+        $.ajax({
+            url: '<?= rex_url::backendController(['page' => 'matomo/settings', 'func' => 'test_connection']) ?>',
+            method: 'POST',
+            data: {
+                matomo_url: url,
+                verify_ssl: verifySsl ? 1 : 0
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $result.html('<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + response.message + '</div>');
+                } else {
+                    $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + response.message + '</div>');
+                }
+            },
+            error: function() {
+                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> Verbindungstest fehlgeschlagen</div>');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i class="fa fa-plug"></i> Test');
+            }
+        });
+    });
+    
+    $('#test-proxy').on('click', function() {
+        var $btn = $(this);
+        var $result = $('#test-proxy-result');
+        
+        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Teste...');
+        $result.html('');
+        
+        $.ajax({
+            url: '<?= rex_url::backendController(['page' => 'matomo/settings', 'func' => 'test_proxy']) ?>',
+            method: 'POST',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $result.html('<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + response.message + '</div>');
+                } else {
+                    $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + response.message + '</div>');
+                }
+            },
+            error: function() {
+                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> Proxy-Test fehlgeschlagen</div>');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i class="fa fa-shield"></i> Proxy testen');
+            }
+        });
+    });
+});
+</script>

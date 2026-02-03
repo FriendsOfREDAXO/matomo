@@ -6,6 +6,7 @@ use rex;
 use rex_addon;
 use rex_config;
 use rex_logger;
+use rex_request;
 use rex_socket;
 use rex_socket_exception;
 
@@ -60,8 +61,8 @@ class Tracker
         $this->tokenAuth = $tokenAuth;
 
         // Set defaults from current request
-        $this->userAgent = rex_server('HTTP_USER_AGENT') ?? '';
-        $this->ip = rex_server('REMOTE_ADDR') ?? '';
+        $this->userAgent = rex_request::server('HTTP_USER_AGENT', 'string', '');
+        $this->ip = rex_request::server('REMOTE_ADDR', 'string', '');
         
         // Generate Visitor ID (16 chars hex)
         // Try to get from cookie if available, or generate hash from IP/UA
@@ -99,14 +100,14 @@ class Tracker
              return null;
         }
 
-        if (!$url) {
+        if (null === $url || '' === $url) {
             return null;
         }
 
         $tracker = new self($siteId, $url, (string) $token);
         
-        // Set SSL Verify from config
-        $sslVerify = (bool) $addon->getConfig('ssl_verify');
+        // Set SSL Verify from config (Standard: true)
+        $sslVerify = (bool) rex_config::get('matomo', 'verify_ssl', true);
         $tracker->setSslVerify($sslVerify);
         
         return $tracker;
@@ -155,7 +156,7 @@ class Tracker
      */
     public function setVisitorId(string $visitorId): self
     {
-        if (preg_match('/^[0-9a-fA-F]{16}$/', $visitorId)) {
+        if (1 === preg_match('/^[0-9a-fA-F]{16}$/', $visitorId)) {
             $this->visitorId = $visitorId;
         }
         return $this;
@@ -240,10 +241,10 @@ class Tracker
     public function setLocation(string $country, string $region = '', string $city = '', float $lat = 0.0, float $long = 0.0): self
     {
         $this->customParameters['country'] = $country;
-        if ($region) $this->customParameters['region'] = $region;
-        if ($city) $this->customParameters['city'] = $city;
-        if ($lat != 0.0) $this->customParameters['lat'] = $lat;
-        if ($long != 0.0) $this->customParameters['long'] = $long;
+        if ('' !== $region) $this->customParameters['region'] = $region;
+        if ('' !== $city) $this->customParameters['city'] = $city;
+        if (0.0 !== $lat) $this->customParameters['lat'] = $lat;
+        if (0.0 !== $long) $this->customParameters['long'] = $long;
         return $this;
     }
 
@@ -252,10 +253,10 @@ class Tracker
      * 
      * @param string $sku Product SKU
      * @param string $name Product Name
-     * @param string|array $category Category or Array of Categories
+     * @param string|array<int, string> $category Category or Array of Categories
      * @param float $price Product Price
      */
-    public function setEcommerceView(string $sku = '', string $name = '', $category = '', float $price = 0.0): self
+    public function setEcommerceView(string $sku = '', string $name = '', string|array $category = '', float $price = 0.0): self
     {
         if (is_array($category)) {
              $category = json_encode($category);
@@ -298,11 +299,11 @@ class Tracker
         $params = [
             'c_n' => $contentName,
             'c_p' => $contentPiece,
-             'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                 (rex_server('HTTP_HOST') ?? '') . 
-                 (rex_server('REQUEST_URI') ?? '')
+             'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                 rex_request::server('HTTP_HOST', 'string', '') . 
+                 rex_request::server('REQUEST_URI', 'string', '')
         ];
-        if ($contentTarget) {
+        if ('' !== $contentTarget) {
             $params['c_t'] = $contentTarget;
         }
         return $this->sendRequest($params);
@@ -317,11 +318,11 @@ class Tracker
             'c_i' => $interaction,
             'c_n' => $contentName,
             'c_p' => $contentPiece,
-             'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                 (rex_server('HTTP_HOST') ?? '') . 
-                 (rex_server('REQUEST_URI') ?? '')
+             'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                 rex_request::server('HTTP_HOST', 'string', '') . 
+                 rex_request::server('REQUEST_URI', 'string', '')
         ];
-        if ($contentTarget) {
+        if ('' !== $contentTarget) {
             $params['c_t'] = $contentTarget;
         }
         return $this->sendRequest($params);
@@ -342,15 +343,15 @@ class Tracker
         $params = [
             'ca' => 1,
             'cra' => $message,
-                 'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                     (rex_server('HTTP_HOST') ?? '') . 
-                     (rex_server('REQUEST_URI') ?? '')
+                 'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                     rex_request::server('HTTP_HOST', 'string', '') . 
+                     rex_request::server('REQUEST_URI', 'string', '')
         ];
         
-        if ($type) $params['cra_tp'] = $type;
-        if ($file) $params['cra_ru'] = $file;
-        if ($line) $params['cra_rl'] = $line;
-        if ($stacktrace) $params['cra_st'] = $stacktrace; // Note: Might be too long for GET requests, but we use POST often
+        if ('' !== $type) $params['cra_tp'] = $type;
+        if ('' !== $file) $params['cra_ru'] = $file;
+        if (0 !== $line) $params['cra_rl'] = $line;
+        if ('' !== $stacktrace) $params['cra_st'] = $stacktrace;
         
         return $this->sendRequest($params);
     }
@@ -364,9 +365,9 @@ class Tracker
     public function trackPageView(string $documentTitle, ?string $url = null): bool
     {
         if ($url === null) {
-                 $url = (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                     (rex_server('HTTP_HOST') ?? '') . 
-                     (rex_server('REQUEST_URI') ?? '');
+                 $url = rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                     rex_request::server('HTTP_HOST', 'string', '') . 
+                     rex_request::server('REQUEST_URI', 'string', '');
         }
 
         return $this->sendRequest([
@@ -386,9 +387,9 @@ class Tracker
         return $this->sendRequest([
             'idgoal' => $goalId,
             'revenue' => $revenue,
-                 'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                     (rex_server('HTTP_HOST') ?? '') . 
-                     (rex_server('REQUEST_URI') ?? '')
+                 'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                     rex_request::server('HTTP_HOST', 'string', '') . 
+                     rex_request::server('REQUEST_URI', 'string', '')
         ]);
     }
 
@@ -403,9 +404,9 @@ class Tracker
     {
         $params = [
             'search' => $keyword,
-                 'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                     (rex_server('HTTP_HOST') ?? '') . 
-                     (rex_server('REQUEST_URI') ?? '')
+                 'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                     rex_request::server('HTTP_HOST', 'string', '') . 
+                     rex_request::server('REQUEST_URI', 'string', '')
         ];
 
         if ($category !== null) {
@@ -424,11 +425,11 @@ class Tracker
      * 
      * @param string $sku SKU
      * @param string $name Product Name
-     * @param string|array|null $category Product Category (string or array of up to 5 categories)
+     * @param string|array<int, string>|null $category Product Category (string or array of up to 5 categories)
      * @param float|int $price Price
      * @param int $quantity Quantity
      */
-    public function addEcommerceItem(string $sku, string $name = '', $category = null, $price = 0, int $quantity = 1): self
+    public function addEcommerceItem(string $sku, string $name = '', string|array|null $category = null, float|int $price = 0, int $quantity = 1): self
     {
         if (!isset($this->customParameters['ec_items'])) {
             $this->customParameters['ec_items'] = [];
@@ -463,9 +464,9 @@ class Tracker
         $params = [
             'ec_id' => $orderId,
             'revenue' => $grandTotal,
-             'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                   (rex_server('HTTP_HOST') ?? '') . 
-                   (rex_server('REQUEST_URI') ?? '')
+             'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                   rex_request::server('HTTP_HOST', 'string', '') . 
+                   rex_request::server('REQUEST_URI', 'string', '')
         ];
         
         if ($subTotal !== null) $params['ec_st'] = $subTotal;
@@ -495,9 +496,9 @@ class Tracker
         return $this->sendRequest([
             'idgoal' => 0,
             'revenue' => $grandTotal,
-            'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                   (rex_server('HTTP_HOST') ?? '') . 
-                   (rex_server('REQUEST_URI') ?? '')
+            'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                   rex_request::server('HTTP_HOST', 'string', '') . 
+                   rex_request::server('REQUEST_URI', 'string', '')
         ]);
         // Note: ec_items currently in buffer will be sent with this request
     }
@@ -515,9 +516,9 @@ class Tracker
         $params = [
             'e_c' => $category,
             'e_a' => $action,
-             'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                   (rex_server('HTTP_HOST') ?? '') . 
-                   (rex_server('REQUEST_URI') ?? '')
+             'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                   rex_request::server('HTTP_HOST', 'string', '') . 
+                   rex_request::server('REQUEST_URI', 'string', '')
         ];
         if ($name !== null) {
             $params['e_n'] = $name;
@@ -544,12 +545,12 @@ class Tracker
             '_id' => $this->visitorId,
         ];
 
-        if ($this->userAgent) {
+        if ('' !== $this->userAgent) {
             $baseParams['ua'] = $this->userAgent;
         }
 
         // Needed for correct IP tracking (requires Auth Token)
-        if ($this->tokenAuth && $this->ip) {
+        if ('' !== $this->tokenAuth && '' !== $this->ip) {
             $baseParams['cip'] = $this->ip;
             $baseParams['token_auth'] = $this->tokenAuth;
         }
@@ -559,8 +560,9 @@ class Tracker
             $baseParams['res'] = $this->width . 'x' . $this->height;
         }
 
-        if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-            $baseParams['lang'] = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+        $acceptLanguage = rex_request::server('HTTP_ACCEPT_LANGUAGE', 'string', '');
+        if ('' !== $acceptLanguage) {
+            $baseParams['lang'] = $acceptLanguage;
         }
 
         // Merge base params with custom params

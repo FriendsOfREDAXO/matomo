@@ -21,15 +21,15 @@ class MatomoDashboardItem extends rex_dashboard_item
         return rex_i18n::msg('matomo_widget_title', 'Matomo');
     }
 
-    public function getData()
+    public function getData(): string
     {
         $addon = rex_addon::get('matomo');
         
         // Prüfen ob Matomo konfiguriert ist
-        $matomo_url = rex_config::get('matomo', 'matomo_url', '');
-        $admin_token = rex_config::get('matomo', 'admin_token', '');
+        $matomo_url = (string) rex_config::get('matomo', 'matomo_url', '');
+        $admin_token = (string) rex_config::get('matomo', 'admin_token', '');
         
-        if (!$matomo_url || !$admin_token) {
+        if ('' === $matomo_url || '' === $admin_token) {
             return $this->renderNotConfigured();
         }
         
@@ -61,9 +61,13 @@ class MatomoDashboardItem extends rex_dashboard_item
         </div>';
     }
     
-    private function renderStats($sites, $api): string
+    /**
+     * @param array<int, array<string, mixed>> $sites
+     * @param MatomoApi $api
+     */
+    private function renderStats(array $sites, MatomoApi $api): string
     {
-        if (empty($sites)) {
+        if ([] === $sites) {
             return '
             <div class="alert alert-warning" style="margin-bottom: 0;">
                 <h4><i class="fa fa-warning"></i> ' . rex_i18n::msg('matomo_widget_no_sites') . '</h4>
@@ -102,7 +106,7 @@ class MatomoDashboardItem extends rex_dashboard_item
             }
         }
         
-        if (!empty($today_stats)) {
+        if ([] !== $today_stats) {
             $content .= '<div class="table-responsive">';
             $content .= '<table class="table table-condensed table-hover" style="margin-bottom: 10px;">';
             $content .= '<thead>';
@@ -145,7 +149,7 @@ class MatomoDashboardItem extends rex_dashboard_item
         return $content;
     }
     
-    private function renderError($error): string
+    private function renderError(string $error): string
     {
         return '
         <div class="alert alert-danger" style="margin-bottom: 0;">
