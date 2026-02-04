@@ -15,8 +15,8 @@ $show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
 $matomo_ready = false;
 $is_external_matomo = false;
 
-if ($matomo_url && $admin_token) {
-    if ($matomo_path) {
+if ($matomo_url !== '' && $admin_token !== '') {
+    if ($matomo_path !== '') {
         // Lokale Matomo-Installation - prüfe ob verfügbar
         $full_path = rex_path::frontend($matomo_path . '/');
         $matomo_ready = file_exists($full_path . 'index.php');
@@ -34,12 +34,17 @@ if (!$matomo_ready) {
 
 // User und Admin-Status früh definieren
 $user = rex::getUser();
-$is_admin = $user && $user->isAdmin();
+$is_admin = $user instanceof rex_user && $user->isAdmin();
 
 // Auto-Login Fix verarbeiten (nur für lokale Installationen)
-if (rex_get('action') === 'fix_autologin' && $is_admin && !$is_external_matomo && $matomo_path) {
+if (rex_get('action', 'string') === 'fix_autologin' && $is_admin === true && $is_external_matomo === false && $matomo_path !== '') {
     // Host aus Matomo URL extrahieren
-    $host = parse_url($matomo_url, PHP_URL_HOST);
+    $parsed_url = parse_url($matomo_url);
+    if (!is_array($parsed_url) || !isset($parsed_url['host'])) {
+        echo rex_view::error('Ungültige Matomo URL');
+        return;
+    }
+    $host = $parsed_url['host'];
     
     // Verschiedene mögliche Pfade testen
     $possible_config_files = [
@@ -65,7 +70,7 @@ if (rex_get('action') === 'fix_autologin' && $is_admin && !$is_external_matomo &
         }
     }
     
-    if (!$config_file) {
+    if ($config_file === '') {
         echo rex_view::error('Keine Matomo config.ini.php gefunden. Getestete Pfade: ' . implode(', ', $possible_config_files));
         return;
     }
@@ -74,7 +79,7 @@ if (rex_get('action') === 'fix_autologin' && $is_admin && !$is_external_matomo &
     
     if (file_exists($config_file)) {
         if (is_writable($config_file)) {
-            $config_content = file_get_contents($config_file);
+            $config_content = (string) file_get_contents($config_file);
             $original_content = $config_content;
             
             // Prüfe ob login_allow_logme bereits existiert
@@ -84,7 +89,7 @@ if (rex_get('action') === 'fix_autologin' && $is_admin && !$is_external_matomo &
                 // Prüfe ob [General] Sektion existiert
                 if (strpos($config_content, '[General]') !== false) {
                     // Füge login_allow_logme zur [General] Sektion hinzu (nach der Zeile mit [General])
-                    $config_content = preg_replace(
+                    $config_content = (string) preg_replace(
                         '/(\[General\]\s*\n)/i',
                         '$1login_allow_logme = 1' . PHP_EOL,
                         $config_content,
@@ -95,7 +100,7 @@ if (rex_get('action') === 'fix_autologin' && $is_admin && !$is_external_matomo &
                     $config_content = "[General]" . PHP_EOL . "login_allow_logme = 1" . PHP_EOL . PHP_EOL . $config_content;
                 }
                 
-                if (file_put_contents($config_file, $config_content)) {
+                if (file_put_contents($config_file, $config_content) !== false) {
                     echo rex_view::success('Auto-Login wurde erfolgreich aktiviert! Die Buttons funktionieren jetzt.');
                     $auto_login_available = true;
                     $auto_login_config_error = false;
@@ -137,14 +142,20 @@ $auto_login_available = false;
 $auto_login_config_error = false;
 $debug_info = '';
 
-if ($matomo_user && $matomo_password) {
-    if ($is_external_matomo || !$matomo_path) {
+if ($matomo_user !== '' && $matomo_password !== '') {
+    if ($is_external_matomo || $matomo_path === '') {
         // Externe Matomo-Installation - Auto-Login verfügbar, aber keine Konfigurationsprüfung möglich
         $auto_login_available = true;
         $debug_info = "Externe Matomo-Installation - Auto-Login ohne lokale Konfigurationsprüfung";
-    } elseif ($matomo_path) {
+    } elseif ($matomo_path !== '') {
     // Host aus Matomo URL extrahieren für Status-Prüfung
-    $host = parse_url($matomo_url, PHP_URL_HOST);
+    $parsed_url = parse_url($matomo_url);
+    if (!is_array($parsed_url) || !isset($parsed_url['host'])) {
+        // Skip check if url invalid
+        $host = 'unknown';
+    } else {
+        $host = $parsed_url['host'];
+    }
     
     // Dieselben Pfade wie bei der Reparatur testen
     $possible_config_files = [
@@ -164,17 +175,17 @@ if ($matomo_user && $matomo_password) {
         }
     }
     
-    if ($config_file) {
+    if ($config_file !== '') {
         $debug_info = "Config-Datei: $config_file | ";
         $debug_info .= "Existiert: Ja | ";
         $debug_info .= "Berechtigung: " . substr(sprintf('%o', fileperms($config_file)), -4) . " | ";
         $debug_info .= "Beschreibbar: " . (is_writable($config_file) ? 'Ja' : 'Nein') . " | ";
         
-        $config_content = file_get_contents($config_file);
+        $config_content = (string) file_get_contents($config_file);
         // Prüfe ob login_allow_logme existiert (egal welcher Wert)
         if (strpos($config_content, 'login_allow_logme') !== false) {
             // Prüfe ob es auf 1 gesetzt ist
-            if (preg_match('/login_allow_logme\s*=\s*1/i', $config_content)) {
+            if (preg_match('/login_allow_logme\s*=\s*1/i', $config_content) === 1) {
                 $auto_login_available = true;
                 $debug_info .= "Status: Bereits konfiguriert (login_allow_logme = 1)";
             } else {
@@ -209,8 +220,9 @@ try {
     // Domain-Filterung anwenden
     $sites = [];
     foreach ($filtered_sites as $site) {
-        $sites[] = $site;
         // TODO: Hier später User-spezifische Domain-Filterung
+        // Für jetzt zeigen wir alles an da $show_all_domains true ist
+        $sites[] = $site;
     }
     
     // Erweiterte Statistiken laden
@@ -238,10 +250,10 @@ try {
     $top_pages_data = [];
     if ($show_top_pages) {
         foreach ($sites as $site) {
-            $site_id = $site['idsite'];
+            $site_id = (int) $site['idsite'];
             try {
                 $top_pages = $api->getTopPages($site_id, 'week', 'today', 5);
-                $top_pages_data[$site_id] = $top_pages ?: [];
+                $top_pages_data[$site_id] = $top_pages;
             } catch (Exception $e) {
                 $top_pages_data[$site_id] = [];
             }
@@ -258,13 +270,13 @@ try {
     <div class="col-sm-12">
         
         <!-- Auto-Login Status Warnung (nur für Admins und lokale Installationen) -->
-        <?php if ($is_admin && $matomo_user && $matomo_password && !$auto_login_available && $auto_login_config_error && !$is_external_matomo): ?>
+        <?php if ($is_admin && $matomo_user !== '' && $matomo_password !== '' && !$auto_login_available && $auto_login_config_error !== false && !$is_external_matomo): ?>
             <div class="alert alert-warning">
                 <h4><i class="fa fa-exclamation-triangle"></i> <?= $addon->i18n('matomo_auto_login_not_available') ?></h4>
                 <p><strong><?= $addon->i18n('matomo_problem') ?>:</strong> <?= $addon->i18n('matomo_auto_login_not_configured') ?></p>
                 
                 <!-- Debug-Info für Entwicklung -->
-                <?php if ($debug_info): ?>
+                <?php if ($debug_info !== ''): ?>
                     <div class="alert alert-info" style="margin: 10px 0;">
                         <small><strong><?= $addon->i18n('matomo_debug') ?>:</strong> <?= rex_escape($debug_info) ?></small>
                     </div>
@@ -272,7 +284,7 @@ try {
                 
                 <?php if ($auto_login_config_error === 'configurable'): ?>
                     <p><strong><?= $addon->i18n('matomo_solution') ?>:</strong> 
-                        <?php if ($matomo_path): ?>
+                        <?php if ($matomo_path !== ''): ?>
                             <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/overview', 'action' => 'fix_autologin']) ?>" 
                                class="btn btn-success btn-sm">
                                 <i class="fa fa-wrench"></i> <?= $addon->i18n('matomo_auto_repair') ?>
@@ -286,7 +298,7 @@ try {
 login_allow_logme = 1</pre>
                 <?php else: ?>
                     <p><strong><?= $addon->i18n('matomo_manual_solution_required') ?>:</strong> 
-                        <?php if ($matomo_path): ?>
+                        <?php if ($matomo_path !== ''): ?>
                             <?= $addon->i18n('matomo_add_to') ?> <code><?= rex_escape($matomo_path) ?>/config/config.ini.php</code>:
                         <?php else: ?>
                             <?= $addon->i18n('matomo_add_to_your_matomo') ?> <code>config/config.ini.php</code>:
@@ -295,7 +307,7 @@ login_allow_logme = 1</pre>
                     <pre>[General]
 login_allow_logme = 1</pre>
                     <p><small class="text-muted">
-                        <?php if ($matomo_path): ?>
+                        <?php if ($matomo_path !== ''): ?>
                             <?= $addon->i18n('matomo_file_not_writable') ?>
                         <?php else: ?>
                             <?= $addon->i18n('matomo_external_installation_edit_on_server') ?>
@@ -316,7 +328,7 @@ login_allow_logme = 1</pre>
                         $matomo_user = rex_config::get('matomo', 'matomo_user', '');
                         $matomo_password = rex_config::get('matomo', 'matomo_password', '');
                         
-                        if ($matomo_user && $matomo_password): 
+                        if ($matomo_user !== '' && $matomo_password !== ''): 
                             // Einfache Login-URL ohne Weiterleitung - Matomo macht das automatisch
                             $password_hash = md5($matomo_password);
                             $login_url = $matomo_url . '/index.php?module=Login&action=logme&login=' . 
@@ -599,7 +611,7 @@ login_allow_logme = 1</pre>
             </div>
             <div class="panel-body">
                 
-                <?php if (empty($sites)): ?>
+                <?php if (count($sites) === 0): ?>
                     <div class="alert alert-info">
                         <i class="fa fa-info-circle"></i> 
                         <strong><?= $addon->i18n('matomo_no_domains_available') ?>:</strong> 

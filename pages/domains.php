@@ -14,8 +14,8 @@ $matomo_path = rex_config::get('matomo', 'matomo_path', '');
 $matomo_ready = false;
 $is_external_matomo = false;
 
-if ($matomo_url && $admin_token) {
-    if ($matomo_path) {
+if ($matomo_url !== '' && $admin_token !== '') {
+    if ($matomo_path !== '') {
         // Lokale Matomo-Installation - prüfe ob verfügbar
         $full_path = rex_path::frontend($matomo_path . '/');
         $matomo_ready = file_exists($full_path . 'index.php');
@@ -34,12 +34,12 @@ if (rex_post('add_domain', 'boolean') && $matomo_ready) {
     $domain_name = rex_post('domain_name', 'string', '');
     $domain_url = rex_post('domain_url', 'string', '');
 
-    if ($domain_name && $domain_url) {
+    if ($domain_name !== '' && $domain_url !== '') {
         try {
             $api = new MatomoApi($matomo_url, $admin_token, $user_token);
             $site_id = $api->addSite($domain_name, $domain_url);
             
-            if ($site_id) {
+            if ($site_id !== null) {
                 $message = $addon->i18n('matomo_domain_added', $domain_name, $site_id);
             } else {
                 $error = $addon->i18n('matomo_domain_add_failed');
@@ -53,8 +53,7 @@ if (rex_post('add_domain', 'boolean') && $matomo_ready) {
 }
 
 // YRewrite Domain Import
-if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && !empty(rex_post('import_domains', 'array'))) {
-    $import_domains = rex_post('import_domains', 'array');
+if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && count($import_domains = rex_post('import_domains', 'array')) > 0 ) {
     
     if (class_exists('FriendsOfRedaxo\Matomo\YRewriteHelper') && YRewriteHelper::isAvailable()) {
         $yrewrite_domains = YRewriteHelper::getAvailableDomains();
@@ -78,14 +77,15 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && !empty(rex_post('
                     $domain_url = rtrim($domain['url'], '/');
                     
                     // Prüfen ob Domain bereits existiert
-                    if (in_array($domain_url, $existing_urls)) {
+                    if (in_array($domain_url, $existing_urls, true)) {
                         $skipped_count++;
                         continue;
                     }
                     
                     try {
-                        $site_id = $api->addSite($domain['title'] ?: $domain['name'], $domain['url']);
-                        if ($site_id) {
+                        $title = $domain['title']; 
+                        $site_id = $api->addSite($title, $domain['url']);
+                        if ($site_id !== null) {
                             $imported_count++;
                         } else {
                             $import_errors[] = $addon->i18n('matomo_domain_import_error', $domain_name);
@@ -105,11 +105,11 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && !empty(rex_post('
                 $success_parts[] = $addon->i18n('matomo_domain_import_skipped', $skipped_count);
             }
             
-            if (!empty($success_parts)) {
+            if (count($success_parts) > 0) {
                 $message = implode(', ', $success_parts) . '.';
             }
             
-            if (!empty($import_errors)) {
+            if (count($import_errors) > 0) {
                 $error = implode('<br>', $import_errors);
             }
             
@@ -145,10 +145,10 @@ if (rex_post('delete_domain', 'boolean') && $matomo_ready) {
 }
 
 // Nachrichten anzeigen
-if ($message) {
+if ($message !== '') {
     echo rex_view::success($message);
 }
-if ($error) {
+if ($error !== '') {
     echo rex_view::error($error);
 }
 
@@ -225,7 +225,7 @@ try {
         <?php if (class_exists('FriendsOfRedaxo\Matomo\YRewriteHelper') && YRewriteHelper::isAvailable()): ?>
             <?php 
             $yrewrite_domains = YRewriteHelper::getAvailableDomains();
-            if (!empty($yrewrite_domains)):
+            if (count($yrewrite_domains) > 0):
                 // Bereits vorhandene URLs sammeln um Duplikate zu markieren
                 $existing_urls = [];
                 foreach ($sites as $site) {
@@ -249,7 +249,7 @@ try {
                         <div class="form-group">
                             <?php foreach ($yrewrite_domains as $domain): 
                                 $domain_url = rtrim($domain['url'], '/');
-                                $already_exists = in_array($domain_url, $existing_urls);
+                                $already_exists = in_array($domain_url, $existing_urls, true);
                             ?>
                                 <div class="checkbox <?= $already_exists ? 'text-muted' : '' ?>">
                                     <label>
@@ -264,8 +264,10 @@ try {
                                         <br>
                                         <small class="text-muted">
                                             <i class="fa fa-link"></i> <?= rex_escape($domain['url']) ?>
-                                            <?php if ($domain['title'] && $domain['title'] !== $domain['name']): ?>
-                                                <br><i class="fa fa-tag"></i> <?= rex_escape($domain['title']) ?>
+                                            <?php 
+                                            $title = $domain['title'];
+                                            if ($title !== $domain['name']): ?>
+                                                <br><i class="fa fa-tag"></i> <?= rex_escape($title) ?>
                                             <?php endif; ?>
                                         </small>
                                     </label>
@@ -288,7 +290,7 @@ try {
                 <h3 class="panel-title">🌐 Vorhandene Domains (<?= count($sites) ?>)</h3>
             </div>
             <div class="panel-body">
-                <?php if (empty($sites)): ?>
+                <?php if (count($sites) === 0): ?>
                     <p class="text-muted">Noch keine Domains konfiguriert.</p>
                 <?php else: ?>
                     <div class="table-responsive">
