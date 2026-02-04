@@ -351,9 +351,10 @@ jQuery(function($) {
         
         // Hole Test-URL vom Backend
         $.ajax({
-            url: '<?= rex_url::backendController(['page' => 'matomo/settings', 'func' => 'test_connection']) ?>',
+            url: window.location.href,
             method: 'POST',
             data: {
+                func: 'test_connection',
                 matomo_url: url
             },
             dataType: 'json'
@@ -394,10 +395,19 @@ jQuery(function($) {
                     $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
                 });
             } else {
-                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + response.message + '</div>');
+                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + (response.message || 'Fehler') + '</div>');
             }
-        }).fail(function() {
-            $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> Backend-Anfrage fehlgeschlagen</div>');
+        }).fail(function(xhr) {
+            var msg = 'Backend-Anfrage fehlgeschlagen';
+            if (xhr.responseText) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        msg = response.message;
+                    }
+                } catch(e) {}
+            }
+            $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
         }).always(function() {
             $btn.prop('disabled', false).html('<i class="fa fa-plug"></i> Test');
         });
@@ -412,8 +422,11 @@ jQuery(function($) {
         
         // Hole Proxy-URL vom Backend
         $.ajax({
-            url: '<?= rex_url::backendController(['page' => 'matomo/settings', 'func' => 'test_proxy']) ?>',
+            url: window.location.href,
             method: 'POST',
+            data: {
+                func: 'test_proxy'
+            },
             dataType: 'json'
         }).done(function(response) {
             if (response.success && response.proxy_url) {
@@ -453,10 +466,19 @@ jQuery(function($) {
                     $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
                 });
             } else {
-                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + response.message + '</div>');
+                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + (response.message || 'Fehler') + '</div>');
             }
-        }).fail(function() {
-            $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> Backend-Anfrage fehlgeschlagen</div>');
+        }).fail(function(xhr) {
+            var msg = 'Backend-Anfrage fehlgeschlagen';
+            if (xhr.responseText) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        msg = response.message;
+                    }
+                } catch(e) {}
+            }
+            $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
         }).always(function() {
             $btn.prop('disabled', false).html('<i class="fa fa-shield"></i> Proxy testen');
         });
