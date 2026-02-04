@@ -6,6 +6,9 @@ use rex;
 use rex_addon;
 use rex_config;
 use rex_logger;
+use rex_request;
+use rex_socket;
+use rex_socket_exception;
 
 /**
  * Matomo Tracker Class for Server-Side Tracking.
@@ -42,6 +45,9 @@ class Tracker
     
     /** @var array<string, mixed> */
     private array $customParameters = [];
+    
+    /** @var bool */
+    private bool $sslVerify = false;
 
     /**
      * @param int $siteId
@@ -55,8 +61,8 @@ class Tracker
         $this->tokenAuth = $tokenAuth;
 
         // Set defaults from current request
-        $this->userAgent = rex_server('HTTP_USER_AGENT') ?? '';
-        $this->ip = rex_server('REMOTE_ADDR') ?? '';
+        $this->userAgent = rex_request::server('HTTP_USER_AGENT', 'string', '');
+        $this->ip = rex_request::server('REMOTE_ADDR', 'string', '');
         
         // Generate Visitor ID (16 chars hex)
         // Try to get from cookie if available, or generate hash from IP/UA
@@ -94,12 +100,26 @@ class Tracker
              return null;
         }
 
-        if (!$url) {
+        if (null === $url || '' === $url) {
             return null;
         }
 
         $tracker = new self($siteId, $url, (string) $token);
+        
+        // Set SSL Verify from config (Standard: true)
+        $sslVerify = (bool) rex_config::get('matomo', 'verify_ssl', true);
+        $tracker->setSslVerify($sslVerify);
+        
         return $tracker;
+    }
+
+    /**
+     * Sets whether SSL certificate verification should be enabled.
+     */
+    public function setSslVerify(bool $verify): self
+    {
+        $this->sslVerify = $verify;
+        return $this;
     }
 
     /**
@@ -136,7 +156,7 @@ class Tracker
      */
     public function setVisitorId(string $visitorId): self
     {
-        if (preg_match('/^[0-9a-fA-F]{16}$/', $visitorId)) {
+        if (1 === preg_match('/^[0-9a-fA-F]{16}$/', $visitorId)) {
             $this->visitorId = $visitorId;
         }
         return $this;
@@ -221,10 +241,10 @@ class Tracker
     public function setLocation(string $country, string $region = '', string $city = '', float $lat = 0.0, float $long = 0.0): self
     {
         $this->customParameters['country'] = $country;
-        if ($region) $this->customParameters['region'] = $region;
-        if ($city) $this->customParameters['city'] = $city;
-        if ($lat != 0.0) $this->customParameters['lat'] = $lat;
-        if ($long != 0.0) $this->customParameters['long'] = $long;
+        if ('' !== $region) $this->customParameters['region'] = $region;
+        if ('' !== $city) $this->customParameters['city'] = $city;
+        if (0.0 !== $lat) $this->customParameters['lat'] = $lat;
+        if (0.0 !== $long) $this->customParameters['long'] = $long;
         return $this;
     }
 
@@ -233,10 +253,10 @@ class Tracker
      * 
      * @param string $sku Product SKU
      * @param string $name Product Name
-     * @param string|array $category Category or Array of Categories
+     * @param string|array<int, string> $category Category or Array of Categories
      * @param float $price Product Price
      */
-    public function setEcommerceView(string $sku = '', string $name = '', $category = '', float $price = 0.0): self
+    public function setEcommerceView(string $sku = '', string $name = '', string|array $category = '', float $price = 0.0): self
     {
         if (is_array($category)) {
              $category = json_encode($category);
@@ -279,11 +299,11 @@ class Tracker
         $params = [
             'c_n' => $contentName,
             'c_p' => $contentPiece,
-             'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                 (rex_server('HTTP_HOST') ?? '') . 
-                 (rex_server('REQUEST_URI') ?? '')
+             'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                 rex_request::server('HTTP_HOST', 'string', '') . 
+                 rex_request::server('REQUEST_URI', 'string', '')
         ];
-        if ($contentTarget) {
+        if ('' !== $contentTarget) {
             $params['c_t'] = $contentTarget;
         }
         return $this->sendRequest($params);
@@ -298,11 +318,11 @@ class Tracker
             'c_i' => $interaction,
             'c_n' => $contentName,
             'c_p' => $contentPiece,
-             'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                 (rex_server('HTTP_HOST') ?? '') . 
-                 (rex_server('REQUEST_URI') ?? '')
+             'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                 rex_request::server('HTTP_HOST', 'string', '') . 
+                 rex_request::server('REQUEST_URI', 'string', '')
         ];
-        if ($contentTarget) {
+        if ('' !== $contentTarget) {
             $params['c_t'] = $contentTarget;
         }
         return $this->sendRequest($params);
@@ -323,15 +343,15 @@ class Tracker
         $params = [
             'ca' => 1,
             'cra' => $message,
-                 'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                     (rex_server('HTTP_HOST') ?? '') . 
-                     (rex_server('REQUEST_URI') ?? '')
+                 'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                     rex_request::server('HTTP_HOST', 'string', '') . 
+                     rex_request::server('REQUEST_URI', 'string', '')
         ];
         
-        if ($type) $params['cra_tp'] = $type;
-        if ($file) $params['cra_ru'] = $file;
-        if ($line) $params['cra_rl'] = $line;
-        if ($stacktrace) $params['cra_st'] = $stacktrace; // Note: Might be too long for GET requests, but we use POST often
+        if ('' !== $type) $params['cra_tp'] = $type;
+        if ('' !== $file) $params['cra_ru'] = $file;
+        if (0 !== $line) $params['cra_rl'] = $line;
+        if ('' !== $stacktrace) $params['cra_st'] = $stacktrace;
         
         return $this->sendRequest($params);
     }
@@ -345,9 +365,9 @@ class Tracker
     public function trackPageView(string $documentTitle, ?string $url = null): bool
     {
         if ($url === null) {
-                 $url = (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                     (rex_server('HTTP_HOST') ?? '') . 
-                     (rex_server('REQUEST_URI') ?? '');
+                 $url = rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                     rex_request::server('HTTP_HOST', 'string', '') . 
+                     rex_request::server('REQUEST_URI', 'string', '');
         }
 
         return $this->sendRequest([
@@ -367,9 +387,9 @@ class Tracker
         return $this->sendRequest([
             'idgoal' => $goalId,
             'revenue' => $revenue,
-                 'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                     (rex_server('HTTP_HOST') ?? '') . 
-                     (rex_server('REQUEST_URI') ?? '')
+                 'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                     rex_request::server('HTTP_HOST', 'string', '') . 
+                     rex_request::server('REQUEST_URI', 'string', '')
         ]);
     }
 
@@ -384,9 +404,9 @@ class Tracker
     {
         $params = [
             'search' => $keyword,
-                 'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                     (rex_server('HTTP_HOST') ?? '') . 
-                     (rex_server('REQUEST_URI') ?? '')
+                 'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                     rex_request::server('HTTP_HOST', 'string', '') . 
+                     rex_request::server('REQUEST_URI', 'string', '')
         ];
 
         if ($category !== null) {
@@ -405,11 +425,11 @@ class Tracker
      * 
      * @param string $sku SKU
      * @param string $name Product Name
-     * @param string|array|null $category Product Category (string or array of up to 5 categories)
+     * @param string|array<int, string>|null $category Product Category (string or array of up to 5 categories)
      * @param float|int $price Price
      * @param int $quantity Quantity
      */
-    public function addEcommerceItem(string $sku, string $name = '', $category = null, $price = 0, int $quantity = 1): self
+    public function addEcommerceItem(string $sku, string $name = '', string|array|null $category = null, float|int $price = 0, int $quantity = 1): self
     {
         if (!isset($this->customParameters['ec_items'])) {
             $this->customParameters['ec_items'] = [];
@@ -444,9 +464,9 @@ class Tracker
         $params = [
             'ec_id' => $orderId,
             'revenue' => $grandTotal,
-             'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                   (rex_server('HTTP_HOST') ?? '') . 
-                   (rex_server('REQUEST_URI') ?? '')
+             'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                   rex_request::server('HTTP_HOST', 'string', '') . 
+                   rex_request::server('REQUEST_URI', 'string', '')
         ];
         
         if ($subTotal !== null) $params['ec_st'] = $subTotal;
@@ -476,9 +496,9 @@ class Tracker
         return $this->sendRequest([
             'idgoal' => 0,
             'revenue' => $grandTotal,
-            'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                   (rex_server('HTTP_HOST') ?? '') . 
-                   (rex_server('REQUEST_URI') ?? '')
+            'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                   rex_request::server('HTTP_HOST', 'string', '') . 
+                   rex_request::server('REQUEST_URI', 'string', '')
         ]);
         // Note: ec_items currently in buffer will be sent with this request
     }
@@ -496,9 +516,9 @@ class Tracker
         $params = [
             'e_c' => $category,
             'e_a' => $action,
-             'url' => (rex_server('REQUEST_SCHEME') ?? 'http') . '://' . 
-                   (rex_server('HTTP_HOST') ?? '') . 
-                   (rex_server('REQUEST_URI') ?? '')
+             'url' => rex_request::server('REQUEST_SCHEME', 'string', 'http') . '://' . 
+                   rex_request::server('HTTP_HOST', 'string', '') . 
+                   rex_request::server('REQUEST_URI', 'string', '')
         ];
         if ($name !== null) {
             $params['e_n'] = $name;
@@ -511,12 +531,9 @@ class Tracker
     }
 
     /**
-     * Sends the request to Matomo using fire-and-forget method.
-     * Uses curl in background process (Unix/Linux/macOS) or fsockopen as fallback.
-     * This ensures minimal impact on page load time.
+     * Sends the request to Matomo using rex_socket.
      * 
      * @param array<string, mixed> $params
-     * @return bool
      */
     private function sendRequest(array $params): bool
     {
@@ -528,12 +545,12 @@ class Tracker
             '_id' => $this->visitorId,
         ];
 
-        if ($this->userAgent) {
+        if ('' !== $this->userAgent) {
             $baseParams['ua'] = $this->userAgent;
         }
 
         // Needed for correct IP tracking (requires Auth Token)
-        if ($this->tokenAuth && $this->ip) {
+        if ('' !== $this->tokenAuth && '' !== $this->ip) {
             $baseParams['cip'] = $this->ip;
             $baseParams['token_auth'] = $this->tokenAuth;
         }
@@ -543,8 +560,9 @@ class Tracker
             $baseParams['res'] = $this->width . 'x' . $this->height;
         }
 
-        if (isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-            $baseParams['lang'] = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+        $acceptLanguage = rex_request::server('HTTP_ACCEPT_LANGUAGE', 'string', '');
+        if ('' !== $acceptLanguage) {
+            $baseParams['lang'] = $acceptLanguage;
         }
 
         // Merge base params with custom params
@@ -559,78 +577,32 @@ class Tracker
         
         // Merge with specific action params
         $finalParams = array_merge($finalParams, $params);
-        
+
         try {
-            // True fire-and-forget using curl in background process
-            // This executes curl in a separate process that immediately detaches
-            // The parent process continues without waiting
-            if (function_exists('exec') && !$this->isWindowsOS()) {
-                // Build POST data - explicitly use & as separator (not &amp;)
-                $postData = http_build_query($finalParams, '', '&');
-                $trackingUrl = $this->matomoUrl . '/matomo.php';
-                
-                // Unix/Linux/macOS: Use curl with proper POST data in background
-                // -d sends POST data, -s silent mode, -o /dev/null discards output
-                $curlCmd = sprintf(
-                    'curl -X POST -s -o /dev/null --max-time 5 -d %s %s > /dev/null 2>&1 &',
-                    escapeshellarg($postData),
-                    escapeshellarg($trackingUrl)
-                );
-                
-                @exec($curlCmd);
-                return true;
-            }
+            $socket = rex_socket::factoryUrl($this->matomoUrl . '/matomo.php');
             
-            // Fallback: Ultra-fast fsockopen with minimal timeout
-            // Parse URL to extract host, port, and path
-            $urlParts = parse_url($this->matomoUrl . '/matomo.php');
-            $host = $urlParts['host'] ?? 'localhost';
-            $port = $urlParts['port'] ?? (($urlParts['scheme'] ?? 'http') === 'https' ? 443 : 80);
-            $path = $urlParts['path'] ?? '/matomo.php';
+            // Set SSL options (allow self-signed if needed, or use strict verification)
+            // Following the pattern in MatomoApi.php which disabled verification
+            $socket->setOptions([
+                'ssl' => [
+                    'verify_peer' => $this->sslVerify,
+                    'verify_peer_name' => $this->sslVerify
+                ]
+            ]);
             
-            // Use SSL/TLS for HTTPS connections
-            $scheme = (($urlParts['scheme'] ?? 'http') === 'https') ? 'ssl://' : '';
+            // Short timeout, we don't want to block page load
+            $socket->setTimeout(3); 
             
-            // Fire-and-forget: Open non-blocking socket with minimal timeout (0.01s = 10ms)
-            // Using @ to suppress warnings, we handle errors via return value
-            $fp = @fsockopen($scheme . $host, $port, $errno, $errstr, 0.01);
+            $socket->doPost($finalParams);
             
-            if ($fp) {
-                // Set non-blocking mode immediately for fire-and-forget behavior
-                stream_set_blocking($fp, false);
-                stream_set_timeout($fp, 0, 1000); // 1ms timeout
-                
-                // Build POST request body - explicitly use & as separator
-                $postData = http_build_query($finalParams, '', '&');
-                
-                // Build minimal HTTP POST request
-                $request = "POST " . $path . " HTTP/1.1\r\n";
-                $request .= "Host: " . $host . "\r\n";
-                $request .= "Content-Type: application/x-www-form-urlencoded\r\n";
-                $request .= "Content-Length: " . strlen($postData) . "\r\n";
-                $request .= "Connection: Close\r\n\r\n";
-                $request .= $postData;
-                
-                // Send request without waiting for response (fire-and-forget)
-                @fwrite($fp, $request);
-                @fclose($fp);
-                
-                return true;
-            }
+            // We don't really care about the response body for tracking
+            // but status code should be 200
             
-            return false;
-        } catch (\Exception $e) {
+            return true;
+        } catch (rex_socket_exception $e) {
             // Log error silently, don't break the page
             rex_logger::logException($e);
             return false;
         }
-    }
-    
-    /**
-     * Check if running on Windows OS
-     */
-    private function isWindowsOS(): bool
-    {
-        return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
     }
 }
