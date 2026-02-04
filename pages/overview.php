@@ -12,6 +12,81 @@ $user_token = rex_config::get('matomo', 'user_token', '');
 $matomo_path = rex_config::get('matomo', 'matomo_path', '');
 $show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
 
+// Styles für Banner und Slider
+?>
+<style>
+@keyframes rex-matomo-gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+.rex-matomo-banner {
+    background: linear-gradient(270deg, #324053, #1f78d1, #324053);
+    background-size: 400% 400%;
+    animation: rex-matomo-gradient 15s ease infinite;
+    color: #fff;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 3px;
+    text-align: center;
+    font-size: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.rex-matomo-banner a {
+    color: #fff;
+    text-decoration: underline;
+    font-weight: bold;
+}
+.rex-matomo-partners {
+    margin-top: 30px;
+    margin-bottom: 30px;
+    text-align: center;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+}
+.rex-matomo-partners:hover {
+    opacity: 1;
+}
+.rex-matomo-partners h4 {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+.rex-matomo-slider-container {
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    padding: 10px 0;
+    max-width: 800px;
+    margin: 0 auto;
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.rex-matomo-slider-track {
+    display: inline-block;
+    animation: rex-matomo-scroll 30s linear infinite;
+}
+.rex-matomo-slide {
+    display: inline-block;
+    padding: 0 30px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #555;
+    vertical-align: middle;
+}
+.rex-matomo-slide i {
+    margin-right: 5px;
+    color: #1f78d1;
+}
+@keyframes rex-matomo-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+</style>
+<?php
+
 $matomo_ready = false;
 $is_external_matomo = false;
 
@@ -109,7 +184,7 @@ if (rex_get('action', 'string') === 'fix_autologin' && $is_admin === true && $is
                 }
             }
         } else {
-            echo rex_view::error('Konfigurationsdatei ist nicht beschreibbar. Permissions: ' . substr(sprintf('%o', fileperms($config_file)), -4));
+            echo rex_view::error('Konfigurationsdatei ist nicht beschreibbar. Permissions: ' . substr(sprintf('%o', (int) fileperms($config_file)), -4));
         }
     } else {
         echo rex_view::error('Konfigurationsdatei nicht gefunden: ' . $config_file);
@@ -122,7 +197,7 @@ $stats_today = [];
 $stats_week = [];
 
 // User-spezifische Domain-Filter (bereits oben definiert)
-$show_all_domains = true; // TODO: Später echte berechtigungsprüfung. Aktuell alles anzeigen.
+// $show_all_domains = true; // TODO: Später echte berechtigungsprüfung. Aktuell alles anzeigen.
 $user_allowed_domains = [];
 
 // Wenn nicht Admin, Domain-Filter anwenden (später implementieren)
@@ -178,7 +253,7 @@ if ($matomo_user !== '' && $matomo_password !== '') {
     if ($config_file !== '') {
         $debug_info = "Config-Datei: $config_file | ";
         $debug_info .= "Existiert: Ja | ";
-        $debug_info .= "Berechtigung: " . substr(sprintf('%o', fileperms($config_file)), -4) . " | ";
+        $debug_info .= "Berechtigung: " . substr(sprintf('%o', (int) fileperms($config_file)), -4) . " | ";
         $debug_info .= "Beschreibbar: " . (is_writable($config_file) ? 'Ja' : 'Nein') . " | ";
         
         $config_content = (string) file_get_contents($config_file);
@@ -248,7 +323,8 @@ try {
 
     // Top Pages laden (wenn aktiviert)
     $top_pages_data = [];
-    if ($show_top_pages) {
+    $show_top_pages_bool = (bool) $show_top_pages;
+    if ($show_top_pages_bool) {
         foreach ($sites as $site) {
             $site_id = (int) $site['idsite'];
             try {
@@ -317,12 +393,20 @@ login_allow_logme = 1</pre>
             </div>
         <?php endif; ?>
         
+        <!-- Werbebanner -->
+        <div class="rex-matomo-banner">
+            <i class="fa fa-rocket"></i> 
+            <?= $addon->i18n('matomo_pro_tip') ?>: 
+            <?= $addon->i18n('matomo_check_out') ?> <a href="https://github.com/FriendsOfREDAXO/matomo/wiki" target="_blank" rel="noopener">FriendsOfREDAXO / Matomo Wiki</a> 
+            <?= $addon->i18n('matomo_for_more_info') ?>
+        </div>
+        
         <!-- Gesamt-Statistiken -->
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
                     <i class="fa fa-chart-bar"></i> <?= $addon->i18n('matomo_analytics_overview') ?>
-                    <small class="text-muted">(<?= count($sites) ?> <?= count($sites) == 1 ? $addon->i18n('matomo_domain') : $addon->i18n('matomo_domains') ?>)</small>
+                    <small class="text-muted">(<?= count($sites) ?> <?= count($sites) === 1 ? $addon->i18n('matomo_domain') : $addon->i18n('matomo_domains') ?>)</small>
                     <div class="btn-group pull-right">
                         <?php
                         $matomo_user = rex_config::get('matomo', 'matomo_user', '');
@@ -485,7 +569,7 @@ login_allow_logme = 1</pre>
         </div>
 
         <!-- Top 5 Seiten (diese Woche) -->
-        <?php if ($show_top_pages && !empty($sites)): ?>
+        <?php if ($show_top_pages_bool && count($sites) > 0): ?>
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">
@@ -498,17 +582,16 @@ login_allow_logme = 1</pre>
                 // Alle Top Pages kombinieren und nach Visits sortieren
                 $all_top_pages = [];
                 foreach ($top_pages_data as $site_id => $pages) {
-                    if (is_array($pages)) {
                         $site_name = '';
                         foreach ($sites as $site) {
-                            if ($site['idsite'] == $site_id) {
+                            if ($site['idsite'] === $site_id) {
                                 $site_name = $site['name'];
                                 break;
                             }
                         }
                         
                         foreach ($pages as $page) {
-                            if (is_array($page) && isset($page['label']) && isset($page['nb_visits'])) {
+                            if (isset($page['label']) && isset($page['nb_visits'])) {
                                 $all_top_pages[] = [
                                     'site_name' => $site_name,
                                     'site_id' => $site_id,
@@ -520,7 +603,6 @@ login_allow_logme = 1</pre>
                             }
                         }
                     }
-                }
                 
                 // Nach Visits sortieren
                 usort($all_top_pages, function($a, $b) {
@@ -531,7 +613,7 @@ login_allow_logme = 1</pre>
                 $all_top_pages = array_slice($all_top_pages, 0, 5);
                 ?>
                 
-                <?php if (empty($all_top_pages)): ?>
+                <?php if (count($all_top_pages) === 0): ?>
                     <div class="alert alert-info">
                         <i class="fa fa-info-circle"></i> 
                         <strong><?= $addon->i18n('matomo_no_data_available') ?>:</strong> <?= $addon->i18n('matomo_no_page_views_recorded') ?>
@@ -675,7 +757,7 @@ login_allow_logme = 1</pre>
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <?php if ($matomo_user && $matomo_password): 
+                                        <?php if ($matomo_user !== '' && $matomo_password !== ''): 
                                             // Site-spezifische Login-URL
                                             $password_hash = md5($matomo_password);
                                             $site_url = $matomo_url . '/index.php?module=CoreHome&action=index&idSite=' . $site_id . '&period=day&date=today';
@@ -703,6 +785,27 @@ login_allow_logme = 1</pre>
             </div>
         </div>
         
+        <!-- Partner Slider -->
+        <div class="rex-matomo-partners">
+            <h4>Partner & Förderer</h4>
+            <div class="rex-matomo-slider-container">
+                <div class="rex-matomo-slider-track">
+                    <span class="rex-matomo-slide"><i class="fa fa-heart"></i> FriendsOfREDAXO</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-cube"></i> REDAXO CMS</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-chart-line"></i> Matomo Analytics</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-code"></i> Open Source</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-server"></i> GitHub</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-shield-alt"></i> Privacy First</span>
+                    <!-- Duplicate for infinite scroll -->
+                    <span class="rex-matomo-slide"><i class="fa fa-heart"></i> FriendsOfREDAXO</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-cube"></i> REDAXO CMS</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-chart-line"></i> Matomo Analytics</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-code"></i> Open Source</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-server"></i> GitHub</span>
+                    <span class="rex-matomo-slide"><i class="fa fa-shield-alt"></i> Privacy First</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

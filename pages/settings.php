@@ -17,7 +17,7 @@ if (rex_request('func', 'string') === 'test_connection') {
     }
     
     // Prüfe nur ob URL valide ist
-    if (!filter_var($test_url, FILTER_VALIDATE_URL)) {
+    if (filter_var($test_url, FILTER_VALIDATE_URL) === false) {
         rex_response::sendJson(['success' => false, 'message' => 'Ungültige URL']);
         exit;
     }
@@ -128,10 +128,10 @@ if ($matomo_url !== '' && $admin_token !== '') {
 }
 
 // Nachrichten anzeigen
-if (!empty($message)) {
+if ($message !== '') {
     echo rex_view::success($message);
 }
-if (!empty($error)) {
+if ($error !== '') {
     echo rex_view::error($error);
 }
 
@@ -212,7 +212,7 @@ if (!function_exists('curl_init')) {
                     
                     <div class="checkbox">
                         <label>
-                            <input type="checkbox" name="verify_ssl" value="1" <?= $verify_ssl ? 'checked' : '' ?>>
+                            <input type="checkbox" name="verify_ssl" value="1" <?= (bool)$verify_ssl ? 'checked' : '' ?>>
                             <strong><?= $addon->i18n('matomo_verify_ssl') ?></strong>
                         </label>
                         <p class="text-muted"><?= $addon->i18n('matomo_verify_ssl_help') ?></p>
@@ -241,7 +241,7 @@ if (!function_exists('curl_init')) {
                     
                     <div class="checkbox">
                         <label>
-                            <input type="checkbox" name="show_top_pages" value="1" <?= $show_top_pages ? 'checked' : '' ?>>
+                            <input type="checkbox" name="show_top_pages" value="1" <?= (bool)$show_top_pages ? 'checked' : '' ?>>
                             <strong>Top 5 Seiten anzeigen</strong>
                         </label>
                         <p class="text-muted">Zeigt die 5 meistbesuchten Seiten der aktuellen Woche in der Übersicht an</p>
@@ -252,13 +252,13 @@ if (!function_exists('curl_init')) {
                     
                     <div class="checkbox">
                         <label>
-                            <input type="checkbox" name="proxy_enabled" value="1" <?= $proxy_enabled ? 'checked' : '' ?>>
+                            <input type="checkbox" name="proxy_enabled" value="1" <?= (bool)$proxy_enabled ? 'checked' : '' ?>>
                             <strong><?= $addon->i18n('matomo_proxy_enabled') ?></strong>
                         </label>
                         <p class="text-muted"><?= $addon->i18n('matomo_proxy_enabled_help') ?></p>
                     </div>
                     
-                    <?php if ($matomo_url): ?>
+                    <?php if ($matomo_url !== ''): ?>
                     <div style="margin: 15px 0;">
                         <button type="button" id="test-proxy" class="btn btn-default">
                             <i class="fa fa-shield"></i> Proxy testen
@@ -293,19 +293,19 @@ if (!function_exists('curl_init')) {
                     <?php endif; ?>
                 </p>
                 
-                <?php if ($matomo_path): ?>
+                <?php if ($matomo_path !== ''): ?>
                 <p><strong>Pfad:</strong><br>
                 <code><?= rex_escape($matomo_path) ?></code></p>
                 <?php endif; ?>
                 
-                <?php if ($matomo_url): ?>
+                <?php if ($matomo_url !== ''): ?>
                 <p><strong>URL:</strong><br>
                 <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-primary btn-sm">
                     🔗 Matomo öffnen
                 </a></p>
                 <?php endif; ?>
                 
-                <?php if ($admin_token): ?>
+                <?php if ($admin_token !== ''): ?>
                 <p><strong>Admin Token:</strong><br>
                 <span class="text-success"><i class="fa fa-check-circle"></i> Konfiguriert</span></p>
                 <?php endif; ?>
