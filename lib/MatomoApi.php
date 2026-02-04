@@ -9,6 +9,7 @@ use rex_file;
 use rex_addon;
 use rex_config;
 use rex_url;
+use rex_request;
 use Exception;
 use ZipArchive;
 use RecursiveIteratorIterator;
