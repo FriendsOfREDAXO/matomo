@@ -199,10 +199,14 @@ class MatomoApi
         
         // URLs bestimmen
         if ($use_proxy) {
-            // Proxy über REDAXO API - verwende rex_url::base() für korrekten Pfad
+            // Proxy über REDAXO API - absolute Basis-URL generieren
+            $scheme = rex_request::server('HTTPS', 'string', '') === 'on' ? 'https' : 'http';
+            $host = rex_request::server('HTTP_HOST', 'string', '');
             $base_path = rtrim(rex_url::base(), '/');
-            $tracker_url = $base_path . '/index.php?rex-api-call=matomo_proxy';
-            $js_url = $base_path . '/index.php?rex-api-call=matomo_proxy&file=matomo.js';
+            $base_url = $scheme . '://' . $host . $base_path;
+            
+            $tracker_url = $base_url . '/index.php?rex-api-call=matomo_proxy';
+            $js_url = $base_url . '/index.php?rex-api-call=matomo_proxy&file=matomo.js';
         } else {
             // Direkte Matomo-URLs
             $tracker_url = $matomo_url . '/';
