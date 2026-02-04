@@ -28,8 +28,12 @@ matomo_user_token = User Token
 matomo_user_token_help = API Token für Statistiken (optional)
 matomo_api_timeout = API Timeout
 matomo_api_timeout_help = Timeout für API-Requests in Sekunden
-matomo_ssl_verify = SSL Zertifikat verifizieren
-matomo_ssl_verify_help = Deaktivieren Sie dies nur bei selbstsignierten Zertifikaten
+matomo_verify_ssl = SSL-Zertifikat verifizieren
+matomo_verify_ssl_help = Aktiviert die SSL-Zertifikatsüberprüfung (empfohlen). Nur bei selbstsignierten Zertifikaten oder lokalen Test-Installationen deaktivieren.
+
+# Proxy Settings
+matomo_proxy_enabled = JavaScript-Proxy aktivieren
+matomo_proxy_enabled_help = Lädt matomo.js über REDAXO um Adblocker zu umgehen. Empfohlen für bessere Tracking-Genauigkeit.
 matomo_auto_tracking = Automatisches Tracking
 matomo_auto_tracking_help = Tracking Code automatisch in Templates einbinden
 matomo_tracking_position = Tracking Code Position
@@ -183,6 +187,23 @@ matomo_last_update = Letzte Aktualisierung
 
 # Dashboard page
 matomo_goto_overview = Zur Statistik Übersicht
+
+# Consent Manager
+matomo_consent_title = Datenschutz & Consent
+matomo_consent_recommendation = Für DSGVO-konformes Tracking wird ein Consent Manager empfohlen.
+matomo_consent_addon_recommendation = Empfohlenes AddOn
+matomo_consent_manager_desc = Verwaltet Cookie-Zustimmungen und integriert sich mit Matomo
+matomo_consent_important = Wichtig
+matomo_consent_manual_integration = Der Tracking-Code muss manuell in die Templates integriert werden.
+matomo_consent_manager_active = Consent Manager ist installiert und aktiv.
+
+# Tracking Code
+matomo_tracking_code_title = Tracking Code
+matomo_tracking_site_id = Site-ID
+matomo_tracking_code_label = Code für Template
+matomo_tracking_note = Hinweis
+matomo_tracking_privacy_note = Bitte beachten Sie die Datenschutzbestimmungen und holen Sie ggf. die Zustimmung der Nutzer ein.
+matomo_tracking_code_not_found = Tracking-Code konnte nicht geladen werden.
 
 # Help section
 matomo_help_first_steps = Erste Schritte

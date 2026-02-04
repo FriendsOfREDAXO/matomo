@@ -160,14 +160,16 @@ if (!$matomo_ready) {
 // Domains laden
 $sites = [];
 $tracking_codes = [];
+$proxy_enabled = (bool) rex_config::get('matomo', 'proxy_enabled', false);
+$consent_manager_available = rex_addon::exists('consent_manager') && rex_addon::get('consent_manager')->isAvailable();
 
 try {
     $api = new MatomoApi($matomo_url, $admin_token);
     $sites = $api->getSites();
     
-    // Tracking Codes für alle Sites laden
+    // Tracking Codes für alle Sites laden (mit Proxy-Option)
     foreach ($sites as $site) {
-        $tracking_codes[$site['idsite']] = $api->getTrackingCode($site['idsite']);
+        $tracking_codes[$site['idsite']] = $api->generateTrackingCode($site['idsite'], $proxy_enabled);
     }
 } catch (Exception $e) {
     echo rex_view::error($addon->i18n('matomo_sites_load_error', $e->getMessage()));
@@ -356,6 +358,19 @@ try {
         </div>
         
         <!-- Consent Manager Empfehlung -->
+        <?php if ($consent_manager_available): ?>
+        <div class="panel panel-success">
+            <div class="panel-heading">
+                <h3 class="panel-title">✅ Consent Manager</h3>
+            </div>
+            <div class="panel-body">
+                <p><?= $addon->i18n('matomo_consent_manager_active') ?></p>
+                <a href="<?= rex_url::currentBackendPage(['page' => 'consent_manager']) ?>" class="btn btn-primary btn-sm">
+                    <i class="fa fa-shield"></i> Consent Manager öffnen
+                </a>
+            </div>
+        </div>
+        <?php else: ?>
         <div class="panel panel-warning">
             <div class="panel-heading">
                 <h3 class="panel-title">⚠️ <?= $addon->i18n('matomo_consent_title') ?></h3>
@@ -371,6 +386,7 @@ try {
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- Tracking Code Anzeige -->
         <div class="panel panel-info" id="tracking-panel" style="display: none;">

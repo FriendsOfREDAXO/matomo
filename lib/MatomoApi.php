@@ -7,6 +7,9 @@ use rex_socket_exception;
 use rex_dir;
 use rex_file;
 use rex_addon;
+use rex_config;
+use rex_url;
+use rex_request;
 use Exception;
 use ZipArchive;
 use RecursiveIteratorIterator;
@@ -43,7 +46,7 @@ class MatomoApi
     {
         $this->matomo_url = rtrim($matomo_url, '/');
         $this->admin_token = $admin_token;
-        $this->user_token = $user_token ?: $admin_token;
+        $this->user_token = $user_token ?? $admin_token;
     }
 
     /**
@@ -66,13 +69,19 @@ class MatomoApi
             // Socket-Verbindung erstellen
             $socket = rex_socket::factoryUrl($this->matomo_url . '/index.php');
             
-            // SSL-Optionen setzen für selbstsignierte Zertifikate
-            $socket->setOptions([
-                'ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false
-                ]
-            ]);
+            // SSL-Verifizierung aus Config auslesen (Standard: true für Sicherheit)
+            $verify_ssl = (bool) rex_config::get('matomo', 'verify_ssl', true);
+            
+            // SSL-Optionen setzen
+            if (false === $verify_ssl) {
+                // Nur bei deaktivierter Verifizierung (z.B. selbstsignierte Zertifikate)
+                $socket->setOptions([
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false
+                    ]
+                ]);
+            }
             
             // Timeout setzen
             $socket->setTimeout(10);
@@ -87,7 +96,7 @@ class MatomoApi
             
             $body = $response->getBody();
             
-            if (empty($body)) {
+            if ('' === $body) {
                 throw new Exception('Keine Antwort vom Matomo Server');
             }
             
@@ -178,6 +187,57 @@ class MatomoApi
     }
 
     /**
+     * Generiert optimierten Tracking-Code mit optionalem Proxy
+     * 
+     * @param int $site_id Site-ID der Website
+     * @param bool $use_proxy Proxy verwenden (nutzt REDAXO API)
+     * @param bool $async_tracking Asynchrones Tracking aktivieren
+     * @return string JavaScript Tracking-Code
+     */
+    public function generateTrackingCode(int $site_id, bool $use_proxy = false, bool $async_tracking = true): string
+    {
+        $matomo_url = rtrim($this->matomo_url, '/');
+        
+        // URLs bestimmen
+        if ($use_proxy) {
+            // Proxy über REDAXO API - absolute Basis-URL generieren
+            $scheme = rex_request::server('HTTPS', 'string', '') === 'on' ? 'https' : 'http';
+            $host = rex_request::server('HTTP_HOST', 'string', '');
+            $base_path = rtrim(rex_url::base(), '/');
+            $base_url = $scheme . '://' . $host . $base_path;
+            
+            $tracker_url = $base_url . '/index.php?rex-api-call=matomo_proxy';
+            $js_url = $base_url . '/index.php?rex-api-call=matomo_proxy&file=matomo.js';
+        } else {
+            // Direkte Matomo-URLs
+            $tracker_url = $matomo_url . '/';
+            $js_url = $matomo_url . '/matomo.js';
+        }
+        
+        $async = $async_tracking ? ' async defer' : '';
+        
+        $code = <<<JS
+<!-- Matomo -->
+<script{$async}>
+  var _paq = window._paq = window._paq || [];
+  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u="{$tracker_url}";
+    _paq.push(['setTrackerUrl', u+'matomo.php']);
+    _paq.push(['setSiteId', '{$site_id}']);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.async=true; g.src='{$js_url}'; s.parentNode.insertBefore(g,s);
+  })();
+</script>
+<!-- End Matomo Code -->
+JS;
+        
+        return $code;
+    }
+
+    /**
      * Matomo herunterladen und entpacken mit rex_socket
      * 
      * @param string $target_path Zielpfad für die Matomo-Installation
@@ -197,19 +257,24 @@ class MatomoApi
             // Socket-Verbindung für Download
             $socket = rex_socket::factoryUrl($download_url);
             
+            // SSL-Verifizierung aus Config auslesen (Standard: true)
+            $verify_ssl = (bool) rex_config::get('matomo', 'verify_ssl', true);
+            
             // SSL-Optionen setzen
-            $socket->setOptions([
-                'ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false
-                ]
-            ]);
+            if (false === $verify_ssl) {
+                $socket->setOptions([
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false
+                    ]
+                ]);
+            }
             
             // Längeren Timeout für Download
             $socket->setTimeout(120);
             
-            // Redirects folgen
-            $socket->followRedirects(true);
+            // Redirects folgen (max 1 Redirect)
+            $socket->followRedirects(1);
             
             // GET-Request senden
             $response = $socket->doGet();
@@ -409,7 +474,7 @@ class YRewriteHelper
             $domains[$name] = [
                 'name' => $name,
                 'url' => $domain->getUrl(),
-                'title' => $domain->getTitle() ?: $name,
+                'title' => $domain->getTitle() !== '' ? $domain->getTitle() : $name,
                 'host' => $domain->getHost()
             ];
         }
@@ -434,7 +499,7 @@ class YRewriteHelper
         
         // Default Domain auch erlauben
         $default_domain = \rex_yrewrite::getDomainByName('default');
-        if ($default_domain) {
+        if (null !== $default_domain) {
             $yrewrite_hosts[] = $default_domain->getHost();
         }
         
@@ -471,7 +536,7 @@ class YRewriteHelper
             if ($domain->getHost() === $host) {
                 return [
                     'name' => $name,
-                    'title' => $domain->getTitle() ?: $name
+                    'title' => $domain->getTitle() !== '' ? $domain->getTitle() : $name
                 ];
             }
         }

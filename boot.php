@@ -2,6 +2,10 @@
 
 use FriendsOfRedaxo\Matomo\MatomoInfoCenterWidget;
 use FriendsOfRedaxo\Matomo\MatomoDashboardItem;
+use FriendsOfRedaxo\Matomo\MatomoProxyApi;
+
+// API-Function für Matomo Proxy registrieren
+rex_api_function::register('matomo_proxy', MatomoProxyApi::class);
 
 if (rex::isBackend()) {
     // Info-Center Widget registrieren (falls Info-Center AddOn vorhanden ist)
@@ -9,7 +13,7 @@ if (rex::isBackend()) {
         rex_extension::register('PACKAGES_INCLUDED', function () {
             // Nur registrieren wenn User Berechtigung für Matomo Overview hat
             $user = rex::getUser();
-            if ($user && $user->hasPerm('matomo[overview]')) {
+            if (null !== $user && $user->hasPerm('matomo[overview]')) {
                 $infoCenter = \KLXM\InfoCenter\InfoCenter::getInstance();
                 
                 // Matomo Widget registrieren
@@ -25,7 +29,7 @@ if (rex::isBackend()) {
         rex_extension::register('PACKAGES_INCLUDED', function () {
             // Nur registrieren wenn User Berechtigung für Matomo Overview hat
             $user = rex::getUser();
-            if ($user && $user->hasPerm('matomo[overview]')) {
+            if (null !== $user && $user->hasPerm('matomo[overview]')) {
                 rex_dashboard::addItem(
                     MatomoDashboardItem::factory('matomo-statistics', '📊 ' . rex_i18n::msg('matomo_widget_title'))
                         ->setColumns(2) // Normal breit (2 Spalten)

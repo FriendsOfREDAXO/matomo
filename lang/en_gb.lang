@@ -47,8 +47,12 @@ matomo_user_token = User Token
 matomo_user_token_help = API token for dashboard access and statistics (optional)
 matomo_api_timeout = API Timeout
 matomo_api_timeout_help = Timeout for API requests in seconds
-matomo_ssl_verify = Verify SSL Certificate
-matomo_ssl_verify_help = Disable this only for self-signed certificates
+matomo_verify_ssl = Verify SSL Certificate
+matomo_verify_ssl_help = Enables SSL certificate verification (recommended). Only disable for self-signed certificates or local test installations.
+
+# Proxy Settings
+matomo_proxy_enabled = Enable JavaScript Proxy
+matomo_proxy_enabled_help = Loads matomo.js via REDAXO to bypass adblockers. Recommended for better tracking accuracy.
 matomo_auto_tracking = Automatic Tracking
 matomo_auto_tracking_help = Automatically embed tracking code in templates
 matomo_tracking_position = Tracking Code Position
@@ -173,13 +177,21 @@ matomo_tracking_note = Important note
 matomo_tracking_privacy_note = Please integrate a consent manager for GDPR compliance
 
 # Consent Manager
-matomo_consent_title = Consent Manager Recommendation
-matomo_consent_recommendation = For GDPR-compliant use of Matomo, you should use a consent manager.
-matomo_consent_addon_recommendation = Recommended REDAXO AddOns
-matomo_consent_manager_desc = Professional cookie management with Matomo integration
-matomo_cookie_notice_desc = Simple cookie notices for smaller websites
+matomo_consent_title = Privacy & Consent
+matomo_consent_recommendation = A consent manager is recommended for GDPR-compliant tracking.
+matomo_consent_addon_recommendation = Recommended AddOn
+matomo_consent_manager_desc = Manages cookie consents and integrates with Matomo
 matomo_consent_important = Important
-matomo_consent_manual_integration = The tracking code must be manually inserted into your templates - no automatic integration is performed.
+matomo_consent_manual_integration = The tracking code must be manually integrated into templates.
+matomo_consent_manager_active = Consent Manager is installed and active.
+
+# Tracking Code
+matomo_tracking_code_title = Tracking Code
+matomo_tracking_site_id = Site ID
+matomo_tracking_code_label = Code for Template
+matomo_tracking_note = Note
+matomo_tracking_privacy_note = Please observe privacy regulations and obtain user consent if necessary.
+matomo_tracking_code_not_found = Tracking code could not be loaded.
 
 # Config page - Dashboard Settings
 matomo_dashboard_section = Dashboard Settings

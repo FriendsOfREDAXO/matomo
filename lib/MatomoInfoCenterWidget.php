@@ -27,10 +27,10 @@ class MatomoInfoCenterWidget extends AbstractWidget
         $addon = rex_addon::get('matomo');
         
         // Prüfen ob Matomo konfiguriert ist
-        $matomo_url = rex_config::get('matomo', 'matomo_url', '');
-        $admin_token = rex_config::get('matomo', 'admin_token', '');
+        $matomo_url = (string) rex_config::get('matomo', 'matomo_url', '');
+        $admin_token = (string) rex_config::get('matomo', 'admin_token', '');
         
-        if (!$matomo_url || !$admin_token) {
+        if ('' === $matomo_url || '' === $admin_token) {
             return $this->wrapContent($this->renderNotConfigured());
         }
         
@@ -62,9 +62,13 @@ class MatomoInfoCenterWidget extends AbstractWidget
         </div>';
     }
     
-    private function renderStats($sites, $api): string
+    /**
+     * @param array<int, array<string, mixed>> $sites
+     * @param MatomoApi $api
+     */
+    private function renderStats(array $sites, MatomoApi $api): string
     {
-        if (empty($sites)) {
+        if ([] === $sites) {
             return '
             <div class="alert alert-warning" style="margin-bottom: 0;">
                 <h4><i class="fa fa-warning"></i> ' . rex_i18n::msg('matomo_widget_no_sites') . '</h4>
@@ -100,7 +104,7 @@ class MatomoInfoCenterWidget extends AbstractWidget
             }
         }
         
-        if (!empty($today_stats)) {
+        if ([] !== $today_stats) {
             foreach ($today_stats as $stat) {
                 $content .= '
                 <div class="matomo-site-stat" style="margin-bottom: 10px; padding: 8px; background: #f8f9fa; border-radius: 3px;">
@@ -132,7 +136,7 @@ class MatomoInfoCenterWidget extends AbstractWidget
         return $content;
     }
     
-    private function renderError($error): string
+    private function renderError(string $error): string
     {
         return '
         <div class="alert alert-danger" style="margin-bottom: 0;">
