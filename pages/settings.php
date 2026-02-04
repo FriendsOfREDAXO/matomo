@@ -43,7 +43,7 @@ if (rex_request('func', 'string') === 'test_proxy') {
     }
     
     // Generiere Proxy-URL für Client-seitigen Test
-    $proxy_url = rex_url::frontend('index.php', ['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js']);
+    $proxy_url = rex_url::frontend('index.php', ['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js', 'test' => '1']);
     
     rex_response::sendJson([
         'success' => true,

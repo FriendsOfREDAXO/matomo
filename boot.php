@@ -2,9 +2,10 @@
 
 use FriendsOfRedaxo\Matomo\MatomoInfoCenterWidget;
 use FriendsOfRedaxo\Matomo\MatomoDashboardItem;
+use FriendsOfRedaxo\Matomo\MatomoProxyApi;
 
 // API-Function für Matomo Proxy registrieren
-rex_api_function::register('matomo_proxy', 'FriendsOfRedaxo\Matomo\MatomoProxyApi');
+rex_api_function::register('matomo_proxy', MatomoProxyApi::class);
 
 if (rex::isBackend()) {
     // Info-Center Widget registrieren (falls Info-Center AddOn vorhanden ist)

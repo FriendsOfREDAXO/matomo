@@ -39,8 +39,11 @@ class MatomoProxyApi extends rex_api_function
     {
         rex_response::cleanOutputBuffers();
         
-        // Prüfen ob Proxy aktiviert ist
-        if (!$this->isProxyEnabled()) {
+        // Erlaube Test-Modus über Parameter (für Backend-Test)
+        $is_test = rex_request::request('test', 'boolean', false);
+        
+        // Prüfen ob Proxy aktiviert ist (außer im Test-Modus)
+        if (!$is_test && !$this->isProxyEnabled()) {
             $this->sendError('Proxy ist nicht aktiviert', 403);
         }
         
