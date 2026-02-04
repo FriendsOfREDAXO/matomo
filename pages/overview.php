@@ -699,20 +699,10 @@ login_allow_logme = 1</pre>
                     </div>
                     
                 <?php endif; ?>
-            </div>
-        </div>
-        
-        <!-- Partner Slider -->
-        <div class="rex-matomo-partners">
-            <h4>Partner & Förderer</h4>
-            <div class="rex-matomo-slider-container">
-                <div class="rex-matomo-slider-track">
-                    <span class="rex-matomo-slide"><i class="fa fa-heart"></i> FriendsOfREDAXO</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-cube"></i> REDAXO CMS</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-chart-line"></i> Matomo Analytics</span>
-    00000); // 5 Minuten
+    </div>
+</div>
 
-// Letzte Aktualisierung anzeigen
+<!-- Auto-Refresh Script -->
 document.addEventListener('DOMContentLoaded', function() {
     var now = new Date();
     var timeString = now.toLocaleTimeString('de-DE');
