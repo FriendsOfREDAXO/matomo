@@ -364,14 +364,6 @@ login_allow_logme = 1</pre>
             </div>
         <?php endif; ?>
         
-        <!-- Werbebanner -->
-        <div class="rex-matomo-banner">
-            <i class="fa fa-rocket"></i> 
-            <?= $addon->i18n('matomo_pro_tip') ?>: 
-            <?= $addon->i18n('matomo_check_out') ?> <a href="https://github.com/FriendsOfREDAXO/matomo/wiki" target="_blank" rel="noopener">FriendsOfREDAXO / Matomo Wiki</a> 
-            <?= $addon->i18n('matomo_for_more_info') ?>
-        </div>
-        
         <!-- Gesamt-Statistiken -->
         <div class="panel panel-default">
             <div class="panel-heading">
@@ -747,13 +739,10 @@ login_allow_logme = 1</pre>
 </div>
 
 <!-- Auto-Refresh Script -->
-document.addEventListener('DOMContentLoaded', function() {
-    var now = new Date();
-    var timeString = now.toLocaleTimeString('de-DE');
-    var infoPanel = document.querySelector('.panel-primary .panel-heading h3');
-    if (infoPanel) {
-        infoPanel.innerHTML += ' <small class="text-muted">(<?= $addon->i18n('matomo_last_update') ?>: ' + timeString + ')</small>';
-    }
-});
+<script>
+// Seite alle 5 Minuten automatisch aktualisieren
+setTimeout(function() {
+    location.reload();
+}, 300000); // 5 Minuten
 </script>
 
