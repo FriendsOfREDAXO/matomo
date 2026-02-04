@@ -478,10 +478,10 @@ login_allow_logme = 1</pre>
                         <div class="matomo-stat-card orange matomo-anim-delay-3">
                             <div class="stat-icon"><i class="fa fa-clock"></i></div>
                             <div class="stat-number"><?= gmdate("i:s", (int)$avg_time_on_site) ?></div>
-                            <div class="stat-label">Avg Duration</div>
+                            <div class="stat-label"><?= $addon->i18n('matomo_avg_duration') ?></div>
                             <div class="stat-trend text-muted">
                                 <i class="fa fa-sign-out-alt"></i> 
-                                <?= $bounce_rate ?>% Bounce Rate
+                                <?= $bounce_rate ?>% <?= $addon->i18n('matomo_bounce_rate') ?>
                             </div>
                         </div>
                     </div>
@@ -494,7 +494,7 @@ login_allow_logme = 1</pre>
                             <div class="stat-label"><?= $addon->i18n('matomo_actions') ?> (<?= $addon->i18n('matomo_today') ?>)</div>
                             <div class="stat-trend text-muted">
                                 <i class="fa fa-list-ol"></i> 
-                                <?= $total_visits_today > 0 ? round($total_actions_today / $total_visits_today, 1) : 0 ?> Actions/Visit
+                                <?= $total_visits_today > 0 ? round($total_actions_today / $total_visits_today, 1) : 0 ?> <?= $addon->i18n('matomo_actions_per_visit') ?>
                             </div>
                         </div>
                     </div>
@@ -504,10 +504,10 @@ login_allow_logme = 1</pre>
                         <div class="matomo-stat-card red matomo-anim-delay-5">
                             <div class="stat-icon"><i class="fa fa-flag-checkered"></i></div>
                             <div class="stat-number" data-count="<?= $total_conversions_today ?>">0</div>
-                            <div class="stat-label"><?= $addon->i18n('matomo_conversions') ?> (Goals)</div>
+                            <div class="stat-label"><?= $addon->i18n('matomo_conversions') ?> (<?= $addon->i18n('matomo_goals') ?>)</div>
                             <div class="stat-trend text-muted">
                                 <i class="fa fa-trophy"></i> 
-                                <?= $total_visits_today > 0 ? round(($total_conversions_today / $total_visits_today) * 100, 1) : 0 ?>% Conv. Rate
+                                <?= $total_visits_today > 0 ? round(($total_conversions_today / $total_visits_today) * 100, 1) : 0 ?>% <?= $addon->i18n('matomo_conversion_rate') ?>
                             </div>
                         </div>
                     </div>
@@ -517,10 +517,10 @@ login_allow_logme = 1</pre>
                         <div class="matomo-stat-card teal matomo-anim-delay-6">
                             <div class="stat-icon"><i class="fa fa-bolt"></i></div>
                             <div class="stat-number" data-count="<?= $max_actions_today ?>">0</div>
-                            <div class="stat-label">Max Actions/Visit</div>
+                            <div class="stat-label"><?= $addon->i18n('matomo_max_actions') ?></div>
                             <div class="stat-trend text-muted">
                                 <i class="fa fa-level-up-alt"></i> 
-                                Highest Engagement
+                                <?= $addon->i18n('matomo_highest_engagement') ?>
                             </div>
                         </div>
                     </div>

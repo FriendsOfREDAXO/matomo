@@ -353,3 +353,12 @@ matomo_add_to = Fügen Sie in
 matomo_add_to_your_matomo = Fügen Sie in Ihrer Matomo
 matomo_file_not_writable = Die Datei ist nicht beschreibbar - bitte manuell bearbeiten
 matomo_external_installation_edit_on_server = Externe Matomo-Installation - Bearbeitung nur auf dem Matomo-Server möglich
+matomo_conversions = Conversions
+matomo_goals = Ziele
+matomo_avg_duration = Ø Dauer
+matomo_bounce_rate = Absprungrate
+matomo_actions_per_visit = Aktionen/Besuch
+matomo_conversion_rate = Konversionsrate
+matomo_max_actions = Max Aktionen/Besuch
+matomo_highest_engagement = Höchstes Engagement
+

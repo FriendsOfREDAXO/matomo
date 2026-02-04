@@ -297,6 +297,15 @@ matomo_yrewrite_import_button = Import Selected Domains
 matomo_yrewrite_not_available = YRewrite AddOn is not available.
 matomo_yrewrite_domains_available = available
 matomo_yrewrite_already_exists = already exists
+matomo_conversions = Conversions
+matomo_goals = Goals
+matomo_avg_duration = Avg Duration
+matomo_bounce_rate = Bounce Rate
+matomo_actions_per_visit = Actions/Visit
+matomo_conversion_rate = Conversion Rate
+matomo_max_actions = Max Actions/Visit
+matomo_highest_engagement = Highest Engagement
+
 
 # Domain Import/Delete Messages
 matomo_domain_import_success = {0} domain(s) successfully imported
