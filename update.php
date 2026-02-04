@@ -9,7 +9,7 @@
 $addon = rex_addon::get('matomo');
 
 // Update von Version 1.x auf 2.x
-if (rex_string::versionCompare($addon->getVersion(), '2.0.0', '<')) {
+if (rex_version::compare($addon->getVersion(), '2.0.0', '<')) {
     
     // Nur die wichtigsten Konfigurationen migrieren
     $migrations = [

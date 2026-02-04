@@ -117,15 +117,18 @@ $stats_today = [];
 $stats_week = [];
 
 // User-spezifische Domain-Filter (bereits oben definiert)
-$show_all_domains = $is_admin;
+$show_all_domains = true; // TODO: Später echte berechtigungsprüfung. Aktuell alles anzeigen.
 $user_allowed_domains = [];
 
 // Wenn nicht Admin, Domain-Filter anwenden (später implementieren)
+/** 
+ * Todo: User-Rechte implementieren
 if (!$show_all_domains) {
     // Hier könnten wir User-spezifische Domain-Berechtigungen laden
     // Für jetzt alle Domains anzeigen, aber das können wir später erweitern
     $show_all_domains = true;
 }
+*/
 
 // Auto-Login Status prüfen
 $matomo_user = rex_config::get('matomo', 'matomo_user', '');
@@ -206,9 +209,7 @@ try {
     // Domain-Filterung anwenden
     $sites = [];
     foreach ($filtered_sites as $site) {
-        if ($show_all_domains) {
-            $sites[] = $site;
-        }
+        $sites[] = $site;
         // TODO: Hier später User-spezifische Domain-Filterung
     }
     
@@ -565,7 +566,7 @@ login_allow_logme = 1</pre>
                                     <td class="text-center">
                                         <?php if ($page['avg_time'] > 0): ?>
                                             <span class="label label-info">
-                                                <i class="fa fa-clock"></i> <?= gmdate('i:s', $page['avg_time']) ?>
+                                                <i class="fa fa-clock"></i> <?= gmdate('i:s', (int) $page['avg_time']) ?>
                                             </span>
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
@@ -586,9 +587,9 @@ login_allow_logme = 1</pre>
             <div class="panel-heading">
                 <h3 class="panel-title">
                     <i class="fa fa-globe"></i> <?= $addon->i18n('matomo_domain_statistics') ?>
-                    <?php if (!$show_all_domains): ?>
+                    <?php /* if (!$show_all_domains): ?>
                         <small class="text-muted">(<?= $addon->i18n('matomo_filtered_permissions') ?>)</small>
-                    <?php endif; ?>
+                    <?php endif; */ ?>
                     <?php if ($is_admin): ?>
                         <a href="<?= rex_url::currentBackendPage(['page' => 'matomo/domains']) ?>" class="btn btn-success btn-sm pull-right">
                             <i class="fa fa-plus"></i> <?= $addon->i18n('matomo_manage_domains') ?>
@@ -602,11 +603,7 @@ login_allow_logme = 1</pre>
                     <div class="alert alert-info">
                         <i class="fa fa-info-circle"></i> 
                         <strong><?= $addon->i18n('matomo_no_domains_available') ?>:</strong> 
-                        <?php if ($show_all_domains): ?>
-                            <?= $addon->i18n('matomo_no_domains_configured') ?>
-                        <?php else: ?>
-                            <?= $addon->i18n('matomo_no_domain_permissions') ?>
-                        <?php endif; ?>
+                        <?= $addon->i18n('matomo_no_domains_configured') ?>
                     </div>
                 <?php else: ?>
                     

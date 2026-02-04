@@ -103,8 +103,8 @@ $matomo_ready = false;
 $is_external_matomo = false;
 $api_status = 'Nicht getestet';
 
-if ($matomo_url && $admin_token) {
-    if ($matomo_path) {
+if ($matomo_url !== '' && $admin_token !== '') {
+    if ($matomo_path !== '') {
         // Lokale Matomo-Installation - prüfe ob verfügbar
         $full_path = rex_path::frontend($matomo_path . '/');
         $matomo_ready = file_exists($full_path . 'index.php');
@@ -149,13 +149,13 @@ if ($matomo_url && $admin_token) {
                         <td><strong>API Status:</strong></td>
                         <td><?= $api_status ?></td>
                     </tr>
-                    <?php if ($matomo_path): ?>
+                    <?php if ($matomo_path !== ''): ?>
                     <tr>
                         <td><strong>Pfad:</strong></td>
                         <td><code><?= rex_escape($matomo_path) ?></code></td>
                     </tr>
                     <?php endif; ?>
-                    <?php if ($matomo_url): ?>
+                    <?php if ($matomo_url !== ''): ?>
                     <tr>
                         <td><strong>URL:</strong></td>
                         <td>

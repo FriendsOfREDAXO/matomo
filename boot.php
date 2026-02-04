@@ -30,7 +30,7 @@ if (rex::isBackend()) {
             // Nur registrieren wenn User Berechtigung für Matomo Overview hat
             $user = rex::getUser();
             if (null !== $user && $user->hasPerm('matomo[overview]')) {
-                rex_dashboard::addItem(
+                \FriendsOfRedaxo\Dashboard\Dashboard::addItem(
                     MatomoDashboardItem::factory('matomo-statistics', '📊 ' . rex_i18n::msg('matomo_widget_title'))
                         ->setColumns(2) // Normal breit (2 Spalten)
                 );

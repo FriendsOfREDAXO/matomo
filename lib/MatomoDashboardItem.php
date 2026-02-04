@@ -5,7 +5,7 @@ namespace FriendsOfRedaxo\Matomo;
 use rex;
 use rex_addon;
 use rex_config;
-use rex_dashboard_item;
+use FriendsOfRedaxo\Dashboard\Base\Item;
 use rex_i18n;
 use rex_escape;
 use rex_url;
@@ -14,7 +14,7 @@ use Exception;
 /**
  * Dashboard Item: Matomo Statistiken.
  */
-class MatomoDashboardItem extends rex_dashboard_item
+class MatomoDashboardItem extends Item
 {
     public function getTitle(): string
     {

@@ -83,7 +83,7 @@ if (rex_post('download_matomo', 'boolean')) {
     $download_path = rex_post('download_path', 'string', '');
     $matomo_url = rex_post('download_url', 'string', '');
 
-    if ($download_path && $matomo_url) {
+    if ($download_path !== '' && $matomo_url !== '') {
         try {
             $full_path = rex_path::frontend($download_path);
             MatomoApi::downloadMatomo($full_path);
@@ -115,8 +115,8 @@ $proxy_enabled = rex_config::get('matomo', 'proxy_enabled', false);
 $matomo_installed = false;
 $is_external_matomo = false;
 
-if ($matomo_url && $admin_token) {
-    if ($matomo_path) {
+if ($matomo_url !== '' && $admin_token !== '') {
+    if ($matomo_path !== '') {
         // Lokale Matomo-Installation - prüfe ob verfügbar
         $full_path = rex_path::frontend($matomo_path . '/');
         $matomo_installed = file_exists($full_path . 'index.php');
@@ -128,10 +128,10 @@ if ($matomo_url && $admin_token) {
 }
 
 // Nachrichten anzeigen
-if ($message) {
+if (!empty($message)) {
     echo rex_view::success($message);
 }
-if ($error) {
+if (!empty($error)) {
     echo rex_view::error($error);
 }
 
