@@ -9,54 +9,26 @@ if (rex_request('func', 'string') === 'test_connection') {
     rex_response::cleanOutputBuffers();
     header('Content-Type: application/json');
     
+    // Gebe nur die Test-URL zurück - Test passiert im Browser
     $test_url = rex_request('matomo_url', 'string', '');
-    $verify_ssl = rex_request('verify_ssl', 'boolean', true);
     
     if ('' === $test_url) {
         echo json_encode(['success' => false, 'message' => 'Keine URL angegeben']);
         exit;
     }
     
-    try {
-        $socket = rex_socket::factoryUrl($test_url);
-        
-        if (false === $verify_ssl) {
-            $socket->setOptions([
-                'ssl' => [
-                    'verify_peer' => false,
-                    'verify_peer_name' => false
-                ]
-            ]);
-        }
-        
-        $socket->setTimeout(5);
-        $response = $socket->doGet();
-        
-        if ($response->isOk()) {
-            $body = $response->getBody();
-            $version = '';
-            
-            // Versuche Matomo-Version zu extrahieren
-            if (preg_match('/Matomo\s+(?:Analytics\s+)?(\d+\.\d+\.\d+)/', $body, $matches)) {
-                $version = $matches[1];
-            }
-            
-            $message = 'Verbindung erfolgreich';
-            if ($version) {
-                $message .= ' (Matomo ' . $version . ')';
-            }
-            
-            echo json_encode(['success' => true, 'message' => $message]);
-        } else {
-            echo json_encode([
-                'success' => false, 
-                'message' => 'HTTP ' . $response->getStatusCode() . ' - ' . $response->getStatusMessage()
-            ]);
-        }
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => 'Fehler: ' . $e->getMessage()]);
+    // Prüfe nur ob URL valide ist
+    if (!filter_var($test_url, FILTER_VALIDATE_URL)) {
+        echo json_encode(['success' => false, 'message' => 'Ungültige URL']);
+        exit;
     }
     
+    // Gebe Test-URL zurück für Client-seitigen Test
+    echo json_encode([
+        'success' => true,
+        'test_url' => rtrim($test_url, '/') . '/matomo.js',
+        'message' => 'Teste Verbindung...'
+    ]);
     exit;
 }
 
@@ -65,38 +37,21 @@ if (rex_request('func', 'string') === 'test_proxy') {
     rex_response::cleanOutputBuffers();
     header('Content-Type: application/json');
     
-    try {
-        // Proxy-URL aufrufen
-        $proxy_url = rex_url::frontend('index.php', ['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js']);
-        $socket = rex_socket::factoryUrl($proxy_url);
-        $socket->setTimeout(5);
-        $response = $socket->doGet();
-        
-        if ($response->isOk()) {
-            $body = $response->getBody();
-            $size = strlen($body);
-            
-            // Prüfe ob es valides JavaScript ist
-            if (strpos($body, 'Matomo') !== false || strpos($body, 'Piwik') !== false) {
-                echo json_encode([
-                    'success' => true, 
-                    'message' => 'Proxy funktioniert (' . number_format($size / 1024, 1) . ' KB geladen)'
-                ]);
-            } else {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Proxy antwortet, aber Inhalt scheint kein Matomo JavaScript zu sein'
-                ]);
-            }
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'HTTP ' . $response->getStatusCode() . ' - ' . $response->getStatusMessage()
-            ]);
-        }
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => 'Fehler: ' . $e->getMessage()]);
+    // Prüfe ob Matomo-URL konfiguriert ist
+    $matomo_url = rex_config::get('matomo', 'matomo_url', '');
+    if ('' === $matomo_url) {
+        echo json_encode(['success' => false, 'message' => 'Matomo URL nicht konfiguriert']);
+        exit;
     }
+    
+    // Generiere Proxy-URL für Client-seitigen Test
+    $proxy_url = rex_url::frontend('index.php', ['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js']);
+    
+    echo json_encode([
+        'success' => true,
+        'proxy_url' => $proxy_url,
+        'message' => 'Teste Proxy...'
+    ]);
     
     exit;
 }
@@ -385,7 +340,6 @@ jQuery(function($) {
         var $btn = $(this);
         var $result = $('#test-result');
         var url = $('#matomo_url').val();
-        var verifySsl = $('input[name="verify_ssl"]').is(':checked');
         
         if (!url) {
             $result.html('<div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> Bitte eine URL eingeben</div>');
@@ -395,27 +349,57 @@ jQuery(function($) {
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Teste...');
         $result.html('');
         
+        // Hole Test-URL vom Backend
         $.ajax({
             url: '<?= rex_url::backendController(['page' => 'matomo/settings', 'func' => 'test_connection']) ?>',
             method: 'POST',
             data: {
-                matomo_url: url,
-                verify_ssl: verifySsl ? 1 : 0
+                matomo_url: url
             },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    $result.html('<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + response.message + '</div>');
-                } else {
-                    $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + response.message + '</div>');
-                }
-            },
-            error: function() {
-                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> Verbindungstest fehlgeschlagen</div>');
-            },
-            complete: function() {
-                $btn.prop('disabled', false).html('<i class="fa fa-plug"></i> Test');
+            dataType: 'json'
+        }).done(function(response) {
+            if (response.success && response.test_url) {
+                // Teste direkt per JavaScript
+                var testUrl = response.test_url;
+                var startTime = new Date().getTime();
+                
+                $.ajax({
+                    url: testUrl,
+                    method: 'GET',
+                    dataType: 'text',
+                    timeout: 10000,
+                    cache: false
+                }).done(function(data) {
+                    var loadTime = new Date().getTime() - startTime;
+                    var size = data.length;
+                    
+                    if (data.indexOf('Matomo') > -1 || data.indexOf('Piwik') > -1) {
+                        $result.html('<div class="alert alert-success">' +
+                            '<i class="fa fa-check-circle"></i> Verbindung erfolgreich!<br>' +
+                            '<small>Größe: ' + (size / 1024).toFixed(1) + ' KB | ' +
+                            'Ladezeit: ' + loadTime + ' ms</small></div>');
+                    } else {
+                        $result.html('<div class="alert alert-warning">' +
+                            '<i class="fa fa-exclamation-triangle"></i> Datei geladen, aber kein Matomo JavaScript erkannt</div>');
+                    }
+                }).fail(function(xhr, status, error) {
+                    var msg = 'Verbindung fehlgeschlagen';
+                    if (xhr.status > 0) {
+                        msg += ' (HTTP ' + xhr.status + ')';
+                    } else if (status === 'timeout') {
+                        msg += ' (Timeout)';
+                    } else if (error) {
+                        msg += ' (' + error + ')';
+                    }
+                    $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
+                });
+            } else {
+                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + response.message + '</div>');
             }
+        }).fail(function() {
+            $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> Backend-Anfrage fehlgeschlagen</div>');
+        }).always(function() {
+            $btn.prop('disabled', false).html('<i class="fa fa-plug"></i> Test');
         });
     });
     
@@ -426,23 +410,55 @@ jQuery(function($) {
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Teste...');
         $result.html('');
         
+        // Hole Proxy-URL vom Backend
         $.ajax({
             url: '<?= rex_url::backendController(['page' => 'matomo/settings', 'func' => 'test_proxy']) ?>',
             method: 'POST',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    $result.html('<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + response.message + '</div>');
-                } else {
-                    $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + response.message + '</div>');
-                }
-            },
-            error: function() {
-                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> Proxy-Test fehlgeschlagen</div>');
-            },
-            complete: function() {
-                $btn.prop('disabled', false).html('<i class="fa fa-shield"></i> Proxy testen');
+            dataType: 'json'
+        }).done(function(response) {
+            if (response.success && response.proxy_url) {
+                var proxyUrl = response.proxy_url;
+                var startTime = new Date().getTime();
+                
+                // Teste Proxy direkt per JavaScript
+                $.ajax({
+                    url: proxyUrl,
+                    method: 'GET',
+                    dataType: 'text',
+                    timeout: 10000,
+                    cache: false
+                }).done(function(data) {
+                    var loadTime = new Date().getTime() - startTime;
+                    var size = data.length;
+                    
+                    if (data.indexOf('Matomo') > -1 || data.indexOf('Piwik') > -1) {
+                        $result.html('<div class="alert alert-success">' +
+                            '<i class="fa fa-check-circle"></i> Proxy funktioniert!<br>' +
+                            '<small>Größe: ' + (size / 1024).toFixed(1) + ' KB | ' +
+                            'Ladezeit: ' + loadTime + ' ms<br>' +
+                            'URL: <code>' + proxyUrl + '</code></small></div>');
+                    } else {
+                        $result.html('<div class="alert alert-warning">' +
+                            '<i class="fa fa-exclamation-triangle"></i> Proxy antwortet, aber kein Matomo JavaScript erkannt</div>');
+                    }
+                }).fail(function(xhr, status, error) {
+                    var msg = 'Proxy-Aufruf fehlgeschlagen';
+                    if (xhr.status > 0) {
+                        msg += ' (HTTP ' + xhr.status + ')';
+                    } else if (status === 'timeout') {
+                        msg += ' (Timeout)';
+                    } else if (error) {
+                        msg += ' (' + error + ')';
+                    }
+                    $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
+                });
+            } else {
+                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + response.message + '</div>');
             }
+        }).fail(function() {
+            $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> Backend-Anfrage fehlgeschlagen</div>');
+        }).always(function() {
+            $btn.prop('disabled', false).html('<i class="fa fa-shield"></i> Proxy testen');
         });
     });
 });
