@@ -15,9 +15,9 @@ $show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
 ?>
 <style>
     .matomo-stats-grid { display: flex; flex-wrap: wrap; margin: 0 -10px 20px; }
-    .matomo-stat-col { padding: 0 10px; width: 25%; box-sizing: border-box; }
-    @media (max-width: 991px) { .matomo-stat-col { width: 50%; margin-bottom: 20px; } }
-    @media (max-width: 480px) { .matomo-stat-col { width: 100%; } }
+    .matomo-stat-col { padding: 0 10px; width: 33.333%; box-sizing: border-box; margin-bottom: 20px; }
+    @media (max-width: 1200px) { .matomo-stat-col { width: 50%; } }
+    @media (max-width: 600px) { .matomo-stat-col { width: 100%; } }
 
     .matomo-stat-card {
         background: #fff;
@@ -36,9 +36,11 @@ $show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
         box-shadow: 0 8px 15px rgba(0,0,0,0.1);
     }
     .matomo-stat-card.blue { border-left-color: #3bb5f1; }
-    .matomo-stat-card.green { border-left-color: #5cb85c; }
+    .matomo-stat-card.green { border-left-color: #2ecc71; }
     .matomo-stat-card.purple { border-left-color: #9b59b6; }
-    .matomo-stat-card.orange { border-left-color: #f0ad4e; }
+    .matomo-stat-card.orange { border-left-color: #f39c12; }
+    .matomo-stat-card.red { border-left-color: #e74c3c; }
+    .matomo-stat-card.teal { border-left-color: #1abc9c; }
 
     .stat-icon { position: absolute; top: 15px; right: 15px; font-size: 24px; opacity: 0.15; color: #333; }
     .stat-number { font-size: 28px; font-weight: 700; color: #333; white-space: nowrap; line-height: 1.2; margin-bottom: 5px; }
@@ -46,10 +48,12 @@ $show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
     .stat-trend { margin-top: 10px; font-size: 12px; font-weight: 500; display: flex; align-items: center; }
     .stat-trend i { margin-right: 4px; }
     
-    .matomo-anim-delay-1 { animation-delay: 0.1s; }
-    .matomo-anim-delay-2 { animation-delay: 0.2s; }
-    .matomo-anim-delay-3 { animation-delay: 0.3s; }
-    .matomo-anim-delay-4 { animation-delay: 0.4s; }
+    .matomo-anim-delay-1 { animation-delay: 0.05s; }
+    .matomo-anim-delay-2 { animation-delay: 0.1s; }
+    .matomo-anim-delay-3 { animation-delay: 0.15s; }
+    .matomo-anim-delay-4 { animation-delay: 0.2s; }
+    .matomo-anim-delay-5 { animation-delay: 0.25s; }
+    .matomo-anim-delay-6 { animation-delay: 0.3s; }
 
     @keyframes matomoSlideUp {
         from { opacity: 0; transform: translateY(20px); }
@@ -404,6 +408,8 @@ login_allow_logme = 1</pre>
                 $total_users_today = 0;
                 $bounce_count_today = 0;
                 $sum_visit_length_today = 0;
+                $total_conversions_today = 0;
+                $max_actions_today = 0;
                 
                 $total_visits_week = 0;
                 $active_sites = 0;
@@ -415,6 +421,12 @@ login_allow_logme = 1</pre>
                     $total_users_today += isset($stat['nb_users']) ? (int) $stat['nb_users'] : 0;
                     $bounce_count_today += isset($stat['bounce_count']) ? (int) $stat['bounce_count'] : 0;
                     $sum_visit_length_today += isset($stat['sum_visit_length']) ? (int) $stat['sum_visit_length'] : 0;
+                    $total_conversions_today += isset($stat['nb_visits_converted']) ? (int) $stat['nb_visits_converted'] : 0;
+                    
+                    $current_max_actions = isset($stat['max_actions']) ? (int) $stat['max_actions'] : 0;
+                    if ($current_max_actions > $max_actions_today) {
+                        $max_actions_today = $current_max_actions;
+                    }
                     
                     if ($visits > 0) {
                         $active_sites++;
@@ -448,9 +460,35 @@ login_allow_logme = 1</pre>
                         </div>
                     </div>
                     
+                    <!-- Users -->
+                    <div class="matomo-stat-col">
+                        <div class="matomo-stat-card purple matomo-anim-delay-2">
+                            <div class="stat-icon"><i class="fa fa-users"></i></div>
+                            <div class="stat-number" data-count="<?= $total_users_today ?>">0</div>
+                            <div class="stat-label"><?= $addon->i18n('matomo_users') ?> (<?= $addon->i18n('matomo_today') ?>)</div>
+                            <div class="stat-trend text-muted">
+                                <i class="fa fa-globe"></i> 
+                                <?= $active_sites ?> <?= $addon->i18n('matomo_active_domains_today') ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Engagement (Duration) -->
+                    <div class="matomo-stat-col">
+                        <div class="matomo-stat-card orange matomo-anim-delay-3">
+                            <div class="stat-icon"><i class="fa fa-clock"></i></div>
+                            <div class="stat-number"><?= gmdate("i:s", (int)$avg_time_on_site) ?></div>
+                            <div class="stat-label">Avg Duration</div>
+                            <div class="stat-trend text-muted">
+                                <i class="fa fa-sign-out-alt"></i> 
+                                <?= $bounce_rate ?>% Bounce Rate
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Actions -->
                     <div class="matomo-stat-col">
-                        <div class="matomo-stat-card green matomo-anim-delay-2">
+                        <div class="matomo-stat-card green matomo-anim-delay-4">
                             <div class="stat-icon"><i class="fa fa-mouse-pointer"></i></div>
                             <div class="stat-number" data-count="<?= $total_actions_today ?>">0</div>
                             <div class="stat-label"><?= $addon->i18n('matomo_actions') ?> (<?= $addon->i18n('matomo_today') ?>)</div>
@@ -461,28 +499,28 @@ login_allow_logme = 1</pre>
                         </div>
                     </div>
                     
-                    <!-- Users -->
+                    <!-- Conversions (Goals) -->
                     <div class="matomo-stat-col">
-                        <div class="matomo-stat-card purple matomo-anim-delay-3">
-                            <div class="stat-icon"><i class="fa fa-users"></i></div>
-                            <div class="stat-number" data-count="<?= $total_users_today ?>">0</div>
-                            <div class="stat-label"><?= $addon->i18n('matomo_users') ?> (<?= $addon->i18n('matomo_today') ?>)</div>
+                        <div class="matomo-stat-card red matomo-anim-delay-5">
+                            <div class="stat-icon"><i class="fa fa-flag-checkered"></i></div>
+                            <div class="stat-number" data-count="<?= $total_conversions_today ?>">0</div>
+                            <div class="stat-label"><?= $addon->i18n('matomo_conversions') ?> (Goals)</div>
                             <div class="stat-trend text-muted">
-                                <i class="fa fa-globe"></i> 
-                                <?= $active_sites ?> <?= $addon->i18n('matomo_active_domains_today') ?>
+                                <i class="fa fa-trophy"></i> 
+                                <?= $total_visits_today > 0 ? round(($total_conversions_today / $total_visits_today) * 100, 1) : 0 ?>% Conv. Rate
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Engagement -->
+
+                    <!-- Peak Activity -->
                     <div class="matomo-stat-col">
-                        <div class="matomo-stat-card orange matomo-anim-delay-4">
-                            <div class="stat-icon"><i class="fa fa-clock"></i></div>
-                            <div class="stat-number"><?= gmdate("i:s", (int)$avg_time_on_site) ?></div>
-                            <div class="stat-label">Avg Duration</div>
+                        <div class="matomo-stat-card teal matomo-anim-delay-6">
+                            <div class="stat-icon"><i class="fa fa-bolt"></i></div>
+                            <div class="stat-number" data-count="<?= $max_actions_today ?>">0</div>
+                            <div class="stat-label">Max Actions/Visit</div>
                             <div class="stat-trend text-muted">
-                                <i class="fa fa-sign-out-alt"></i> 
-                                <?= $bounce_rate ?>% Bounce Rate
+                                <i class="fa fa-level-up-alt"></i> 
+                                Highest Engagement
                             </div>
                         </div>
                     </div>
