@@ -152,6 +152,7 @@ matomo_tracking_code_title = Tracking Code
 matomo_tracking_site_id = Site ID
 matomo_copy_code = Code kopieren
 matomo_close = Schließen
+matomo_curl_not_available = cURL ist auf diesem Server nicht verfügbar. Das AddOn verwendet eine performante Fallback-Lösung (Stream Socket Client) für Tracking-Requests.
 matomo_tracking_code_not_found = Tracking Code nicht gefunden
 matomo_tracking_code_label = Tracking Code für Ihre Website
 matomo_tracking_note = Wichtiger Hinweis
@@ -200,7 +201,7 @@ matomo_consent_manager_active = Consent Manager ist installiert und aktiv.
 # Tracking Code
 matomo_tracking_code_title = Tracking Code
 matomo_tracking_site_id = Site-ID
-matomo_tracking_code_label = Code für Template
+matomo_tracking_code_label = Code für consent manager
 matomo_tracking_note = Hinweis
 matomo_tracking_privacy_note = Bitte beachten Sie die Datenschutzbestimmungen und holen Sie ggf. die Zustimmung der Nutzer ein.
 matomo_tracking_code_not_found = Tracking-Code konnte nicht geladen werden.
