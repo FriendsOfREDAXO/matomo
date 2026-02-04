@@ -2,6 +2,7 @@
 
 namespace FriendsOfRedaxo\Matomo;
 
+use rex;
 use rex_socket;
 use rex_socket_exception;
 use rex_dir;
