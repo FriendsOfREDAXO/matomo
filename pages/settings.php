@@ -7,24 +7,23 @@ $addon = rex_addon::get('matomo');
 // Test-Connection Handler
 if (rex_request('func', 'string') === 'test_connection') {
     rex_response::cleanOutputBuffers();
-    header('Content-Type: application/json');
     
     // Gebe nur die Test-URL zurück - Test passiert im Browser
     $test_url = rex_request('matomo_url', 'string', '');
     
     if ('' === $test_url) {
-        echo json_encode(['success' => false, 'message' => 'Keine URL angegeben']);
+        rex_response::sendJson(['success' => false, 'message' => 'Keine URL angegeben']);
         exit;
     }
     
     // Prüfe nur ob URL valide ist
     if (!filter_var($test_url, FILTER_VALIDATE_URL)) {
-        echo json_encode(['success' => false, 'message' => 'Ungültige URL']);
+        rex_response::sendJson(['success' => false, 'message' => 'Ungültige URL']);
         exit;
     }
     
     // Gebe Test-URL zurück für Client-seitigen Test
-    echo json_encode([
+    rex_response::sendJson([
         'success' => true,
         'test_url' => rtrim($test_url, '/') . '/matomo.js',
         'message' => 'Teste Verbindung...'
@@ -35,24 +34,22 @@ if (rex_request('func', 'string') === 'test_connection') {
 // Test-Proxy Handler
 if (rex_request('func', 'string') === 'test_proxy') {
     rex_response::cleanOutputBuffers();
-    header('Content-Type: application/json');
     
     // Prüfe ob Matomo-URL konfiguriert ist
     $matomo_url = rex_config::get('matomo', 'matomo_url', '');
     if ('' === $matomo_url) {
-        echo json_encode(['success' => false, 'message' => 'Matomo URL nicht konfiguriert']);
+        rex_response::sendJson(['success' => false, 'message' => 'Matomo URL nicht konfiguriert']);
         exit;
     }
     
     // Generiere Proxy-URL für Client-seitigen Test
     $proxy_url = rex_url::frontend('index.php', ['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js']);
     
-    echo json_encode([
+    rex_response::sendJson([
         'success' => true,
         'proxy_url' => $proxy_url,
         'message' => 'Teste Proxy...'
     ]);
-    
     exit;
 }
 
