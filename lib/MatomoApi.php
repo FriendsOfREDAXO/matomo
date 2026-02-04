@@ -199,9 +199,10 @@ class MatomoApi
         
         // URLs bestimmen
         if ($use_proxy) {
-            // Proxy über REDAXO API
-            $tracker_url = rex_url::frontend('index.php?rex-api-call=matomo_proxy');
-            $js_url = rex_url::frontend('index.php?rex-api-call=matomo_proxy&file=matomo.js');
+            // Proxy über REDAXO API - absolute URLs verwenden
+            $tracker_url = rex_url::frontendController(['rex-api-call' => 'matomo_proxy'], false);
+            $tracker_url = rtrim($tracker_url, '/') . '/';
+            $js_url = rex_url::frontendController(['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js'], false);
         } else {
             // Direkte Matomo-URLs
             $tracker_url = $matomo_url . '/';
