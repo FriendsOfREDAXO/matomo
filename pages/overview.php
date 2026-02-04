@@ -12,81 +12,6 @@ $user_token = rex_config::get('matomo', 'user_token', '');
 $matomo_path = rex_config::get('matomo', 'matomo_path', '');
 $show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
 
-// Styles für Banner und Slider
-?>
-<style>
-@keyframes rex-matomo-gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-.rex-matomo-banner {
-    background: linear-gradient(270deg, #324053, #1f78d1, #324053);
-    background-size: 400% 400%;
-    animation: rex-matomo-gradient 15s ease infinite;
-    color: #fff;
-    padding: 15px 20px;
-    margin-bottom: 20px;
-    border-radius: 3px;
-    text-align: center;
-    font-size: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.rex-matomo-banner a {
-    color: #fff;
-    text-decoration: underline;
-    font-weight: bold;
-}
-.rex-matomo-partners {
-    margin-top: 30px;
-    margin-bottom: 30px;
-    text-align: center;
-    opacity: 0.7;
-    transition: opacity 0.3s;
-}
-.rex-matomo-partners:hover {
-    opacity: 1;
-}
-.rex-matomo-partners h4 {
-    font-size: 12px;
-    text-transform: uppercase;
-    color: #999;
-    margin-bottom: 15px;
-    letter-spacing: 1px;
-}
-.rex-matomo-slider-container {
-    overflow: hidden;
-    white-space: nowrap;
-    position: relative;
-    padding: 10px 0;
-    max-width: 800px;
-    margin: 0 auto;
-    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-}
-.rex-matomo-slider-track {
-    display: inline-block;
-    animation: rex-matomo-scroll 30s linear infinite;
-}
-.rex-matomo-slide {
-    display: inline-block;
-    padding: 0 30px;
-    font-size: 16px;
-    font-weight: 500;
-    color: #555;
-    vertical-align: middle;
-}
-.rex-matomo-slide i {
-    margin-right: 5px;
-    color: #1f78d1;
-}
-@keyframes rex-matomo-scroll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-}
-</style>
-<?php
-
 $matomo_ready = false;
 $is_external_matomo = false;
 
@@ -468,14 +393,6 @@ login_allow_logme = 1</pre>
                 ?>
                 
                 <!-- Erweiterte Metriken -->
-                <div class="row">
-                    <!-- Heute -->
-                    <div class="col-sm-6">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h4><i class="fa fa-calendar-day"></i> <?= $addon->i18n('matomo_today') ?></h4>
-                            </div>
-                            <div class="panel-body">
                                 <div class="row">
                                     <div class="col-xs-4 text-center">
                                         <i class="fa fa-eye fa-2x text-primary"></i>
@@ -793,28 +710,7 @@ login_allow_logme = 1</pre>
                     <span class="rex-matomo-slide"><i class="fa fa-heart"></i> FriendsOfREDAXO</span>
                     <span class="rex-matomo-slide"><i class="fa fa-cube"></i> REDAXO CMS</span>
                     <span class="rex-matomo-slide"><i class="fa fa-chart-line"></i> Matomo Analytics</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-code"></i> Open Source</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-server"></i> GitHub</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-shield-alt"></i> Privacy First</span>
-                    <!-- Duplicate for infinite scroll -->
-                    <span class="rex-matomo-slide"><i class="fa fa-heart"></i> FriendsOfREDAXO</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-cube"></i> REDAXO CMS</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-chart-line"></i> Matomo Analytics</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-code"></i> Open Source</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-server"></i> GitHub</span>
-                    <span class="rex-matomo-slide"><i class="fa fa-shield-alt"></i> Privacy First</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Auto-Refresh Script -->
-<script>
-// Seite alle 5 Minuten automatisch aktualisieren
-setTimeout(function() {
-    location.reload();
-}, 300000); // 5 Minuten
+    00000); // 5 Minuten
 
 // Letzte Aktualisierung anzeigen
 document.addEventListener('DOMContentLoaded', function() {
