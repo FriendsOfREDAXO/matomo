@@ -12,6 +12,52 @@ $user_token = rex_config::get('matomo', 'user_token', '');
 $matomo_path = rex_config::get('matomo', 'matomo_path', '');
 $show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
 
+?>
+<style>
+    .matomo-stats-grid { display: flex; flex-wrap: wrap; margin: 0 -10px 20px; }
+    .matomo-stat-col { padding: 0 10px; width: 25%; box-sizing: border-box; }
+    @media (max-width: 991px) { .matomo-stat-col { width: 50%; margin-bottom: 20px; } }
+    @media (max-width: 480px) { .matomo-stat-col { width: 100%; } }
+
+    .matomo-stat-card {
+        background: #fff;
+        border-radius: 4px;
+        border-left: 4px solid #dfe3e9;
+        padding: 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        height: 100%;
+        position: relative;
+        transition: all 0.3s ease;
+        opacity: 0; 
+        animation: matomoSlideUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+    }
+    .matomo-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    .matomo-stat-card.blue { border-left-color: #3bb5f1; }
+    .matomo-stat-card.green { border-left-color: #5cb85c; }
+    .matomo-stat-card.purple { border-left-color: #9b59b6; }
+    .matomo-stat-card.orange { border-left-color: #f0ad4e; }
+
+    .stat-icon { position: absolute; top: 15px; right: 15px; font-size: 24px; opacity: 0.15; color: #333; }
+    .stat-number { font-size: 28px; font-weight: 700; color: #333; white-space: nowrap; line-height: 1.2; margin-bottom: 5px; }
+    .stat-label { font-size: 11px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; font-weight: 600; }
+    .stat-trend { margin-top: 10px; font-size: 12px; font-weight: 500; display: flex; align-items: center; }
+    .stat-trend i { margin-right: 4px; }
+    
+    .matomo-anim-delay-1 { animation-delay: 0.1s; }
+    .matomo-anim-delay-2 { animation-delay: 0.2s; }
+    .matomo-anim-delay-3 { animation-delay: 0.3s; }
+    .matomo-anim-delay-4 { animation-delay: 0.4s; }
+
+    @keyframes matomoSlideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+<?php
+
 $matomo_ready = false;
 $is_external_matomo = false;
 
@@ -364,124 +410,122 @@ login_allow_logme = 1</pre>
                 $total_visits_today = 0;
                 $total_actions_today = 0;
                 $total_users_today = 0;
+                $bounce_count_today = 0;
+                $sum_visit_length_today = 0;
+                
                 $total_visits_week = 0;
-                $total_actions_week = 0;  
-                $total_users_week = 0;
-                $total_bounce_rate = 0;
-                $total_avg_time = 0;
                 $active_sites = 0;
                 
                 foreach ($stats_today as $stat) {
-                    $total_visits_today += $stat['nb_visits'] ?? 0;
-                    $total_actions_today += $stat['nb_actions'] ?? 0;
-                    $total_users_today += $stat['nb_users'] ?? 0;
-                    if (($stat['nb_visits'] ?? 0) > 0) {
+                    $visits = isset($stat['nb_visits']) ? (int) $stat['nb_visits'] : 0;
+                    $total_visits_today += $visits;
+                    $total_actions_today += isset($stat['nb_actions']) ? (int) $stat['nb_actions'] : 0;
+                    $total_users_today += isset($stat['nb_users']) ? (int) $stat['nb_users'] : 0;
+                    $bounce_count_today += isset($stat['bounce_count']) ? (int) $stat['bounce_count'] : 0;
+                    $sum_visit_length_today += isset($stat['sum_visit_length']) ? (int) $stat['sum_visit_length'] : 0;
+                    
+                    if ($visits > 0) {
                         $active_sites++;
                     }
                 }
                 
                 foreach ($stats_week as $stat) {
-                    $total_visits_week += $stat['nb_visits'] ?? 0;
-                    $total_actions_week += $stat['nb_actions'] ?? 0;
-                    $total_users_week += $stat['nb_users'] ?? 0;
+                    $total_visits_week += isset($stat['nb_visits']) ? (int) $stat['nb_visits'] : 0;
                 }
                 
                 // Durchschnittswerte berechnen
-                $avg_actions_per_visit = $total_visits_today > 0 ? round($total_actions_today / $total_visits_today, 1) : 0;
+                $avg_time_on_site = $total_visits_today > 0 ? round($sum_visit_length_today / $total_visits_today) : 0;
+                $bounce_rate = $total_visits_today > 0 ? round(($bounce_count_today / $total_visits_today) * 100, 1) : 0;
+                
                 $growth_rate = $total_visits_week > 0 && $total_visits_today > 0 ? 
                     round((($total_visits_today * 7) / $total_visits_week - 1) * 100, 1) : 0;
                 ?>
                 
-                <!-- Erweiterte Metriken -->
-                                <div class="row">
-                                    <div class="col-xs-4 text-center">
-                                        <i class="fa fa-eye fa-2x text-primary"></i>
-                                        <h3 class="text-primary"><?= number_format($total_visits_today) ?></h3>
-                                        <small class="text-muted"><?= $addon->i18n('matomo_visits') ?></small>
-                                    </div>
-                                    <div class="col-xs-4 text-center">
-                                        <i class="fa fa-mouse-pointer fa-2x text-success"></i>
-                                        <h3 class="text-success"><?= number_format($total_actions_today) ?></h3>
-                                        <small class="text-muted"><?= $addon->i18n('matomo_actions') ?></small>
-                                    </div>
-                                    <div class="col-xs-4 text-center">
-                                        <i class="fa fa-users fa-2x text-info"></i>
-                                        <h3 class="text-info"><?= number_format($total_users_today) ?></h3>
-                                        <small class="text-muted"><?= $addon->i18n('matomo_users') ?></small>
-                                    </div>
-                                </div>
+                <!-- Metrics Grid -->
+                <div class="matomo-stats-grid">
+                    <!-- Visits -->
+                    <div class="matomo-stat-col">
+                        <div class="matomo-stat-card blue matomo-anim-delay-1">
+                            <div class="stat-icon"><i class="fa fa-eye"></i></div>
+                            <div class="stat-number" data-count="<?= $total_visits_today ?>">0</div>
+                            <div class="stat-label"><?= $addon->i18n('matomo_visits') ?> (<?= $addon->i18n('matomo_today') ?>)</div>
+                            <div class="stat-trend <?= $growth_rate >= 0 ? 'text-success' : 'text-danger' ?>">
+                                <i class="fa fa-<?= $growth_rate >= 0 ? 'chart-line' : 'arrow-down' ?>"></i> 
+                                <?= $growth_rate >= 0 ? '+' : '' ?><?= $growth_rate ?>% <?= $addon->i18n('matomo_trend_7_days') ?>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Diese Woche -->  
-                    <div class="col-sm-6">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h4><i class="fa fa-calendar-week"></i> <?= $addon->i18n('matomo_this_week') ?></h4>
+                    <!-- Actions -->
+                    <div class="matomo-stat-col">
+                        <div class="matomo-stat-card green matomo-anim-delay-2">
+                            <div class="stat-icon"><i class="fa fa-mouse-pointer"></i></div>
+                            <div class="stat-number" data-count="<?= $total_actions_today ?>">0</div>
+                            <div class="stat-label"><?= $addon->i18n('matomo_actions') ?> (<?= $addon->i18n('matomo_today') ?>)</div>
+                            <div class="stat-trend text-muted">
+                                <i class="fa fa-list-ol"></i> 
+                                <?= $total_visits_today > 0 ? round($total_actions_today / $total_visits_today, 1) : 0 ?> Actions/Visit
                             </div>
-                            <div class="panel-body">
-                                <div class="row">
-                                    <div class="col-xs-4 text-center">
-                                        <i class="fa fa-eye fa-2x text-primary"></i>
-                                        <h3 class="text-primary"><?= number_format($total_visits_week) ?></h3>
-                                        <small class="text-muted"><?= $addon->i18n('matomo_visits') ?></small>
-                                    </div>
-                                    <div class="col-xs-4 text-center">
-                                        <i class="fa fa-mouse-pointer fa-2x text-success"></i>
-                                        <h3 class="text-success"><?= number_format($total_actions_week) ?></h3>
-                                        <small class="text-muted"><?= $addon->i18n('matomo_actions') ?></small>
-                                    </div>
-                                    <div class="col-xs-4 text-center">
-                                        <i class="fa fa-users fa-2x text-info"></i>
-                                        <h3 class="text-info"><?= number_format($total_users_week) ?></h3>
-                                        <small class="text-muted"><?= $addon->i18n('matomo_users') ?></small>
-                                    </div>
-                                </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Users -->
+                    <div class="matomo-stat-col">
+                        <div class="matomo-stat-card purple matomo-anim-delay-3">
+                            <div class="stat-icon"><i class="fa fa-users"></i></div>
+                            <div class="stat-number" data-count="<?= $total_users_today ?>">0</div>
+                            <div class="stat-label"><?= $addon->i18n('matomo_users') ?> (<?= $addon->i18n('matomo_today') ?>)</div>
+                            <div class="stat-trend text-muted">
+                                <i class="fa fa-globe"></i> 
+                                <?= $active_sites ?> <?= $addon->i18n('matomo_active_domains_today') ?>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Engagement -->
+                    <div class="matomo-stat-col">
+                        <div class="matomo-stat-card orange matomo-anim-delay-4">
+                            <div class="stat-icon"><i class="fa fa-clock"></i></div>
+                            <div class="stat-number"><?= gmdate("i:s", (int)$avg_time_on_site) ?></div>
+                            <div class="stat-label">Avg Duration</div>
+                            <div class="stat-trend text-muted">
+                                <i class="fa fa-sign-out-alt"></i> 
+                                <?= $bounce_rate ?>% Bounce Rate
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Zusätzliche Metriken -->
-                <div class="row">
-                    <div class="col-sm-3">
-                        <div class="panel panel-default">
-                            <div class="panel-body text-center">
-                                <i class="fa fa-chart-line fa-2x text-warning"></i>
-                                <h3 class="text-warning"><?= $avg_actions_per_visit ?></h3>
-                                <small class="text-muted"><?= $addon->i18n('matomo_avg_actions_per_visit') ?></small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-3">
-                        <div class="panel panel-default">
-                            <div class="panel-body text-center">
-                                <i class="fa fa-globe fa-2x text-primary"></i>
-                                <h3 class="text-primary"><?= $active_sites ?></h3>
-                                <small class="text-muted"><?= $addon->i18n('matomo_active_domains_today') ?></small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-3">
-                        <div class="panel panel-default">
-                            <div class="panel-body text-center">
-                                <i class="fa fa-<?= $growth_rate >= 0 ? 'arrow-up text-success' : 'arrow-down text-danger' ?> fa-2x"></i>
-                                <h3 class="<?= $growth_rate >= 0 ? 'text-success' : 'text-danger' ?>"><?= $growth_rate ?>%</h3>
-                                <small class="text-muted"><?= $addon->i18n('matomo_trend_7_days') ?></small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-3">
-                        <div class="panel panel-default">
-                            <div class="panel-body text-center">
-                                <i class="fa fa-calendar fa-2x text-muted"></i>
-                                <h3 class="text-muted"><?= count($sites) ?></h3>
-                                <small class="text-muted"><?= $addon->i18n('matomo_monitored_domains') ?></small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+                <!-- Number Animation Script -->
+                <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var counters = document.querySelectorAll('.stat-number[data-count]');
+                    counters.forEach(function(counter) {
+                        var target = parseInt(counter.getAttribute('data-count'));
+                        var duration = 1500; // ms
+                        var start = null;
+                        
+                        function step(timestamp) {
+                            if (!start) start = timestamp;
+                            var progress = timestamp - start;
+                            var percent = Math.min(progress / duration, 1);
+                            
+                            // Ease out calc
+                            var easeOut = 1 - Math.pow(1 - percent, 3);
+                            
+                            counter.innerText = Math.floor(easeOut * target).toLocaleString('de-DE');
+                            
+                            if (progress < duration) {
+                                window.requestAnimationFrame(step);
+                            } else {
+                                counter.innerText = target.toLocaleString('de-DE');
+                            }
+                        }
+                        
+                        window.requestAnimationFrame(step);
+                    });
+                });
+                </script>
             </div>
         </div>
 
