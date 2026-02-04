@@ -344,66 +344,45 @@ jQuery(function($) {
         }
         
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Teste...');
-        $result.html('');
         
-        // Hole Test-URL vom Backend
+        // Generiere Test-URL direkt
+        var testUrl = url.replace(/\/$/, '') + '/matomo.js';
+        var startTime = new Date().getTime();
+        
+        // Zeige URL an
+        $result.html('<div class="alert alert-info"><i class="fa fa-info-circle"></i> Teste: <code>' + testUrl + '</code></div>');
+        
+        // Teste direkt per JavaScript
         $.ajax({
-            url: window.location.href,
-            method: 'POST',
-            data: {
-                func: 'test_connection',
-                matomo_url: url
-            },
-            dataType: 'json'
-        }).done(function(response) {
-            if (response.success && response.test_url) {
-                // Teste direkt per JavaScript
-                var testUrl = response.test_url;
-                var startTime = new Date().getTime();
-                
-                $.ajax({
-                    url: testUrl,
-                    method: 'GET',
-                    dataType: 'text',
-                    timeout: 10000,
-                    cache: false
-                }).done(function(data) {
-                    var loadTime = new Date().getTime() - startTime;
-                    var size = data.length;
-                    
-                    if (data.indexOf('Matomo') > -1 || data.indexOf('Piwik') > -1) {
-                        $result.html('<div class="alert alert-success">' +
-                            '<i class="fa fa-check-circle"></i> Verbindung erfolgreich!<br>' +
-                            '<small>Größe: ' + (size / 1024).toFixed(1) + ' KB | ' +
-                            'Ladezeit: ' + loadTime + ' ms</small></div>');
-                    } else {
-                        $result.html('<div class="alert alert-warning">' +
-                            '<i class="fa fa-exclamation-triangle"></i> Datei geladen, aber kein Matomo JavaScript erkannt</div>');
-                    }
-                }).fail(function(xhr, status, error) {
-                    var msg = 'Verbindung fehlgeschlagen';
-                    if (xhr.status > 0) {
-                        msg += ' (HTTP ' + xhr.status + ')';
-                    } else if (status === 'timeout') {
-                        msg += ' (Timeout)';
-                    } else if (error) {
-                        msg += ' (' + error + ')';
-                    }
-                    $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
-                });
+            url: testUrl,
+            method: 'GET',
+            dataType: 'text',
+            timeout: 10000,
+            cache: false
+        }).done(function(data) {
+            var loadTime = new Date().getTime() - startTime;
+            var size = data.length;
+            
+            if (data.indexOf('Matomo') > -1 || data.indexOf('Piwik') > -1) {
+                $result.html('<div class="alert alert-success">' +
+                    '<i class="fa fa-check-circle"></i> Verbindung erfolgreich!<br>' +
+                    '<small>Größe: ' + (size / 1024).toFixed(1) + ' KB | ' +
+                    'Ladezeit: ' + loadTime + ' ms</small></div>');
             } else {
-                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + (response.message || 'Fehler') + '</div>');
+                $result.html('<div class="alert alert-warning">' +
+                    '<i class="fa fa-exclamation-triangle"></i> Datei geladen, aber kein Matomo JavaScript erkannt<br>' +
+                    '<small>Erste 100 Zeichen: ' + data.substring(0, 100) + '</small></div>');
             }
-        }).fail(function(xhr) {
-            var msg = 'Backend-Anfrage fehlgeschlagen';
-            if (xhr.responseText) {
-                try {
-                    var response = JSON.parse(xhr.responseText);
-                    if (response.message) {
-                        msg = response.message;
-                    }
-                } catch(e) {}
+        }).fail(function(xhr, status, error) {
+            var msg = 'Verbindung fehlgeschlagen';
+            if (xhr.status > 0) {
+                msg += ' (HTTP ' + xhr.status + ')';
+            } else if (status === 'timeout') {
+                msg += ' (Timeout)';
+            } else if (error) {
+                msg += ' (' + error + ')';
             }
+            msg += '<br><small>URL: <code>' + testUrl + '</code></small>';
             $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
         }).always(function() {
             $btn.prop('disabled', false).html('<i class="fa fa-plug"></i> Test');
