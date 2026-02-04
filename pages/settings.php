@@ -42,21 +42,13 @@ if (rex_request('func', 'string') === 'test_proxy') {
         exit;
     }
     
-    // Debug: Prüfe ob API registriert ist
-    $registered_apis = rex_api_function::getRegisteredApis();
-    $is_registered = isset($registered_apis['matomo_proxy']);
-    
     // Generiere Proxy-URL für Client-seitigen Test - absolute URL
     $proxy_url = rex_url::frontendController(['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js', 'test' => '1']);
     
     rex_response::sendJson([
         'success' => true,
         'proxy_url' => $proxy_url,
-        'message' => 'Teste Proxy...',
-        'debug' => [
-            'is_registered' => $is_registered,
-            'registered_apis' => array_keys($registered_apis)
-        ]
+        'message' => 'Teste Proxy...'
     ]);
     exit;
 }
@@ -423,73 +415,47 @@ jQuery(function($) {
         var $result = $('#test-proxy-result');
         
         $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Teste...');
-        $result.html('');
         
-        // Hole Proxy-URL vom Backend
+        // Generiere Proxy-URL direkt im Frontend
+        var baseUrl = window.location.protocol + '//' + window.location.host;
+        var proxyUrl = baseUrl + '/index.php?rex-api-call=matomo_proxy&file=matomo.js&test=1';
+        var startTime = new Date().getTime();
+        
+        // Zeige URL an
+        $result.html('<div class="alert alert-info"><i class="fa fa-info-circle"></i> Teste: <code>' + proxyUrl + '</code></div>');
+        
+        // Teste Proxy direkt per JavaScript
         $.ajax({
-            url: window.location.href,
-            method: 'POST',
-            data: {
-                func: 'test_proxy'
-            },
-            dataType: 'json'
-        }).done(function(response) {
-            if (response.success && response.proxy_url) {
-                var proxyUrl = response.proxy_url;
-                var startTime = new Date().getTime();
-                
-                // Debug-Info anzeigen wenn vorhanden
-                if (response.debug) {
-                    console.log('Proxy Debug:', response.debug);
-                    console.log('Proxy URL:', proxyUrl);
-                }
-                
-                // Teste Proxy direkt per JavaScript
-                $.ajax({
-                    url: proxyUrl,
-                    method: 'GET',
-                    dataType: 'text',
-                    timeout: 10000,
-                    cache: false
-                }).done(function(data) {
-                    var loadTime = new Date().getTime() - startTime;
-                    var size = data.length;
-                    
-                    if (data.indexOf('Matomo') > -1 || data.indexOf('Piwik') > -1) {
-                        $result.html('<div class="alert alert-success">' +
-                            '<i class="fa fa-check-circle"></i> Proxy funktioniert!<br>' +
-                            '<small>Größe: ' + (size / 1024).toFixed(1) + ' KB | ' +
-                            'Ladezeit: ' + loadTime + ' ms<br>' +
-                            'URL: <code>' + proxyUrl + '</code></small></div>');
-                    } else {
-                        $result.html('<div class="alert alert-warning">' +
-                            '<i class="fa fa-exclamation-triangle"></i> Proxy antwortet, aber kein Matomo JavaScript erkannt</div>');
-                    }
-                }).fail(function(xhr, status, error) {
-                    var msg = 'Proxy-Aufruf fehlgeschlagen';
-                    if (xhr.status > 0) {
-                        msg += ' (HTTP ' + xhr.status + ')';
-                    } else if (status === 'timeout') {
-                        msg += ' (Timeout)';
-                    } else if (error) {
-                        msg += ' (' + error + ')';
-                    }
-                    msg += '<br><small>URL: <code>' + proxyUrl + '</code></small>';
-                    $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
-                });
+            url: proxyUrl,
+            method: 'GET',
+            dataType: 'text',
+            timeout: 10000,
+            cache: false
+        }).done(function(data) {
+            var loadTime = new Date().getTime() - startTime;
+            var size = data.length;
+            
+            if (data.indexOf('Matomo') > -1 || data.indexOf('Piwik') > -1) {
+                $result.html('<div class="alert alert-success">' +
+                    '<i class="fa fa-check-circle"></i> Proxy funktioniert!<br>' +
+                    '<small>Größe: ' + (size / 1024).toFixed(1) + ' KB | ' +
+                    'Ladezeit: ' + loadTime + ' ms<br>' +
+                    'URL: <code>' + proxyUrl + '</code></small></div>');
             } else {
-                $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + (response.message || 'Fehler') + '</div>');
+                $result.html('<div class="alert alert-warning">' +
+                    '<i class="fa fa-exclamation-triangle"></i> Proxy antwortet, aber kein Matomo JavaScript erkannt<br>' +
+                    '<small>Erste 100 Zeichen: ' + data.substring(0, 100) + '</small></div>');
             }
-        }).fail(function(xhr) {
-            var msg = 'Backend-Anfrage fehlgeschlagen';
-            if (xhr.responseText) {
-                try {
-                    var response = JSON.parse(xhr.responseText);
-                    if (response.message) {
-                        msg = response.message;
-                    }
-                } catch(e) {}
+        }).fail(function(xhr, status, error) {
+            var msg = 'Proxy-Aufruf fehlgeschlagen';
+            if (xhr.status > 0) {
+                msg += ' (HTTP ' + xhr.status + ')';
+            } else if (status === 'timeout') {
+                msg += ' (Timeout)';
+            } else if (error) {
+                msg += ' (' + error + ')';
             }
+            msg += '<br><small>URL: <code>' + proxyUrl + '</code></small>';
             $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
         }).always(function() {
             $btn.prop('disabled', false).html('<i class="fa fa-shield"></i> Proxy testen');
