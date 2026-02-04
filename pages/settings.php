@@ -42,13 +42,21 @@ if (rex_request('func', 'string') === 'test_proxy') {
         exit;
     }
     
-    // Generiere Proxy-URL für Client-seitigen Test
-    $proxy_url = rex_url::frontend('index.php', ['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js', 'test' => '1']);
+    // Debug: Prüfe ob API registriert ist
+    $registered_apis = rex_api_function::getRegisteredApis();
+    $is_registered = isset($registered_apis['matomo_proxy']);
+    
+    // Generiere Proxy-URL für Client-seitigen Test - absolute URL
+    $proxy_url = rex_url::frontendController(['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js', 'test' => '1']);
     
     rex_response::sendJson([
         'success' => true,
         'proxy_url' => $proxy_url,
-        'message' => 'Teste Proxy...'
+        'message' => 'Teste Proxy...',
+        'debug' => [
+            'is_registered' => $is_registered,
+            'registered_apis' => array_keys($registered_apis)
+        ]
     ]);
     exit;
 }
@@ -430,6 +438,12 @@ jQuery(function($) {
                 var proxyUrl = response.proxy_url;
                 var startTime = new Date().getTime();
                 
+                // Debug-Info anzeigen wenn vorhanden
+                if (response.debug) {
+                    console.log('Proxy Debug:', response.debug);
+                    console.log('Proxy URL:', proxyUrl);
+                }
+                
                 // Teste Proxy direkt per JavaScript
                 $.ajax({
                     url: proxyUrl,
@@ -460,6 +474,7 @@ jQuery(function($) {
                     } else if (error) {
                         msg += ' (' + error + ')';
                     }
+                    msg += '<br><small>URL: <code>' + proxyUrl + '</code></small>';
                     $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
                 });
             } else {
