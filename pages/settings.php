@@ -135,6 +135,11 @@ if ($error) {
     echo rex_view::error($error);
 }
 
+// Check for cURL availability
+if (!function_exists('curl_init')) {
+    echo rex_view::info($addon->i18n('matomo_curl_not_available'));
+}
+
 ?>
 
 <div class="row">

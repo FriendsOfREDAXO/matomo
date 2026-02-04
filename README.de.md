@@ -41,6 +41,20 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 - **REDAXO i18n System** Integration
 - **Konsistente Terminologie** über alle Seiten
 
+## 🖥️ Systemvoraussetzungen & Empfehlungen
+
+### Voraussetzungen
+- **REDAXO 5.16.1+**
+- **PHP 8.2+** (Empfohlen: PHP 8.4+)
+- **rex_socket** (Core-Komponente) als Basis
+
+### Empfehlungen
+- **PHP cURL Extension**: Dringend empfohlen für Server-Side Tracking.
+    - Ermöglicht "Fire-and-Forget" Requests (minimiert Auswirkungen auf die Ladezeit)
+    - Bei fehlendem cURL wird automatisch auf eine performante native Socket-Lösung zurückgegriffen (seit v2.2)
+- **SSL-Zertifikat**: Empfohlen für alle Domains (HTTPS)
+- **YRewrite AddOn**: Empfohlen für Multi-Domain-Verwaltung
+
 ## ️ Installation
 
 1. **AddOn installieren** über den REDAXO Installer oder manuell
@@ -289,6 +303,9 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 [Daniel Springer](https://github.com/danspringer)
 
 [Thomas Skerbis](https://github.com/skerbis)
+
+**Mitwirkende**  
+Danke an [VIEWSION](https://github.com/VIEWSION) für das Tracker-Refactoring in [PR #22](https://github.com/FriendsOfREDAXO/matomo/pull/22)
 
 ## 🤝 Support
 

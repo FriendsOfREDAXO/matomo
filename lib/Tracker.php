@@ -531,7 +531,9 @@ class Tracker
     }
 
     /**
-     * Sends the request to Matomo using rex_socket.
+     * Sends the request to Matomo.
+     * Tries to use cURL with a very short timeout (fire-and-forget) first.
+     * Falls back to rex_socket if cURL is not available.
      * 
      * @param array<string, mixed> $params
      */
@@ -578,31 +580,104 @@ class Tracker
         // Merge with specific action params
         $finalParams = array_merge($finalParams, $params);
 
-        try {
-            $socket = rex_socket::factoryUrl($this->matomoUrl . '/matomo.php');
+        $url = $this->matomoUrl . '/matomo.php';
+
+        // Try cURL first (Fire-and-Forget style)
+        if (function_exists('curl_init')) {
+            $ch = curl_init();
             
-            // Set SSL options (allow self-signed if needed, or use strict verification)
-            // Following the pattern in MatomoApi.php which disabled verification
-            $socket->setOptions([
+            // Convert params to query string if POSTFIELDS not used as array (but array is better for multipart, here we want simple POST)
+            // Matomo accepts GET or POST. POST is safer for long URLs.
+            // Using http_build_query for body standard application/x-www-form-urlencoded
+            $postData = http_build_query($finalParams);
+
+            $options = [
+                CURLOPT_URL => $url,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => $postData,
+                CURLOPT_USERAGENT => $this->userAgent ?: 'Matomo-Tracker',
+                CURLOPT_HEADER => false,
+                CURLOPT_RETURNTRANSFER => true, // Return response instead of outputting
+                CURLOPT_TIMEOUT_MS => 100, // Very short timeout for fire-and-forget
+                // Force resolving SSL verify setting
+                CURLOPT_SSL_VERIFYPEER => $this->sslVerify,
+                CURLOPT_SSL_VERIFYHOST => $this->sslVerify ? 2 : 0,
+            ];
+
+            // Prevent Expect: 100-continue which adds latency
+            $options[CURLOPT_HTTPHEADER] = ['Expect:'];
+
+            // Handle NOSIGNAL for sub-second timeouts on Unix
+            if (defined('CURLOPT_NOSIGNAL')) {
+                $options[CURLOPT_NOSIGNAL] = 1;
+            }
+
+            curl_setopt_array($ch, $options);
+            
+            curl_exec($ch);
+            $errno = curl_errno($ch);
+            curl_close($ch);
+
+            // Consider success if no error OR timeout (28) occurred which is expected for fire-and-forget
+            if ($errno === 0 || $errno === 28) {
+                return true;
+            }
+            
+            // If we have other errors (like DNS resolution, SSL handshake fail immediately), we might try fallback or just fail.
+            // But if cURL fails, rex_socket might fail too. Let's try fallback only if not a configuration error.
+        }
+
+        // Fallback: Raw Socket (Fire-and-Forget style)
+        // We direct use stream_socket_client to avoid waiting for response (which rex_socket does)
+        try {
+            $parts = parse_url($url);
+            $host = $parts['host'];
+            $path = $parts['path'] ?? '/';
+            $scheme = $parts['scheme'] ?? 'http';
+            $port = $parts['port'] ?? ($scheme === 'https' ? 443 : 80);
+            
+            $protocol = ($scheme === 'https') ? 'ssl://' : 'tcp://';
+            $address = $protocol . $host . ':' . $port;
+
+            $context = stream_context_create([
                 'ssl' => [
                     'verify_peer' => $this->sslVerify,
-                    'verify_peer_name' => $this->sslVerify
+                    'verify_peer_name' => $this->sslVerify,
                 ]
             ]);
-            
-            // Short timeout, we don't want to block page load
-            $socket->setTimeout(3); 
-            
-            $socket->doPost($finalParams);
-            
-            // We don't really care about the response body for tracking
-            // but status code should be 200
-            
-            return true;
-        } catch (rex_socket_exception $e) {
+
+            $fp = @stream_socket_client(
+                $address, 
+                $errno, 
+                $errstr, 
+                3, // Connect timeout (seconds)
+                STREAM_CLIENT_CONNECT, 
+                $context
+            );
+
+            if ($fp) {
+                // Prepare payload
+                $content = http_build_query($finalParams);
+                
+                $out = "POST $path HTTP/1.1\r\n";
+                $out .= "Host: $host\r\n";
+                $out .= "User-Agent: " . ($this->userAgent ?: 'Matomo-Tracker') . "\r\n";
+                $out .= "Content-Type: application/x-www-form-urlencoded\r\n";
+                $out .= "Content-Length: " . strlen($content) . "\r\n";
+                $out .= "Connection: Close\r\n\r\n";
+                $out .= $content;
+
+                fwrite($fp, $out);
+                // We do NOT read the response to return as fast as possible
+                fclose($fp);
+                
+                return true;
+            }
+        } catch (\Throwable $e) {
             // Log error silently, don't break the page
             rex_logger::logException($e);
-            return false;
         }
+
+        return false;
     }
 }
