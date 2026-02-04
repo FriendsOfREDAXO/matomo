@@ -7,7 +7,7 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 ### ✅ **Automatisierte Installation**
 - **Ein-Klick Download** der neuesten Matomo-Version
 - **Automatische Konfiguration** von URL und Pfad
-- **REDAXO-native Implementierung** mit `rex_socket`, `rex_file` und `rex_dir`
+- **REDAXO-Implementation** für API-Steuerung
 
 ### 📊 **Übersichten & Analytics**
 - **Kompakte Übersichtsseite** mit Statistiken aller Domains
@@ -46,7 +46,7 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 ### Voraussetzungen
 - **REDAXO 5.16.1+**
 - **PHP 8.2+** (Empfohlen: PHP 8.4+)
-- **rex_socket** (Core-Komponente) als Basis
+- **rex_socket** (Core-Komponente) für API-Verwaltung
 
 ### Empfehlungen
 - **PHP cURL Extension**: Dringend empfohlen für Server-Side Tracking.
@@ -174,11 +174,11 @@ Das AddOn nutzt die **Matomo HTTP API** für:
 - Tracking-Code Generierung
 - Dashboard-Widget Integration
 
-Alle HTTP-Requests erfolgen über `rex_socket` mit konfigurierbaren Timeouts und SSL-Optionen.
+Alle API-Verwaltungs-Requests erfolgen über `rex_socket` mit konfigurierbaren Timeouts und SSL-Optionen.
 
 ## 💻 PHP Tracking API (Serverseitig)
 
-Das AddOn bringt eine leistungsfähige PHP-Klasse `Tracker` für Server-Side Tracking mit (z.B. für API-Endpunkte, Cronjobs oder Headless-Anwendungen). Diese nutzt `rex_socket` und verwaltet die Verbindung automatisch.
+Das AddOn bringt eine leistungsfähige PHP-Klasse `Tracker` für Server-Side Tracking mit (z.B. für API-Endpunkte, Cronjobs oder Headless-Anwendungen). Diese nutzt primär **cURL (Fire-and-Forget)** und fällt bei Nichtverfügbarkeit automatisch auf performante **Native Sockets** zurück.
 
 ### Einfache Verwendung
 

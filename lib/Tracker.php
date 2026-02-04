@@ -7,8 +7,6 @@ use rex_addon;
 use rex_config;
 use rex_logger;
 use rex_request;
-use rex_socket;
-use rex_socket_exception;
 
 /**
  * Matomo Tracker Class for Server-Side Tracking.
@@ -595,7 +593,7 @@ class Tracker
                 CURLOPT_URL => $url,
                 CURLOPT_POST => true,
                 CURLOPT_POSTFIELDS => $postData,
-                CURLOPT_USERAGENT => $this->userAgent ?: 'Matomo-Tracker',
+                CURLOPT_USERAGENT => $this->userAgent !== '' ? $this->userAgent : 'Matomo-Tracker',
                 CURLOPT_HEADER => false,
                 CURLOPT_RETURNTRANSFER => true, // Return response instead of outputting
                 CURLOPT_TIMEOUT_MS => 100, // Very short timeout for fire-and-forget
@@ -607,12 +605,12 @@ class Tracker
             // Prevent Expect: 100-continue which adds latency
             $options[CURLOPT_HTTPHEADER] = ['Expect:'];
 
+            curl_setopt_array($ch, $options);
+
             // Handle NOSIGNAL for sub-second timeouts on Unix
             if (defined('CURLOPT_NOSIGNAL')) {
-                $options[CURLOPT_NOSIGNAL] = 1;
+                curl_setopt($ch, CURLOPT_NOSIGNAL, true);
             }
-
-            curl_setopt_array($ch, $options);
             
             curl_exec($ch);
             $errno = curl_errno($ch);
@@ -631,6 +629,9 @@ class Tracker
         // We direct use stream_socket_client to avoid waiting for response (which rex_socket does)
         try {
             $parts = parse_url($url);
+            if (!is_array($parts) || !isset($parts['host'])) {
+                return false;
+            }
             $host = $parts['host'];
             $path = $parts['path'] ?? '/';
             $scheme = $parts['scheme'] ?? 'http';
@@ -655,13 +656,15 @@ class Tracker
                 $context
             );
 
-            if ($fp) {
+            if ($fp !== false) {
                 // Prepare payload
                 $content = http_build_query($finalParams);
                 
+                $ua = ($this->userAgent !== '') ? $this->userAgent : 'Matomo-Tracker';
+
                 $out = "POST $path HTTP/1.1\r\n";
                 $out .= "Host: $host\r\n";
-                $out .= "User-Agent: " . ($this->userAgent ?: 'Matomo-Tracker') . "\r\n";
+                $out .= "User-Agent: " . $ua . "\r\n";
                 $out .= "Content-Type: application/x-www-form-urlencoded\r\n";
                 $out .= "Content-Length: " . strlen($content) . "\r\n";
                 $out .= "Connection: Close\r\n\r\n";

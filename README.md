@@ -65,7 +65,7 @@ The **Matomo AddOn** provides complete integrat### 4. **View Statistics**
 ### Requirements
 - **REDAXO 5.16.1+**
 - **PHP 8.2+** (Recommended: PHP 8.4+)
-- **rex_socket** (Core Component) for fallback communication
+- **rex_socket** (Core Component) for API management
 
 ### Recommendations
 - **PHP cURL Extension**: Highly recommended for Server-Side Tracking.
