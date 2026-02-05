@@ -47,6 +47,15 @@ class Tracker
     /** @var bool */
     private bool $sslVerify = false;
 
+    /** @var string */
+    private string $proxyHost = '';
+    
+    /** @var int */
+    private int $proxyPort = 80;
+
+    /** @var float */
+    private float $socketTimeout = 1.0;
+
     /**
      * @param int $siteId
      * @param string $matomoUrl
@@ -108,7 +117,29 @@ class Tracker
         $sslVerify = (bool) rex_config::get('matomo', 'verify_ssl', true);
         $tracker->setSslVerify($sslVerify);
         
+        // Set Proxy Config
+        $proxyHost = $addon->getConfig('http_proxy_host');
+        if ($proxyHost) {
+            $tracker->setProxy($proxyHost, (int) $addon->getConfig('http_proxy_port', 80));
+        }
+
+        // Set Socket Timeout
+        $tracker->setSocketTimeout((float) $addon->getConfig('socket_timeout', 1.0));
+
         return $tracker;
+    }
+
+    public function setProxy(string $host, int $port = 80): self
+    {
+        $this->proxyHost = $host;
+        $this->proxyPort = $port;
+        return $this;
+    }
+
+    public function setSocketTimeout(float $timeout): self
+    {
+        $this->socketTimeout = $timeout;
+        return $this;
     }
 
     /**
@@ -530,8 +561,7 @@ class Tracker
 
     /**
      * Sends the request to Matomo.
-     * Tries to use cURL with a very short timeout (fire-and-forget) first.
-     * Falls back to rex_socket if cURL is not available.
+     * Uses fsockopen/transports for a non-blocking (fire-and-forget) style request.
      * 
      * @param array<string, mixed> $params
      */
@@ -579,66 +609,43 @@ class Tracker
         $finalParams = array_merge($finalParams, $params);
 
         $url = $this->matomoUrl . '/matomo.php';
-
-        // Try cURL first (Fire-and-Forget style)
-        if (function_exists('curl_init')) {
-            $ch = curl_init();
-            
-            // Convert params to query string if POSTFIELDS not used as array (but array is better for multipart, here we want simple POST)
-            // Matomo accepts GET or POST. POST is safer for long URLs.
-            // Using http_build_query for body standard application/x-www-form-urlencoded
-            $postData = http_build_query($finalParams);
-
-            $options = [
-                CURLOPT_URL => $url,
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => $postData,
-                CURLOPT_USERAGENT => $this->userAgent !== '' ? $this->userAgent : 'Matomo-Tracker',
-                CURLOPT_HEADER => false,
-                CURLOPT_RETURNTRANSFER => true, // Return response instead of outputting
-                CURLOPT_TIMEOUT_MS => 100, // Very short timeout for fire-and-forget
-                // Force resolving SSL verify setting
-                CURLOPT_SSL_VERIFYPEER => $this->sslVerify,
-                CURLOPT_SSL_VERIFYHOST => $this->sslVerify ? 2 : 0,
-            ];
-
-            // Prevent Expect: 100-continue which adds latency
-            $options[CURLOPT_HTTPHEADER] = ['Expect:'];
-
-            curl_setopt_array($ch, $options);
-
-            // Handle NOSIGNAL for sub-second timeouts on Unix
-            if (defined('CURLOPT_NOSIGNAL')) {
-                curl_setopt($ch, CURLOPT_NOSIGNAL, true);
-            }
-            
-            curl_exec($ch);
-            $errno = curl_errno($ch);
-            curl_close($ch);
-
-            // Consider success if no error OR timeout (28) occurred which is expected for fire-and-forget
-            if ($errno === 0 || $errno === 28) {
-                return true;
-            }
-            
-            // If we have other errors (like DNS resolution, SSL handshake fail immediately), we might try fallback or just fail.
-            // But if cURL fails, rex_socket might fail too. Let's try fallback only if not a configuration error.
+        $parts = parse_url($url);
+        
+        if (!is_array($parts) || !isset($parts['host'])) {
+            return false;
         }
 
-        // Fallback: Raw Socket (Fire-and-Forget style)
-        // We direct use stream_socket_client to avoid waiting for response (which rex_socket does)
+        $host = $parts['host'];
+        $path = $parts['path'] ?? '/';
+        $scheme = $parts['scheme'] ?? 'http';
+        $port = $parts['port'] ?? ($scheme === 'https' ? 443 : 80);
+        
+        // Prepare payload
+        $content = http_build_query($finalParams);
+        $ua = ($this->userAgent !== '') ? $this->userAgent : 'Matomo-Tracker';
+        
+        $request  = "POST " . ($this->proxyHost ? $url : $path) . " HTTP/1.1\r\n";
+        $request .= "Host: $host\r\n";
+        $request .= "User-Agent: " . $ua . "\r\n";
+        $request .= "Content-Type: application/x-www-form-urlencoded\r\n";
+        $request .= "Content-Length: " . strlen($content) . "\r\n";
+        $request .= "Connection: Close\r\n\r\n";
+        $request .= $content;
+
         try {
-            $parts = parse_url($url);
-            if (!is_array($parts) || !isset($parts['host'])) {
-                return false;
-            }
-            $host = $parts['host'];
-            $path = $parts['path'] ?? '/';
-            $scheme = $parts['scheme'] ?? 'http';
-            $port = $parts['port'] ?? ($scheme === 'https' ? 443 : 80);
+            $targetHost = $this->proxyHost ?: $host;
+            $targetPort = $this->proxyHost ? $this->proxyPort : $port;
             
-            $protocol = ($scheme === 'https') ? 'ssl://' : 'tcp://';
-            $address = $protocol . $host . ':' . $port;
+            // For HTTPS via Proxy, we would need CONNECT. This simpel implementation 
+            // only supports HTTP Proxy for HTTP targets or Direct connection.
+            // If direct HTTPS, we use ssl:// wrapper.
+            
+            $transport = 'tcp://';
+            if (!$this->proxyHost && $scheme === 'https') {
+                $transport = 'ssl://';
+            }
+            
+            $socketUrl = $transport . $targetHost . ':' . $targetPort;
 
             $context = stream_context_create([
                 'ssl' => [
@@ -648,30 +655,21 @@ class Tracker
             ]);
 
             $fp = @stream_socket_client(
-                $address, 
+                $socketUrl, 
                 $errno, 
                 $errstr, 
-                3, // Connect timeout (seconds)
+                (float) $this->socketTimeout, // Use configured timeout
                 STREAM_CLIENT_CONNECT, 
                 $context
             );
 
             if ($fp !== false) {
-                // Prepare payload
-                $content = http_build_query($finalParams);
+                // Set non-blocking to return immediately after writing buffer
+                stream_set_blocking($fp, false);
                 
-                $ua = ($this->userAgent !== '') ? $this->userAgent : 'Matomo-Tracker';
-
-                $out = "POST $path HTTP/1.1\r\n";
-                $out .= "Host: $host\r\n";
-                $out .= "User-Agent: " . $ua . "\r\n";
-                $out .= "Content-Type: application/x-www-form-urlencoded\r\n";
-                $out .= "Content-Length: " . strlen($content) . "\r\n";
-                $out .= "Connection: Close\r\n\r\n";
-                $out .= $content;
-
-                fwrite($fp, $out);
-                // We do NOT read the response to return as fast as possible
+                fwrite($fp, $request);
+                
+                // Do not read response for fire-and-forget
                 fclose($fp);
                 
                 return true;

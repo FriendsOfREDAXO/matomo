@@ -50,6 +50,18 @@ $field->setLabel($addon->i18n('matomo_ssl_verify'));
 $field->addOption($addon->i18n('matomo_ssl_verify_option'), '1');
 $field->setNotice($addon->i18n('matomo_ssl_verify_help'));
 
+// Socket Settings
+$form->addFieldset('Socket Einstellungen');
+
+$field = $form->addTextField('socket_timeout');
+$field->setLabel($addon->i18n('matomo_socket_timeout'));
+$field->setNotice($addon->i18n('matomo_socket_timeout_help'));
+$field->getValidator()->add('min', 'Min 0.1 Sekunden', 0.1);
+// Standardwert 1 verhindern wir, sonst steht nichts drin wenn leer
+if ($field->getValue() == '') {
+    $field->setValue(1);
+}
+
 // Tracking Optionen Sektion
 $form->addFieldset($addon->i18n('matomo_tracking_options'));
 

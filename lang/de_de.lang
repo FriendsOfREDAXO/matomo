@@ -362,3 +362,7 @@ matomo_conversion_rate = Konversionsrate
 matomo_max_actions = Max Aktionen/Besuch
 matomo_highest_engagement = Höchstes Engagement
 
+
+# Socket Settings
+matomo_socket_timeout = Socket Timeout
+matomo_socket_timeout_help = Maximale Wartezeit für den Verbindungsaufbau beim Tracking (in Sekunden). Standard: 1
