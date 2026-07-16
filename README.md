@@ -180,13 +180,13 @@ The AddOn uses the **Matomo HTTP API** for:
 
 All HTTP requests are made via `rex_socket` with configurable timeouts and SSL options.
 
-## �️ Server-Side Tracking (No JS & No Cookies)
+## Server-Side Tracking (No JS & No Cookies)
 
 REDAXO can take over the role of Matomo JavaScript entirely, reporting page views directly from the server to Matomo. This makes tracking independent of adblockers, disabled JavaScript, and browser tracking protection.
 
 ### Activation
 
-Under **Matomo → Matomo Setup**:
+Under **Matomo → Configuration**:
 1. Enable **"Enable server-side tracking"**
 2. Enter the **Matomo Site ID** (found in Matomo under Administration → Websites)
 
@@ -207,7 +207,22 @@ In addition to server-side page tracking, a lightweight JS script can be enabled
 - **Form submissions** (all `<form>` elements)
 - **Custom events** via `data-matomo-event` attribute
 
-Activate under **Matomo → Matomo Setup → "Enable browser event tracking"**.
+Activate under **Matomo → Configuration → "Enable browser event tracking"**.
+
+Important: The AddOn intentionally does **not** auto-inject this script into frontend output.
+Integration must be done manually by the integrator, e.g. via consent manager or template.
+
+#### Manual Integration (Consent Manager / Template)
+```html
+<script>
+window.MatomoEventsConfig = {
+    endpoint: '/index.php?rex-api-call=matomo_event'
+};
+</script>
+<script defer src="/redaxo/assets/addons/matomo/matomo-events.js"></script>
+```
+
+Note: For subdirectory installations, adjust paths to the correct webroot (e.g. `/subdir/index.php?rex-api-call=matomo_event`).
 
 #### Custom Events via Data Attribute (no JS required)
 ```html
@@ -284,9 +299,6 @@ if ($tracker) {
 
     // 5. Track an Outbound Link
     $tracker->trackOutboundLink('https://partner.com');
-    // 3. Track an Event
-    // Category, Action, Name (optional), Value (optional)
-    $tracker->trackEvent('Contact Form', 'Submit', 'General Inquiry', 1);
     
     // 4. Track a Goal (Conversion)
     // Goal ID, Revenue (optional)

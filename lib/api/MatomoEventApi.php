@@ -2,6 +2,7 @@
 
 namespace FriendsOfRedaxo\Matomo;
 
+use rex;
 use rex_api_function;
 use rex_api_result;
 use rex_config;
@@ -46,13 +47,17 @@ class MatomoEventApi extends rex_api_function
 
         // ── CORS for same-site XHR ───────────────────────────────────────
         $origin = rex_request::server('HTTP_ORIGIN', 'string', '');
-        if ('' !== $origin) {
-            $host = rex_request::server('HTTP_HOST', 'string', '');
-            // Allow only same host (scheme-agnostic)
-            if (str_contains($origin, $host)) {
-                header('Access-Control-Allow-Origin: ' . $origin);
-            }
+        if ('' !== $origin && !$this->isAllowedOrigin($origin)) {
+            rex_response::setStatus(rex_response::HTTP_FORBIDDEN);
+            rex_response::sendJson(['ok' => false, 'error' => 'forbidden origin']);
+            exit;
         }
+
+        if ('' !== $origin) {
+            header('Access-Control-Allow-Origin: ' . $origin);
+            header('Vary: Origin');
+        }
+
         header('Content-Type: application/json; charset=utf-8');
 
         if (!$this->isEnabled()) {
@@ -106,8 +111,37 @@ class MatomoEventApi extends rex_api_function
 
     private function isEnabled(): bool
     {
-        return (bool) rex_config::get('matomo', 'server_side_tracking', false)
+        return (bool) rex_config::get('matomo', 'event_tracking_js', false)
             && (int) rex_config::get('matomo', 'server_side_site_id', 0) > 0;
+    }
+
+    private function isAllowedOrigin(string $origin): bool
+    {
+        $originParts = parse_url($origin);
+        if (!is_array($originParts)) {
+            return false;
+        }
+
+        $originScheme = strtolower((string) ($originParts['scheme'] ?? ''));
+        $originHost = strtolower((string) ($originParts['host'] ?? ''));
+        if ('' === $originHost || !in_array($originScheme, ['http', 'https'], true)) {
+            return false;
+        }
+
+        $serverUrl = (string) rex::getServer();
+        $serverParts = parse_url($serverUrl);
+        $serverScheme = strtolower((string) ($serverParts['scheme'] ?? ''));
+        $serverHost = strtolower((string) ($serverParts['host'] ?? ''));
+        if ('' === $serverHost || '' === $serverScheme) {
+            return false;
+        }
+
+        $originPort = $originParts['port'] ?? ($originScheme === 'https' ? 443 : 80);
+        $serverPort = $serverParts['port'] ?? ($serverScheme === 'https' ? 443 : 80);
+
+        return $originHost === $serverHost
+            && $originScheme === $serverScheme
+            && (int) $originPort === (int) $serverPort;
     }
 
     /**

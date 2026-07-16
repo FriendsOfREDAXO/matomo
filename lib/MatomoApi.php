@@ -240,6 +240,7 @@ class MatomoApi
         }
         
         $async = $async_tracking ? ' async defer' : '';
+        $browserEventSnippet = $this->buildManualBrowserEventSnippet();
         
         $code = <<<JS
 <!-- Matomo -->
@@ -256,25 +257,55 @@ class MatomoApi
   })();
 </script>
 <!-- End Matomo Code -->
+
+{$browserEventSnippet}
 JS;
         
         return $code;
     }
 
     /**
-     * Baut eine Proxy-URL mit korrektem Webroot und rohen Query-Parametern.
+     * Optionaler Snippet fuer manuelles Browser-Event-Tracking.
+     * Wird bewusst nicht automatisch injiziert, sondern nur als Copy-Vorlage ausgegeben.
      */
-    private function buildProxyUrl(string $file): string
+    private function buildManualBrowserEventSnippet(): string
+    {
+        $endpoint = $this->buildFrontendApiUrl('matomo_event');
+        $eventsJs = rex_addon::get('matomo')->getAssetsUrl('matomo-events.js');
+
+        return <<<JS
+<!-- Optional: Browser-Event-Tracking manuell einbinden (Consent-Manager oder Template) -->
+<script>
+  window.MatomoEventsConfig = {
+    endpoint: '{$endpoint}'
+  };
+</script>
+<script defer src="{$eventsJs}"></script>
+<!-- End Optional Browser-Event-Tracking -->
+JS;
+    }
+
+    /**
+     * Erzeugt eine Frontend-API-URL mit korrektem Webroot (auch bei Unterordner-Installation).
+     */
+    private function buildFrontendApiUrl(string $apiCall): string
     {
         $query = rex_string::buildQuery([
-            'rex-api-call' => 'matomo_proxy',
-            'file' => $file,
+            'rex-api-call' => $apiCall,
         ]);
 
+        return $this->resolveFrontendIndexUrl() . '?' . $query;
+    }
+
+    /**
+     * Loest den Frontend-Indexpfad zu einer Webroot-korrekten URL auf.
+     */
+    private function resolveFrontendIndexUrl(): string
+    {
         $frontendIndex = rex_url::frontend('index.php');
 
         if (preg_match('@^https?://@i', $frontendIndex)) {
-            return $frontendIndex . '?' . $query;
+            return $frontendIndex;
         }
 
         if (str_starts_with($frontendIndex, './') || str_starts_with($frontendIndex, '../')) {
@@ -290,7 +321,20 @@ JS;
             $frontendIndex = '/' . ltrim($frontendIndex, '/');
         }
 
-        return $frontendIndex . '?' . $query;
+        return $frontendIndex;
+    }
+
+    /**
+     * Baut eine Proxy-URL mit korrektem Webroot und rohen Query-Parametern.
+     */
+    private function buildProxyUrl(string $file): string
+    {
+        $query = rex_string::buildQuery([
+            'rex-api-call' => 'matomo_proxy',
+            'file' => $file,
+        ]);
+
+        return $this->resolveFrontendIndexUrl() . '?' . $query;
     }
 
     /**

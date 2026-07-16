@@ -176,13 +176,13 @@ Das AddOn nutzt die **Matomo HTTP API** für:
 
 Alle API-Verwaltungs-Requests erfolgen über `rex_socket` mit konfigurierbaren Timeouts und SSL-Optionen.
 
-## �️ Server-Side Tracking (ohne JS & Cookies)
+## Server-Side Tracking (ohne JS & Cookies)
 
 REDAXO kann die Rolle des Matomo-JavaScripts komplett übernehmen und Seitenaufrufe direkt serverseitig an Matomo melden. Damit ist Tracking unabhängig von Adblockern, JavaScript-Deaktivierung und Browser-Tracking-Schutz.
 
 ### Aktivierung
 
-Unter **Matomo → Matomo-Setup**:
+Unter **Matomo → Konfiguration**:
 1. **"Server-seitiges Tracking aktivieren"** einschalten
 2. **Matomo Site-ID** eintragen (zu finden in Matomo unter Administration → Websites)
 
@@ -203,7 +203,22 @@ Ergänzend zum serverseitigen Page-Tracking kann ein leichtgewichtiges JS-Script
 - **Formular-Versendungen** (alle `<form>`-Elemente)
 - **Beliebige Custom-Events** per `data-matomo-event`-Attribut
 
-Aktivierung unter **Matomo → Matomo-Setup → "Browser-Event-Tracking aktivieren"**.
+Aktivierung unter **Matomo → Konfiguration → "Browser-Event-Tracking aktivieren"**.
+
+Wichtig: Das Script wird bewusst **nicht automatisch** vom AddOn in das Frontend injiziert.
+Die Einbindung erfolgt manuell durch den Integrator, z.B. im Consent-Manager oder direkt im Template.
+
+#### Manuelle Einbindung (Consent-Manager / Template)
+```html
+<script>
+window.MatomoEventsConfig = {
+    endpoint: '/index.php?rex-api-call=matomo_event'
+};
+</script>
+<script defer src="/redaxo/assets/addons/matomo/matomo-events.js"></script>
+```
+
+Hinweis: Bei Unterordner-Installationen muss der Pfad mit dem korrekten Webroot gesetzt werden (z.B. `/subdir/index.php?rex-api-call=matomo_event`).
 
 #### Custom-Events per Data-Attribut (kein JS nötig)
 ```html

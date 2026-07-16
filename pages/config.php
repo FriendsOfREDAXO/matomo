@@ -410,11 +410,11 @@ if ($matomo_url !== '' && $admin_token !== '') {
                     </tr>
                     <tr>
                         <td><strong>API Status:</strong></td>
-                        <td><?= $api_status ?></td>
+                        <td><?= rex_escape($api_status) ?></td>
                     </tr>
                     <tr>
                         <td><strong>Superuser-Token:</strong></td>
-                        <td><?= $superuser_status ?></td>
+                        <td><?= rex_escape($superuser_status) ?></td>
                     </tr>
                     <?php if ($matomo_path !== ''): ?>
                     <tr>
