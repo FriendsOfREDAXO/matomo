@@ -219,7 +219,7 @@ window.MatomoEventsConfig = {
     endpoint: '/index.php?rex-api-call=matomo_event'
 };
 </script>
-<script defer src="/redaxo/assets/addons/matomo/matomo-events.js"></script>
+<script defer src="/assets/addons/matomo/matomo-events.js"></script>
 ```
 
 Note: For subdirectory installations, adjust paths to the correct webroot (e.g. `/subdir/index.php?rex-api-call=matomo_event`).

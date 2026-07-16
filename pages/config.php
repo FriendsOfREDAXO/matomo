@@ -1,8 +1,6 @@
 <?php
 
 use FriendsOfRedaxo\Matomo\MatomoApi;
-use rex_socket;
-use rex_socket_exception;
 
 $addon = rex_addon::get('matomo');
 
@@ -110,8 +108,6 @@ if (rex_request('func', 'string') === 'test_proxy') {
 $csrf = rex_csrf_token::factory('matomo_config');
 $message = '';
 $error = '';
-
-rex_view::addJsFile($addon->getAssetsUrl('matomo-config.js'), ['defer' => true]);
 
 if (rex_post('save_config', 'boolean')) {
     if (!$csrf->isValid()) {

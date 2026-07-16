@@ -271,7 +271,7 @@ JS;
     private function buildManualBrowserEventSnippet(): string
     {
         $endpoint = $this->buildFrontendApiUrl('matomo_event');
-        $eventsJs = rex_addon::get('matomo')->getAssetsUrl('matomo-events.js');
+        $eventsJs = $this->buildFrontendAssetUrl('matomo-events.js');
 
         return <<<JS
 <!-- Optional: Browser-Event-Tracking manuell einbinden (Consent-Manager oder Template) -->
@@ -283,6 +283,22 @@ JS;
 <script defer src="{$eventsJs}"></script>
 <!-- End Optional Browser-Event-Tracking -->
 JS;
+    }
+
+    /**
+     * Erzeugt eine Frontend-Asset-URL fuer Addon-Dateien mit korrektem Webroot.
+     */
+    private function buildFrontendAssetUrl(string $assetFile): string
+    {
+        $frontendIndex = $this->resolveFrontendIndexUrl();
+
+        if (str_ends_with($frontendIndex, '/index.php')) {
+            $base = substr($frontendIndex, 0, -strlen('/index.php'));
+        } else {
+            $base = rtrim(dirname($frontendIndex), '/');
+        }
+
+        return rtrim($base, '/') . '/assets/addons/matomo/' . ltrim($assetFile, '/');
     }
 
     /**

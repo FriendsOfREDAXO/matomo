@@ -10,6 +10,10 @@ use FriendsOfRedaxo\Matomo\Tracker;
 rex_api_function::register('matomo_proxy', MatomoProxyApi::class);
 rex_api_function::register('matomo_event', MatomoEventApi::class);
 
+if (rex::isBackend() && rex_be_controller::getCurrentPage() === 'matomo/config') {
+    rex_view::addJsFile(rex_addon::get('matomo')->getAssetsUrl('matomo-config.js'));
+}
+
 // ── Server-Side Tracking (kein JS, keine Cookies) ──────────────────────────
 if (!rex::isBackend() && (bool) rex_config::get('matomo', 'server_side_tracking', false)) {
     rex_extension::register('OUTPUT_FILTER', static function (rex_extension_point $ep): void {
