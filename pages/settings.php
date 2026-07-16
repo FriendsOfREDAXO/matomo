@@ -4,55 +4,6 @@ use FriendsOfRedaxo\Matomo\MatomoApi;
 
 $addon = rex_addon::get('matomo');
 
-// Test-Connection Handler
-if (rex_request('func', 'string') === 'test_connection') {
-    rex_response::cleanOutputBuffers();
-    
-    // Gebe nur die Test-URL zurück - Test passiert im Browser
-    $test_url = rex_request('matomo_url', 'string', '');
-    
-    if ('' === $test_url) {
-        rex_response::sendJson(['success' => false, 'message' => 'Keine URL angegeben']);
-        exit;
-    }
-    
-    // Prüfe nur ob URL valide ist
-    if (filter_var($test_url, FILTER_VALIDATE_URL) === false) {
-        rex_response::sendJson(['success' => false, 'message' => 'Ungültige URL']);
-        exit;
-    }
-    
-    // Gebe Test-URL zurück für Client-seitigen Test
-    rex_response::sendJson([
-        'success' => true,
-        'test_url' => rtrim($test_url, '/') . '/matomo.js',
-        'message' => 'Teste Verbindung...'
-    ]);
-    exit;
-}
-
-// Test-Proxy Handler
-if (rex_request('func', 'string') === 'test_proxy') {
-    rex_response::cleanOutputBuffers();
-    
-    // Prüfe ob Matomo-URL konfiguriert ist
-    $matomo_url = rex_config::get('matomo', 'matomo_url', '');
-    if ('' === $matomo_url) {
-        rex_response::sendJson(['success' => false, 'message' => 'Matomo URL nicht konfiguriert']);
-        exit;
-    }
-    
-    // Generiere Proxy-URL für Client-seitigen Test - absolute URL
-    $proxy_url = rex_url::frontendController(['rex-api-call' => 'matomo_proxy', 'file' => 'matomo.js', 'test' => '1']);
-    
-    rex_response::sendJson([
-        'success' => true,
-        'proxy_url' => $proxy_url,
-        'message' => 'Teste Proxy...'
-    ]);
-    exit;
-}
-
 // Form-Verarbeitung
 $message = '';
 $error = '';
@@ -199,16 +150,8 @@ if (!function_exists('curl_init')) {
                     
                     <div class="form-group">
                         <label for="matomo_url">Matomo URL:</label>
-                        <div class="input-group">
-                            <input type="url" class="form-control" id="matomo_url" name="matomo_url" 
-                                   value="<?= rex_escape($matomo_url) ?>" placeholder="https://ihre-domain.de/matomo">
-                            <span class="input-group-btn">
-                                <button type="button" id="test-connection" class="btn btn-default" title="Verbindung testen">
-                                    <i class="fa fa-plug"></i> Test
-                                </button>
-                            </span>
-                        </div>
-                        <div id="test-result" style="margin-top: 10px;"></div>
+                        <input type="url" class="form-control" id="matomo_url" name="matomo_url" 
+                               value="<?= rex_escape($matomo_url) ?>" placeholder="https://ihre-domain.de/matomo">
                     </div>
                     
                     <div class="form-group">
@@ -315,63 +258,3 @@ if (!function_exists('curl_init')) {
     </div>
 </div>
 
-<script nonce="<?= rex_response::getNonce() ?>">
-jQuery(function($) {
-    $('#test-connection').on('click', function() {
-        var $btn = $(this);
-        var $result = $('#test-result');
-        var url = $('#matomo_url').val();
-        
-        if (!url) {
-            $result.html('<div class="alert alert-warning"><i class="fa fa-exclamation-triangle"></i> Bitte eine URL eingeben</div>');
-            return;
-        }
-        
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Teste...');
-        
-        // Generiere Test-URL direkt
-        var testUrl = url.replace(/\/$/, '') + '/matomo.js';
-        var startTime = new Date().getTime();
-        
-        // Zeige URL an
-        $result.html('<div class="alert alert-info"><i class="fa fa-info-circle"></i> Teste: <code>' + testUrl + '</code></div>');
-        
-        // Teste direkt per JavaScript
-        $.ajax({
-            url: testUrl,
-            method: 'GET',
-            dataType: 'text',
-            timeout: 10000,
-            cache: false
-        }).done(function(data) {
-            var loadTime = new Date().getTime() - startTime;
-            var size = data.length;
-            
-            if (data.indexOf('Matomo') > -1 || data.indexOf('Piwik') > -1) {
-                $result.html('<div class="alert alert-success">' +
-                    '<i class="fa fa-check-circle"></i> Verbindung erfolgreich!<br>' +
-                    '<small>Größe: ' + (size / 1024).toFixed(1) + ' KB | ' +
-                    'Ladezeit: ' + loadTime + ' ms</small></div>');
-            } else {
-                $result.html('<div class="alert alert-warning">' +
-                    '<i class="fa fa-exclamation-triangle"></i> Datei geladen, aber kein Matomo JavaScript erkannt<br>' +
-                    '<small>Erste 100 Zeichen: ' + data.substring(0, 100) + '</small></div>');
-            }
-        }).fail(function(xhr, status, error) {
-            var msg = 'Verbindung fehlgeschlagen';
-            if (xhr.status > 0) {
-                msg += ' (HTTP ' + xhr.status + ')';
-            } else if (status === 'timeout') {
-                msg += ' (Timeout)';
-            } else if (error) {
-                msg += ' (' + error + ')';
-            }
-            msg += '<br><small>URL: <code>' + testUrl + '</code></small>';
-            $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
-        }).always(function() {
-            $btn.prop('disabled', false).html('<i class="fa fa-plug"></i> Test');
-        });
-    });
-    
-});
-</script>

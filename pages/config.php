@@ -1,11 +1,117 @@
 <?php
 
 use FriendsOfRedaxo\Matomo\MatomoApi;
+use rex_socket;
+use rex_socket_exception;
+
 $addon = rex_addon::get('matomo');
+
+if (rex_request('func', 'string') === 'test_connection') {
+    rex_response::cleanOutputBuffers();
+
+    $testUrl = trim(rex_request('matomo_url', 'string', ''));
+    if ('' === $testUrl) {
+        rex_response::sendJson(['success' => false, 'message' => 'Keine URL angegeben']);
+        exit;
+    }
+
+    if (false === filter_var($testUrl, FILTER_VALIDATE_URL)) {
+        rex_response::sendJson(['success' => false, 'message' => 'Ungültige URL']);
+        exit;
+    }
+
+    $jsUrl = rtrim($testUrl, '/') . '/matomo.js';
+
+    try {
+        $socket = rex_socket::factoryUrl($jsUrl);
+        $socket->setTimeout(10);
+        $response = $socket->doGet();
+
+        if (!$response->isSuccessful()) {
+            rex_response::sendJson([
+                'success' => false,
+                'message' => 'HTTP ' . $response->getStatusCode(),
+                'url' => $jsUrl,
+            ]);
+            exit;
+        }
+
+        $body = $response->getBody();
+        $isMatomoJs = str_contains($body, 'Matomo') || str_contains($body, 'Piwik');
+
+        rex_response::sendJson([
+            'success' => $isMatomoJs,
+            'message' => $isMatomoJs ? 'Verbindung erfolgreich' : 'Datei geladen, aber kein Matomo JS erkannt',
+            'url' => $jsUrl,
+            'size' => strlen($body),
+        ]);
+        exit;
+    } catch (rex_socket_exception $e) {
+        rex_response::sendJson([
+            'success' => false,
+            'message' => 'Socket-Fehler: ' . $e->getMessage(),
+            'url' => $jsUrl,
+        ]);
+        exit;
+    }
+}
+
+if (rex_request('func', 'string') === 'test_proxy') {
+    rex_response::cleanOutputBuffers();
+
+    $matomoUrl = (string) rex_config::get('matomo', 'matomo_url', '');
+    if ('' === $matomoUrl) {
+        rex_response::sendJson(['success' => false, 'message' => 'Matomo URL nicht konfiguriert']);
+        exit;
+    }
+
+    $proxyUrl = rex_url::frontendController([
+        'rex-api-call' => 'matomo_proxy',
+        'file' => 'matomo.js',
+        'test' => '1',
+    ]);
+
+    try {
+        $server = rtrim((string) rex::getServer(), '/');
+        $requestUrl = ('' !== $server ? $server : '') . $proxyUrl;
+        $socket = rex_socket::factoryUrl($requestUrl);
+        $socket->setTimeout(10);
+        $response = $socket->doGet();
+
+        if (!$response->isSuccessful()) {
+            rex_response::sendJson([
+                'success' => false,
+                'message' => 'HTTP ' . $response->getStatusCode(),
+                'url' => $proxyUrl,
+            ]);
+            exit;
+        }
+
+        $body = $response->getBody();
+        $isMatomoJs = str_contains($body, 'Matomo') || str_contains($body, 'Piwik');
+
+        rex_response::sendJson([
+            'success' => $isMatomoJs,
+            'message' => $isMatomoJs ? 'Proxy funktioniert' : 'Proxy antwortet, aber kein Matomo JS erkannt',
+            'url' => $proxyUrl,
+            'size' => strlen($body),
+        ]);
+        exit;
+    } catch (rex_socket_exception $e) {
+        rex_response::sendJson([
+            'success' => false,
+            'message' => 'Socket-Fehler: ' . $e->getMessage(),
+            'url' => $proxyUrl,
+        ]);
+        exit;
+    }
+}
 
 $csrf = rex_csrf_token::factory('matomo_config');
 $message = '';
 $error = '';
+
+rex_view::addJsFile($addon->getAssetsUrl('matomo-config.js'), ['defer' => true]);
 
 if (rex_post('save_config', 'boolean')) {
     if (!$csrf->isValid()) {
@@ -120,6 +226,10 @@ if ($matomo_url !== '' && $admin_token !== '') {
     <strong>Konfiguration:</strong> Alle Tracking-Optionen sind hier zentral gebündelt. Das Matomo-Setup enthält nur noch Installation und Grund-Setup.
 </div>
 
+<div id="matomo-config-endpoints"
+     data-test-connection-url="<?= rex_escape(rex_url::currentBackendPage(['func' => 'test_connection'])) ?>"
+     data-test-proxy-url="<?= rex_escape(rex_url::currentBackendPage(['func' => 'test_proxy'])) ?>"></div>
+
 <form method="post" class="rex-form">
     <?= $csrf->getHiddenField() ?>
     <div class="row">
@@ -129,8 +239,16 @@ if ($matomo_url !== '' && $admin_token !== '') {
                 <div class="panel-body">
                     <div class="form-group">
                         <label for="matomo_url"><?= $addon->i18n('matomo_url') ?></label>
-                        <input type="url" id="matomo_url" name="matomo_url" class="form-control" value="<?= rex_escape($matomo_url) ?>" placeholder="https://ihre-domain.de/matomo">
+                        <div class="input-group">
+                            <input type="url" id="matomo_url" name="matomo_url" class="form-control" value="<?= rex_escape($matomo_url) ?>" placeholder="https://ihre-domain.de/matomo">
+                            <span class="input-group-btn">
+                                <button type="button" id="test-connection" class="btn btn-default" title="Verbindung testen">
+                                    <i class="fas fa-plug"></i> Test
+                                </button>
+                            </span>
+                        </div>
                         <p class="help-block"><?= $addon->i18n('matomo_url_help') ?></p>
+                        <div id="test-result"></div>
                     </div>
                     <div class="form-group">
                         <label for="matomo_path"><?= $addon->i18n('matomo_path') ?></label>
@@ -195,6 +313,10 @@ if ($matomo_url !== '' && $admin_token !== '') {
                             <?= $addon->i18n('matomo_proxy_enabled') ?>
                         </label>
                         <p class="help-block"><?= $addon->i18n('matomo_proxy_enabled_help') ?></p>
+                        <button type="button" id="test-proxy" class="btn btn-default btn-sm">
+                            <i class="fas fa-shield-alt"></i> Proxy testen
+                        </button>
+                        <div id="test-proxy-result" style="margin-top: 8px;"></div>
                     </div>
                     <div class="checkbox">
                         <label>
