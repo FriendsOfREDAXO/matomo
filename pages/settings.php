@@ -63,24 +63,14 @@ if (rex_post('save_settings', 'boolean')) {
     $admin_token = trim(rex_post('admin_token', 'string', ''));
     $matomo_user = trim(rex_post('matomo_user', 'string', ''));
     $matomo_password = rex_post('matomo_password', 'string', '');
-    $show_top_pages = rex_post('show_top_pages', 'boolean', false);
     $verify_ssl = rex_post('verify_ssl', 'boolean', true);
-    $proxy_enabled = rex_post('proxy_enabled', 'boolean', false);
-    $server_side_tracking = rex_post('server_side_tracking', 'boolean', false);
-    $server_side_site_id = rex_post('server_side_site_id', 'int', 0);
-    $event_tracking_js = rex_post('event_tracking_js', 'boolean', false);
 
     rex_config::set('matomo', 'matomo_path', $matomo_path);
     rex_config::set('matomo', 'matomo_url', $matomo_url);
     rex_config::set('matomo', 'admin_token', $admin_token);
     rex_config::set('matomo', 'matomo_user', $matomo_user);
     rex_config::set('matomo', 'matomo_password', $matomo_password);
-    rex_config::set('matomo', 'show_top_pages', $show_top_pages);
     rex_config::set('matomo', 'verify_ssl', $verify_ssl);
-    rex_config::set('matomo', 'proxy_enabled', $proxy_enabled);
-    rex_config::set('matomo', 'server_side_tracking', $server_side_tracking);
-    rex_config::set('matomo', 'server_side_site_id', $server_side_site_id);
-    rex_config::set('matomo', 'event_tracking_js', $event_tracking_js);
 
     $message = $addon->i18n('matomo_config_saved');
 }
@@ -113,12 +103,7 @@ $matomo_path = rex_config::get('matomo', 'matomo_path', 'auswertung');
 $admin_token = rex_config::get('matomo', 'admin_token', '');
 $matomo_user = rex_config::get('matomo', 'matomo_user', '');
 $matomo_password = rex_config::get('matomo', 'matomo_password', '');
-$show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
 $verify_ssl = rex_config::get('matomo', 'verify_ssl', true);
-$proxy_enabled = rex_config::get('matomo', 'proxy_enabled', false);
-$server_side_tracking = rex_config::get('matomo', 'server_side_tracking', false);
-$server_side_site_id = (int) rex_config::get('matomo', 'server_side_site_id', 0);
-$event_tracking_js = rex_config::get('matomo', 'event_tracking_js', false);
 
 // Status prüfen
 $matomo_installed = false;
@@ -258,63 +243,6 @@ if (!function_exists('curl_init')) {
                                value="<?= rex_escape($matomo_password) ?>" placeholder="">
                         <small class="text-muted">Ihr Matomo-Passwort für automatischen Login</small>
                     </div>
-                    
-                    <hr>
-                    <h4><i class="fa fa-chart-line"></i> Statistik-Features</h4>
-                    
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" name="show_top_pages" value="1" <?= (bool)$show_top_pages ? 'checked' : '' ?>>
-                            <strong>Top 5 Seiten anzeigen</strong>
-                        </label>
-                        <p class="text-muted">Zeigt die 5 meistbesuchten Seiten der aktuellen Woche in der Übersicht an</p>
-                    </div>
-                    
-                    <hr>
-                    <h4><i class="fa fa-shield"></i> Tracking-Proxy (Anti-Adblocker)</h4>
-                    
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" name="proxy_enabled" value="1" <?= (bool)$proxy_enabled ? 'checked' : '' ?>>
-                            <strong><?= $addon->i18n('matomo_proxy_enabled') ?></strong>
-                        </label>
-                        <p class="text-muted"><?= $addon->i18n('matomo_proxy_enabled_help') ?></p>
-                    </div>
-                    
-                    <?php if ($matomo_url !== ''): ?>
-                    <div style="margin: 15px 0;">
-                        <button type="button" id="test-proxy" class="btn btn-default">
-                            <i class="fa fa-shield"></i> Proxy testen
-                        </button>
-                        <div id="test-proxy-result" style="margin-top: 10px;"></div>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <hr>
-                    <h4><i class="fa fa-server"></i> <?= $addon->i18n('matomo_server_side_tracking') ?></h4>
-                    
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" name="server_side_tracking" value="1" <?= (bool)$server_side_tracking ? 'checked' : '' ?>>
-                            <strong><?= $addon->i18n('matomo_server_side_tracking_enable') ?></strong>
-                        </label>
-                        <p class="text-muted"><?= $addon->i18n('matomo_server_side_tracking_help') ?></p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="server_side_site_id"><?= $addon->i18n('matomo_server_side_site_id') ?>:</label>
-                        <input type="number" class="form-control" id="server_side_site_id" name="server_side_site_id"
-                               value="<?= (int)$server_side_site_id ?>" min="1" style="width: 120px;">
-                        <small class="text-muted"><?= $addon->i18n('matomo_server_side_site_id_help') ?></small>
-                    </div>
-
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" name="event_tracking_js" value="1" <?= (bool)$event_tracking_js ? 'checked' : '' ?>>
-                            <strong><?= $addon->i18n('matomo_event_tracking_js') ?></strong>
-                        </label>
-                        <p class="text-muted"><?= $addon->i18n('matomo_event_tracking_js_help') ?></p>
-                    </div>
 
                     <button type="submit" name="save_settings" value="1" class="btn btn-success">
                         <i class="fa fa-save"></i> Einstellungen speichern
@@ -445,56 +373,5 @@ jQuery(function($) {
         });
     });
     
-    $('#test-proxy').on('click', function() {
-        var $btn = $(this);
-        var $result = $('#test-proxy-result');
-        
-        $btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Teste...');
-        
-        // Generiere Proxy-URL direkt im Frontend
-        var baseUrl = window.location.protocol + '//' + window.location.host;
-        var proxyUrl = baseUrl + '/index.php?rex-api-call=matomo_proxy&file=matomo.js&test=1';
-        var startTime = new Date().getTime();
-        
-        // Zeige URL an
-        $result.html('<div class="alert alert-info"><i class="fa fa-info-circle"></i> Teste: <code>' + proxyUrl + '</code></div>');
-        
-        // Teste Proxy direkt per JavaScript
-        $.ajax({
-            url: proxyUrl,
-            method: 'GET',
-            dataType: 'text',
-            timeout: 10000,
-            cache: false
-        }).done(function(data) {
-            var loadTime = new Date().getTime() - startTime;
-            var size = data.length;
-            
-            if (data.indexOf('Matomo') > -1 || data.indexOf('Piwik') > -1) {
-                $result.html('<div class="alert alert-success">' +
-                    '<i class="fa fa-check-circle"></i> Proxy funktioniert!<br>' +
-                    '<small>Größe: ' + (size / 1024).toFixed(1) + ' KB | ' +
-                    'Ladezeit: ' + loadTime + ' ms<br>' +
-                    'URL: <code>' + proxyUrl + '</code></small></div>');
-            } else {
-                $result.html('<div class="alert alert-warning">' +
-                    '<i class="fa fa-exclamation-triangle"></i> Proxy antwortet, aber kein Matomo JavaScript erkannt<br>' +
-                    '<small>Erste 100 Zeichen: ' + data.substring(0, 100) + '</small></div>');
-            }
-        }).fail(function(xhr, status, error) {
-            var msg = 'Proxy-Aufruf fehlgeschlagen';
-            if (xhr.status > 0) {
-                msg += ' (HTTP ' + xhr.status + ')';
-            } else if (status === 'timeout') {
-                msg += ' (Timeout)';
-            } else if (error) {
-                msg += ' (' + error + ')';
-            }
-            msg += '<br><small>URL: <code>' + proxyUrl + '</code></small>';
-            $result.html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + msg + '</div>');
-        }).always(function() {
-            $btn.prop('disabled', false).html('<i class="fa fa-shield"></i> Proxy testen');
-        });
-    });
 });
 </script>

@@ -35,6 +35,8 @@ matomo_verify_ssl_help = Aktiviert die SSL-Zertifikatsüberprüfung (empfohlen).
 # Proxy Settings
 matomo_proxy_enabled = JavaScript-Proxy aktivieren
 matomo_proxy_enabled_help = Lädt matomo.js über REDAXO um Adblocker zu umgehen. Empfohlen für bessere Tracking-Genauigkeit.
+matomo_show_top_pages = Top 5 Seiten anzeigen
+matomo_show_top_pages_help = Zeigt die 5 meistbesuchten Seiten der aktuellen Woche in der Übersicht an.
 
 # Server-Side Tracking
 matomo_server_side_tracking = Server-seitiges Tracking (kein JS, keine Cookies)

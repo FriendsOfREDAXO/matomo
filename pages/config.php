@@ -1,115 +1,76 @@
 <?php
-use FriendsOfRedaxo\Matomo\MatomoApi;
-/**
- * Erweiterte Konfigurationsseite mit rex_config_form
- */
 
+use FriendsOfRedaxo\Matomo\MatomoApi;
 $addon = rex_addon::get('matomo');
 
-// Konfigurationsformular erstellen
-$form = rex_config_form::factory('matomo');
+$csrf = rex_csrf_token::factory('matomo_config');
+$message = '';
+$error = '';
 
-// Matomo Installation Sektion
-$form->addFieldset($addon->i18n('matomo_installation_section'));
+if (rex_post('save_config', 'boolean')) {
+    if (!$csrf->isValid()) {
+        $error = rex_i18n::msg('csrf_token_invalid');
+    } else {
+        $matomoUrl = trim(rex_post('matomo_url', 'string', ''));
+        if ('' !== $matomoUrl && false === filter_var($matomoUrl, FILTER_VALIDATE_URL)) {
+            $error = 'Bitte eine gültige Matomo URL eingeben.';
+        } else {
+            $cookieLifetime = rex_post('cookie_lifetime', 'int', 2592000);
+            $allowedCookieLifetimes = [1800, 3600, 86400, 604800, 2592000, 31536000];
+            if (!in_array($cookieLifetime, $allowedCookieLifetimes, true)) {
+                $cookieLifetime = 2592000;
+            }
 
-$field = $form->addTextField('matomo_url');
-$field->setLabel($addon->i18n('matomo_url'));
-$field->setNotice($addon->i18n('matomo_url_help'));
-$field->getValidator()->add('url', 'Bitte eine gültige URL eingeben');
+            $apiTimeout = rex_post('api_timeout', 'int', 30);
+            $allowedApiTimeouts = [10, 30, 60, 120];
+            if (!in_array($apiTimeout, $allowedApiTimeouts, true)) {
+                $apiTimeout = 30;
+            }
 
-$field = $form->addTextField('matomo_path');
-$field->setLabel($addon->i18n('matomo_path'));
-$field->setNotice($addon->i18n('matomo_path_help'));
+            $socketTimeout = (float) rex_post('socket_timeout', 'float', 1.0);
+            if ($socketTimeout < 0.1) {
+                $socketTimeout = 0.1;
+            }
 
-$field = $form->addTextField('admin_token');
-$field->setLabel($addon->i18n('matomo_admin_token'));
-$field->setNotice($addon->i18n('matomo_admin_token_help'));
-$field->setAttribute('type', 'password');
+            rex_config::set('matomo', 'matomo_url', $matomoUrl);
+            rex_config::set('matomo', 'matomo_path', trim(rex_post('matomo_path', 'string', '')));
+            rex_config::set('matomo', 'admin_token', trim(rex_post('admin_token', 'string', '')));
+            rex_config::set('matomo', 'user_token', trim(rex_post('user_token', 'string', '')));
+            rex_config::set('matomo', 'api_timeout', $apiTimeout);
+            rex_config::set('matomo', 'ssl_verify', rex_post('ssl_verify', 'boolean', false));
+            rex_config::set('matomo', 'socket_timeout', $socketTimeout);
+            rex_config::set('matomo', 'anonymize_ip', rex_post('anonymize_ip', 'boolean', false));
+            rex_config::set('matomo', 'cookieless_tracking', rex_post('cookieless_tracking', 'boolean', false));
+            rex_config::set('matomo', 'show_top_pages', rex_post('show_top_pages', 'boolean', false));
+            rex_config::set('matomo', 'proxy_enabled', rex_post('proxy_enabled', 'boolean', false));
+            rex_config::set('matomo', 'server_side_tracking', rex_post('server_side_tracking', 'boolean', false));
+            rex_config::set('matomo', 'server_side_site_id', max(0, rex_post('server_side_site_id', 'int', 0)));
+            rex_config::set('matomo', 'event_tracking_js', rex_post('event_tracking_js', 'boolean', false));
+            rex_config::set('matomo', 'respect_dnt', rex_post('respect_dnt', 'boolean', false));
+            rex_config::set('matomo', 'cookie_lifetime', $cookieLifetime);
 
-$field = $form->addTextField('user_token');
-$field->setLabel($addon->i18n('matomo_user_token'));
-$field->setNotice($addon->i18n('matomo_user_token_help'));
-$field->setAttribute('type', 'password');
-
-// API Einstellungen Sektion
-$form->addFieldset($addon->i18n('matomo_api_section'));
-
-$field = $form->addSelectField('api_timeout');
-$field->setLabel($addon->i18n('matomo_api_timeout'));
-$field->setNotice($addon->i18n('matomo_api_timeout_help'));
-$select = $field->getSelect();
-$select->addOptions([
-    '10' => $addon->i18n('matomo_timeout_10s'),
-    '30' => $addon->i18n('matomo_timeout_30s'), 
-    '60' => $addon->i18n('matomo_timeout_60s'),
-    '120' => $addon->i18n('matomo_timeout_120s')
-], true);
-
-$field = $form->addCheckboxField('ssl_verify');
-$field->setLabel($addon->i18n('matomo_ssl_verify'));
-$field->addOption($addon->i18n('matomo_ssl_verify_option'), '1');
-$field->setNotice($addon->i18n('matomo_ssl_verify_help'));
-
-// Socket Settings
-$form->addFieldset('Socket Einstellungen');
-
-$field = $form->addTextField('socket_timeout');
-$field->setLabel($addon->i18n('matomo_socket_timeout'));
-$field->setNotice($addon->i18n('matomo_socket_timeout_help'));
-$field->getValidator()->add('min', 'Min 0.1 Sekunden', 0.1);
-// Standardwert 1 verhindern wir, sonst steht nichts drin wenn leer
-if ($field->getValue() == '') {
-    $field->setValue(1);
+            $message = $addon->i18n('matomo_config_saved');
+        }
+    }
 }
-
-// Tracking Optionen Sektion
-$form->addFieldset($addon->i18n('matomo_tracking_options'));
-
-$field = $form->addCheckboxField('anonymize_ip');
-$field->setLabel($addon->i18n('matomo_anonymize_ip'));
-$field->addOption($addon->i18n('matomo_anonymize_ip_option'), '1');
-$field->setNotice($addon->i18n('matomo_anonymize_ip_help'));
-
-$field = $form->addCheckboxField('cookieless_tracking');
-$field->setLabel($addon->i18n('matomo_cookieless'));
-$field->addOption($addon->i18n('matomo_cookieless_option'), '1');
-$field->setNotice($addon->i18n('matomo_cookieless_help'));
-
-// Datenschutz Sektion
-$form->addFieldset($addon->i18n('matomo_privacy_section'));
-
-$field = $form->addCheckboxField('respect_dnt');
-$field->setLabel($addon->i18n('matomo_respect_dnt'));
-$field->addOption($addon->i18n('matomo_respect_dnt_option'), '1');
-$field->setNotice($addon->i18n('matomo_respect_dnt_help'));
-
-$field = $form->addSelectField('cookie_lifetime');
-$field->setLabel($addon->i18n('matomo_cookie_lifetime'));
-$field->setNotice($addon->i18n('matomo_cookie_lifetime_help'));
-$select = $field->getSelect();
-$select->addOptions([
-    '1800' => $addon->i18n('matomo_cookie_30min'),
-    '3600' => $addon->i18n('matomo_cookie_1hour'),
-    '86400' => $addon->i18n('matomo_cookie_1day'),
-    '604800' => $addon->i18n('matomo_cookie_1week'),
-    '2592000' => $addon->i18n('matomo_cookie_1month'),
-    '31536000' => $addon->i18n('matomo_cookie_1year')
-], true);
-
-// Formular anzeigen
-$content = $form->get();
-
-$fragment = new rex_fragment();
-$fragment->setVar('class', 'edit');
-$fragment->setVar('title', 'Matomo Konfiguration');
-$fragment->setVar('body', $content, false);
-echo $fragment->parse('core/page/section.php');
 
 // Status-Panel
 $matomo_url = rex_config::get('matomo', 'matomo_url', '');
 $admin_token = rex_config::get('matomo', 'admin_token', '');
 $user_token = rex_config::get('matomo', 'user_token', '');
 $matomo_path = rex_config::get('matomo', 'matomo_path', '');
+$api_timeout = (int) rex_config::get('matomo', 'api_timeout', 30);
+$ssl_verify = (bool) rex_config::get('matomo', 'ssl_verify', false);
+$socket_timeout = (float) rex_config::get('matomo', 'socket_timeout', 1.0);
+$anonymize_ip = (bool) rex_config::get('matomo', 'anonymize_ip', false);
+$cookieless_tracking = (bool) rex_config::get('matomo', 'cookieless_tracking', false);
+$show_top_pages = (bool) rex_config::get('matomo', 'show_top_pages', false);
+$proxy_enabled = (bool) rex_config::get('matomo', 'proxy_enabled', false);
+$server_side_tracking = (bool) rex_config::get('matomo', 'server_side_tracking', false);
+$server_side_site_id = (int) rex_config::get('matomo', 'server_side_site_id', 0);
+$event_tracking_js = (bool) rex_config::get('matomo', 'event_tracking_js', false);
+$respect_dnt = (bool) rex_config::get('matomo', 'respect_dnt', false);
+$cookie_lifetime = (int) rex_config::get('matomo', 'cookie_lifetime', 2592000);
 
 $matomo_ready = false;
 $is_external_matomo = false;
@@ -146,6 +107,166 @@ if ($matomo_url !== '' && $admin_token !== '') {
 }
 
 ?>
+
+<?php if ('' !== $message): ?>
+    <?= rex_view::success($message) ?>
+<?php endif; ?>
+<?php if ('' !== $error): ?>
+    <?= rex_view::error($error) ?>
+<?php endif; ?>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i>
+    <strong>Konfiguration:</strong> Alle Tracking-Optionen sind hier zentral gebündelt. Das Matomo-Setup enthält nur noch Installation und Grund-Setup.
+</div>
+
+<form method="post" class="rex-form">
+    <?= $csrf->getHiddenField() ?>
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title"><i class="fas fa-globe"></i> Basis & Zugang</h3></div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label for="matomo_url"><?= $addon->i18n('matomo_url') ?></label>
+                        <input type="url" id="matomo_url" name="matomo_url" class="form-control" value="<?= rex_escape($matomo_url) ?>" placeholder="https://ihre-domain.de/matomo">
+                        <p class="help-block"><?= $addon->i18n('matomo_url_help') ?></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="matomo_path"><?= $addon->i18n('matomo_path') ?></label>
+                        <input type="text" id="matomo_path" name="matomo_path" class="form-control" value="<?= rex_escape($matomo_path) ?>" placeholder="matomo">
+                        <p class="help-block"><?= $addon->i18n('matomo_path_help') ?></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin_token"><?= $addon->i18n('matomo_admin_token') ?></label>
+                        <input type="password" id="admin_token" name="admin_token" class="form-control" value="<?= rex_escape($admin_token) ?>">
+                        <p class="help-block"><?= $addon->i18n('matomo_admin_token_help') ?></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="user_token"><?= $addon->i18n('matomo_user_token') ?></label>
+                        <input type="password" id="user_token" name="user_token" class="form-control" value="<?= rex_escape($user_token) ?>">
+                        <p class="help-block"><?= $addon->i18n('matomo_user_token_help') ?></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title"><i class="fas fa-plug"></i> API & Verbindung</h3></div>
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label for="api_timeout"><?= $addon->i18n('matomo_api_timeout') ?></label>
+                        <select id="api_timeout" name="api_timeout" class="form-control">
+                            <option value="10" <?= 10 === $api_timeout ? 'selected' : '' ?>><?= $addon->i18n('matomo_timeout_10s') ?></option>
+                            <option value="30" <?= 30 === $api_timeout ? 'selected' : '' ?>><?= $addon->i18n('matomo_timeout_30s') ?></option>
+                            <option value="60" <?= 60 === $api_timeout ? 'selected' : '' ?>><?= $addon->i18n('matomo_timeout_60s') ?></option>
+                            <option value="120" <?= 120 === $api_timeout ? 'selected' : '' ?>><?= $addon->i18n('matomo_timeout_120s') ?></option>
+                        </select>
+                        <p class="help-block"><?= $addon->i18n('matomo_api_timeout_help') ?></p>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="ssl_verify" value="1" <?= $ssl_verify ? 'checked' : '' ?>>
+                            <?= $addon->i18n('matomo_ssl_verify_option') ?>
+                        </label>
+                        <p class="help-block"><?= $addon->i18n('matomo_ssl_verify_help') ?></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="socket_timeout">Socket Timeout (Sekunden)</label>
+                        <input type="number" id="socket_timeout" name="socket_timeout" class="form-control" min="0.1" step="0.1" value="<?= rex_escape((string) $socket_timeout) ?>">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title"><i class="fas fa-chart-line"></i> Tracking-Features</h3></div>
+                <div class="panel-body">
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="show_top_pages" value="1" <?= $show_top_pages ? 'checked' : '' ?>>
+                            <?= $addon->i18n('matomo_show_top_pages') ?>
+                        </label>
+                        <p class="help-block"><?= $addon->i18n('matomo_show_top_pages_help') ?></p>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="proxy_enabled" value="1" <?= $proxy_enabled ? 'checked' : '' ?>>
+                            <?= $addon->i18n('matomo_proxy_enabled') ?>
+                        </label>
+                        <p class="help-block"><?= $addon->i18n('matomo_proxy_enabled_help') ?></p>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="server_side_tracking" value="1" <?= $server_side_tracking ? 'checked' : '' ?>>
+                            <?= $addon->i18n('matomo_server_side_tracking_enable') ?>
+                        </label>
+                        <p class="help-block"><?= $addon->i18n('matomo_server_side_tracking_help') ?></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="server_side_site_id"><?= $addon->i18n('matomo_server_side_site_id') ?></label>
+                        <input type="number" id="server_side_site_id" name="server_side_site_id" class="form-control" min="0" value="<?= (int) $server_side_site_id ?>">
+                        <p class="help-block"><?= $addon->i18n('matomo_server_side_site_id_help') ?></p>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="event_tracking_js" value="1" <?= $event_tracking_js ? 'checked' : '' ?>>
+                            <?= $addon->i18n('matomo_event_tracking_js') ?>
+                        </label>
+                        <p class="help-block"><?= $addon->i18n('matomo_event_tracking_js_help') ?></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading"><h3 class="panel-title"><i class="fas fa-user-shield"></i> Datenschutz</h3></div>
+                <div class="panel-body">
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="anonymize_ip" value="1" <?= $anonymize_ip ? 'checked' : '' ?>>
+                            <?= $addon->i18n('matomo_anonymize_ip_option') ?>
+                        </label>
+                        <p class="help-block"><?= $addon->i18n('matomo_anonymize_ip_help') ?></p>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="cookieless_tracking" value="1" <?= $cookieless_tracking ? 'checked' : '' ?>>
+                            <?= $addon->i18n('matomo_cookieless_option') ?>
+                        </label>
+                        <p class="help-block"><?= $addon->i18n('matomo_cookieless_help') ?></p>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="respect_dnt" value="1" <?= $respect_dnt ? 'checked' : '' ?>>
+                            <?= $addon->i18n('matomo_respect_dnt_option') ?>
+                        </label>
+                        <p class="help-block"><?= $addon->i18n('matomo_respect_dnt_help') ?></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="cookie_lifetime"><?= $addon->i18n('matomo_cookie_lifetime') ?></label>
+                        <select id="cookie_lifetime" name="cookie_lifetime" class="form-control">
+                            <option value="1800" <?= 1800 === $cookie_lifetime ? 'selected' : '' ?>><?= $addon->i18n('matomo_cookie_30min') ?></option>
+                            <option value="3600" <?= 3600 === $cookie_lifetime ? 'selected' : '' ?>><?= $addon->i18n('matomo_cookie_1hour') ?></option>
+                            <option value="86400" <?= 86400 === $cookie_lifetime ? 'selected' : '' ?>><?= $addon->i18n('matomo_cookie_1day') ?></option>
+                            <option value="604800" <?= 604800 === $cookie_lifetime ? 'selected' : '' ?>><?= $addon->i18n('matomo_cookie_1week') ?></option>
+                            <option value="2592000" <?= 2592000 === $cookie_lifetime ? 'selected' : '' ?>><?= $addon->i18n('matomo_cookie_1month') ?></option>
+                            <option value="31536000" <?= 31536000 === $cookie_lifetime ? 'selected' : '' ?>><?= $addon->i18n('matomo_cookie_1year') ?></option>
+                        </select>
+                        <p class="help-block"><?= $addon->i18n('matomo_cookie_lifetime_help') ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-success">
+        <div class="panel-body text-right">
+            <button type="submit" name="save_config" value="1" class="btn btn-success btn-lg">
+                <i class="fas fa-save"></i> <?= $addon->i18n('matomo_save') ?>
+            </button>
+        </div>
+    </div>
+</form>
 
 <div class="row">
     <div class="col-sm-6">
