@@ -4,107 +4,6 @@ use FriendsOfRedaxo\Matomo\MatomoApi;
 
 $addon = rex_addon::get('matomo');
 
-if (rex_request('func', 'string') === 'test_connection') {
-    rex_response::cleanOutputBuffers();
-
-    $testUrl = trim(rex_request('matomo_url', 'string', ''));
-    if ('' === $testUrl) {
-        rex_response::sendJson(['success' => false, 'message' => 'Keine URL angegeben']);
-        exit;
-    }
-
-    if (false === filter_var($testUrl, FILTER_VALIDATE_URL)) {
-        rex_response::sendJson(['success' => false, 'message' => 'Ungültige URL']);
-        exit;
-    }
-
-    $jsUrl = rtrim($testUrl, '/') . '/matomo.js';
-
-    try {
-        $socket = rex_socket::factoryUrl($jsUrl);
-        $socket->setTimeout(10);
-        $response = $socket->doGet();
-
-        if (!$response->isSuccessful()) {
-            rex_response::sendJson([
-                'success' => false,
-                'message' => 'HTTP ' . $response->getStatusCode(),
-                'url' => $jsUrl,
-            ]);
-            exit;
-        }
-
-        $body = $response->getBody();
-        $isMatomoJs = str_contains($body, 'Matomo') || str_contains($body, 'Piwik');
-
-        rex_response::sendJson([
-            'success' => $isMatomoJs,
-            'message' => $isMatomoJs ? 'Verbindung erfolgreich' : 'Datei geladen, aber kein Matomo JS erkannt',
-            'url' => $jsUrl,
-            'size' => strlen($body),
-        ]);
-        exit;
-    } catch (rex_socket_exception $e) {
-        rex_response::sendJson([
-            'success' => false,
-            'message' => 'Socket-Fehler: ' . $e->getMessage(),
-            'url' => $jsUrl,
-        ]);
-        exit;
-    }
-}
-
-if (rex_request('func', 'string') === 'test_proxy') {
-    rex_response::cleanOutputBuffers();
-
-    $matomoUrl = (string) rex_config::get('matomo', 'matomo_url', '');
-    if ('' === $matomoUrl) {
-        rex_response::sendJson(['success' => false, 'message' => 'Matomo URL nicht konfiguriert']);
-        exit;
-    }
-
-    $proxyUrl = rex_url::frontendController([
-        'rex-api-call' => 'matomo_proxy',
-        'file' => 'matomo.js',
-        'test' => '1',
-    ]);
-
-    try {
-        $server = rtrim((string) rex::getServer(), '/');
-        $requestUrl = ('' !== $server ? $server : '') . $proxyUrl;
-        $socket = rex_socket::factoryUrl($requestUrl);
-        $socket->setTimeout(10);
-        $response = $socket->doGet();
-
-        if (!$response->isSuccessful()) {
-            rex_response::sendJson([
-                'success' => false,
-                'message' => 'HTTP ' . $response->getStatusCode(),
-                'url' => $proxyUrl,
-            ]);
-            exit;
-        }
-
-        $body = $response->getBody();
-        $isMatomoJs = str_contains($body, 'Matomo') || str_contains($body, 'Piwik');
-
-        rex_response::sendJson([
-            'success' => $isMatomoJs,
-            'message' => $isMatomoJs ? 'Proxy funktioniert' : 'Proxy antwortet, aber kein Matomo JS erkannt',
-            'url' => $proxyUrl,
-            'size' => strlen($body),
-        ]);
-        exit;
-    } catch (rex_socket_exception $e) {
-        rex_response::sendJson([
-            'success' => false,
-            'message' => 'Socket-Fehler: ' . $e->getMessage(),
-            'url' => $proxyUrl,
-        ]);
-        exit;
-    }
-}
-
 $csrf = rex_csrf_token::factory('matomo_config');
 $message = '';
 $error = '';
@@ -223,8 +122,8 @@ if ($matomo_url !== '' && $admin_token !== '') {
 </div>
 
 <div id="matomo-config-endpoints"
-     data-test-connection-url="<?= rex_escape(rex_url::currentBackendPage(['func' => 'test_connection'])) ?>"
-     data-test-proxy-url="<?= rex_escape(rex_url::currentBackendPage(['func' => 'test_proxy'])) ?>"></div>
+    data-test-connection-url="<?= rex_escape(rex_url::backendController(['rex-api-call' => 'matomo_test_connection'])) ?>"
+    data-test-proxy-url="<?= rex_escape(rex_url::backendController(['rex-api-call' => 'matomo_test_proxy'])) ?>"></div>
 
 <form method="post" class="rex-form">
     <?= $csrf->getHiddenField() ?>

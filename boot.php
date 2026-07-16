@@ -9,6 +9,8 @@ use FriendsOfRedaxo\Matomo\Tracker;
 // API-Funktionen registrieren
 rex_api_function::register('matomo_proxy', MatomoProxyApi::class);
 rex_api_function::register('matomo_event', MatomoEventApi::class);
+rex_api_function::register('matomo_test_connection', 'rex_api_matomo_test_connection');
+rex_api_function::register('matomo_test_proxy', 'rex_api_matomo_test_proxy');
 
 if (rex::isBackend() && rex_be_controller::getCurrentPage() === 'matomo/config') {
     rex_view::addJsFile(rex_addon::get('matomo')->getAssetsUrl('matomo-config.js'));
