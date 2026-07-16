@@ -33,6 +33,7 @@ matomo_fill_all_fields = Please fill in all fields!
 matomo_domain_added = Domain '{0}' successfully added (Site ID: {1})
 matomo_domain_add_failed = Domain could not be created
 matomo_domain_add_error = Error adding domain: {0}
+matomo_superuser_required = The configured Matomo API token has no superuser access. Creating or deleting domains requires a token from a Matomo superuser account.
 matomo_sites_load_error = Error loading domains: {0}
 matomo_not_configured = Matomo is not fully configured. Please go to <a href="{0}">Settings</a> and configure Matomo first.
 
@@ -53,6 +54,17 @@ matomo_verify_ssl_help = Enables SSL certificate verification (recommended). Onl
 # Proxy Settings
 matomo_proxy_enabled = Enable JavaScript Proxy
 matomo_proxy_enabled_help = Loads matomo.js via REDAXO to bypass adblockers. Recommended for better tracking accuracy.
+matomo_show_top_pages = Show Top 5 pages
+matomo_show_top_pages_help = Shows the 5 most visited pages of the current week in the overview.
+
+# Server-Side Tracking
+matomo_server_side_tracking = Server-Side Tracking (no JS, no cookies)
+matomo_server_side_tracking_enable = Enable server-side tracking
+matomo_server_side_tracking_help = REDAXO sends a direct request to the Matomo Tracking API on every frontend page load – without JavaScript and without cookies. Bots are automatically filtered out. Requires a valid admin token for IP forwarding.
+matomo_server_side_site_id = Matomo Site ID
+matomo_server_side_site_id_help = The Matomo site ID under which page views should be recorded (find it in Matomo under Administration → Websites).
+matomo_event_tracking_js = Enable browser event tracking (matomo-events.js)
+matomo_event_tracking_js_help = Embeds a lightweight script that automatically detects downloads, outbound links and form submissions and reports them to Matomo via the REDAXO server. No Matomo JavaScript required. In PHP code the MatomoTrack class is also available for manual events.
 matomo_auto_tracking = Automatic Tracking
 matomo_auto_tracking_help = Automatically embed tracking code in templates
 matomo_tracking_position = Tracking Code Position

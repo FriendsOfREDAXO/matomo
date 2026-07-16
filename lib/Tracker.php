@@ -202,6 +202,46 @@ class Tracker
     }
 
     /**
+     * Sets the HTTP Referer URL.
+     */
+    public function setReferer(string $referer): self
+    {
+        $this->customParameters['urlref'] = $referer;
+        return $this;
+    }
+
+    /**
+     * Checks whether the current request originates from a known bot/crawler.
+     * Uses a conservative list of common bot identifiers in the User-Agent string.
+     */
+    public function isBot(): bool
+    {
+        if ('' === $this->userAgent) {
+            return false;
+        }
+
+        $botPatterns = [
+            'bot', 'crawl', 'spider', 'slurp', 'search', 'fetch',
+            'mediapartners', 'adsbot', 'googlebot', 'bingbot', 'facebookexternalhit',
+            'twitterbot', 'linkedinbot', 'whatsapp', 'telegrambot', 'applebot',
+            'duckduckbot', 'baiduspider', 'yandexbot', 'sogou', 'exabot',
+            'ia_archiver', 'archive.org', 'semrushbot', 'ahrefsbot', 'mj12bot',
+            'dotbot', 'rogerbot', 'uptimerobot', 'pingdom', 'dataprovider',
+            'scrapy', 'python-requests', 'go-http-client', 'curl/', 'wget/',
+            'libwww', 'java/', 'okhttp', 'axios', 'node-fetch',
+        ];
+
+        $ua = strtolower($this->userAgent);
+        foreach ($botPatterns as $pattern) {
+            if (str_contains($ua, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Sets a Custom Dimension.
      * Requires the Custom Dimensions plugin in Matomo.
      * 
@@ -383,6 +423,48 @@ class Tracker
         if ('' !== $stacktrace) $params['cra_st'] = $stacktrace;
         
         return $this->sendRequest($params);
+    }
+
+    /**
+     * Tracks a file download click.
+     * The file URL must be whitelisted in Matomo (Administration → Websites → Downloads).
+     * Use $pageUrl to pass the page the user was on when clicking.
+     *
+     * @param string $fileUrl  Absolute URL of the downloaded file
+     * @param string $pageUrl  The page URL (defaults to current server request URI)
+     */
+    public function trackDownload(string $fileUrl, string $pageUrl = ''): bool
+    {
+        if ('' === $pageUrl) {
+            $pageUrl = rex_request::server('REQUEST_SCHEME', 'string', 'https') . '://'
+                . rex_request::server('HTTP_HOST', 'string', '')
+                . rex_request::server('REQUEST_URI', 'string', '/');
+        }
+
+        return $this->sendRequest([
+            'download' => $fileUrl,
+            'url'      => $pageUrl,
+        ]);
+    }
+
+    /**
+     * Tracks an outbound link click.
+     *
+     * @param string $linkUrl  Absolute URL of the external link
+     * @param string $pageUrl  The page URL (defaults to current server request URI)
+     */
+    public function trackOutboundLink(string $linkUrl, string $pageUrl = ''): bool
+    {
+        if ('' === $pageUrl) {
+            $pageUrl = rex_request::server('REQUEST_SCHEME', 'string', 'https') . '://'
+                . rex_request::server('HTTP_HOST', 'string', '')
+                . rex_request::server('REQUEST_URI', 'string', '/');
+        }
+
+        return $this->sendRequest([
+            'link' => $linkUrl,
+            'url'  => $pageUrl,
+        ]);
     }
 
     /**

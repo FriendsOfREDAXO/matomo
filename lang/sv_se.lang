@@ -19,3 +19,4 @@ matomo_track_DonotTrack = ccept client DoNotTrack setting
 matomo_track_disableCookies = Deaktivera cookies
 matomo_track_mergeAliasUrls = Dölj klick på aliasdomäner
 matomo_title = Matomo-statistik
+matomo_superuser_required = Den konfigurerade Matomo API-token har inte superuser-åtkomst. För att skapa eller ta bort domäner krävs en token från ett Matomo-superuserkonto.

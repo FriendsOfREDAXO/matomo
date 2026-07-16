@@ -176,9 +176,101 @@ Das AddOn nutzt die **Matomo HTTP API** für:
 
 Alle API-Verwaltungs-Requests erfolgen über `rex_socket` mit konfigurierbaren Timeouts und SSL-Optionen.
 
-## 💻 PHP Tracking API (Serverseitig)
+## Server-Side Tracking (ohne JS & Cookies)
 
-Das AddOn bringt eine leistungsfähige PHP-Klasse `Tracker` für Server-Side Tracking mit (z.B. für API-Endpunkte, Cronjobs oder Headless-Anwendungen). Diese nutzt primär **cURL (Fire-and-Forget)** und fällt bei Nichtverfügbarkeit automatisch auf performante **Native Sockets** zurück.
+REDAXO kann die Rolle des Matomo-JavaScripts komplett übernehmen und Seitenaufrufe direkt serverseitig an Matomo melden. Damit ist Tracking unabhängig von Adblockern, JavaScript-Deaktivierung und Browser-Tracking-Schutz.
+
+### Aktivierung
+
+Unter **Matomo → Konfiguration**:
+1. **"Server-seitiges Tracking aktivieren"** einschalten
+2. **Matomo Site-ID** eintragen (zu finden in Matomo unter Administration → Websites)
+
+### Was wird automatisch erfasst
+- Seitenaufrufe (Titel + URL) aller REDAXO-Artikel
+- Echte Besucher-IP (wenn Admin-Token hinterlegt)
+- User-Agent + Accept-Language
+- HTTP-Referer
+- YCom-Benutzer als User-ID (wenn YCom installiert)
+- Bots werden automatisch herausgefiltert
+
+### Browser-Event-Tracking (`matomo-events.js`)
+
+Ergänzend zum serverseitigen Page-Tracking kann ein leichtgewichtiges JS-Script aktiviert werden, das rein browserseitige Ereignisse erkennt und über den REDAXO-Server an Matomo meldet:
+
+- **Downloads** (PDF, ZIP, MP3 u.v.m. – Endungen konfigurierbar)
+- **Outbound-Links** (Klicks auf externe Domains)
+- **Formular-Versendungen** (alle `<form>`-Elemente)
+- **Beliebige Custom-Events** per `data-matomo-event`-Attribut
+
+Aktivierung unter **Matomo → Konfiguration → "Browser-Event-Tracking aktivieren"**.
+
+Wichtig: Das Script wird bewusst **nicht automatisch** vom AddOn in das Frontend injiziert.
+Die Einbindung erfolgt manuell durch den Integrator, z.B. im Consent-Manager oder direkt im Template.
+
+#### Manuelle Einbindung (Consent-Manager / Template)
+```html
+<script>
+window.MatomoEventsConfig = {
+    endpoint: '/index.php?rex-api-call=matomo_event'
+};
+</script>
+<script defer src="/assets/addons/matomo/matomo-events.js"></script>
+```
+
+Hinweis: Bei Unterordner-Installationen muss der Pfad mit dem korrekten Webroot gesetzt werden (z.B. `/subdir/index.php?rex-api-call=matomo_event`).
+
+#### Custom-Events per Data-Attribut (kein JS nötig)
+```html
+<button data-matomo-event='{"category":"CTA","action":"Click","name":"Hero-Button"}'>
+    Jetzt buchen
+</button>
+
+<a href="/produkt" data-matomo-event='{"category":"Product","action":"View"}'>
+    Produkt ansehen
+</a>
+```
+
+#### Konfiguration des Scripts (optional)
+```html
+<script>
+window.MatomoEventsConfig = {
+    trackOutbound:  true,
+    trackDownloads: true,
+    extensions: ['pdf', 'zip', 'docx', 'mp4'],  // eigene Endungen
+};
+</script>
+```
+
+## 🎯 `MatomoTrack` – PHP-Tracking-Facade
+
+Für Tracking aus PHP-Code (Module, Templates, `rex_api`-Funktionen) steht die statische Hilfsklasse `MatomoTrack` bereit. Sie ist ein no-op wenn Tracking nicht konfiguriert ist – kann also immer aufgerufen werden.
+
+```php
+use FriendsOfRedaxo\Matomo\MatomoTrack;
+
+// Formular-Versand (z.B. in YForm-Action oder rex_api)
+MatomoTrack::event('Form', 'Submit', 'Kontaktformular');
+
+// Download-Controller
+MatomoTrack::download('https://example.com/files/broschuere.pdf');
+
+// Outbound-Weiterleitung
+MatomoTrack::outboundLink('https://partner.de');
+
+// Interne Suche
+MatomoTrack::search('redaxo themes', 'Dokumentation', 12);
+
+// Ziel / Konversion
+MatomoTrack::goal(3, 29.90);
+
+// Manueller Page View (z.B. aus Headless-Controller)
+MatomoTrack::pageView('Produktdetail – Rotes T-Shirt', 'https://example.com/produkte/rotes-tshirt');
+```
+
+## 💻 PHP Tracking API (Serverseitig – direkte Klasse)
+
+Das AddOn bringt eine leistungsfähige PHP-Klasse `Tracker` für direktes Server-Side Tracking mit (z.B. für API-Endpunkte, Cronjobs oder Headless-Anwendungen). Diese nutzt **Native Sockets** im Fire-and-Forget-Modus.
 
 ### Einfache Verwendung
 
@@ -197,6 +289,12 @@ if ($tracker) {
     // 3. Event tracken
     // Kategorie, Aktion, Name (optional), Wert (optional)
     $tracker->trackEvent('Kontaktformular', 'Absenden', 'Allgemeine Anfrage', 1);
+
+    // 4. Download tracken
+    $tracker->trackDownload('https://example.com/files/broschuere.pdf');
+
+    // 5. Outbound-Link tracken
+    $tracker->trackOutboundLink('https://partner.de');
     
     // 4. Ziel (Goal) erfassen
     // Goal ID, Umsatz (optional)
@@ -274,6 +372,18 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.4.0
+- **Server-Side Page Tracking**: REDAXO sendet bei jedem Frontend-Aufruf einen direkten Request an die Matomo Tracking API – ohne JavaScript, ohne Cookies, ohne Adblocker-Problem
+- **Bot-Filter**: Automatische Erkennung und Filterung von 30+ bekannten Crawler- und Bot-User-Agents
+- **HTTP-Referer**: Referer-Header wird automatisch an Matomo weitergeleitet
+- **YCom-Integration**: Eingeloggte YCom-Benutzer werden als User-ID getrackt (Cross-Device)
+- **`MatomoTrack`-Facade**: Neue statische Hilfsklasse `MatomoTrack` für bequemes Tracking aus Modulen, Plugins und rex_api-Funktionen – Events, Downloads, Outbound-Links, Suche, Ziele, Page Views per einzeiligem Aufruf
+- **`trackDownload()` / `trackOutboundLink()`**: Neue Methoden direkt im `Tracker`
+- **Browser-Event-Tracking** (`matomo-events.js`): Leichtgewichtiges Script, das Downloads, externe Links und Formular-Versendungen automatisch erkennt und über den REDAXO-Server an Matomo meldet – kein Matomo-JS nötig
+- **`data-matomo-event`-Attribut**: Beliebige HTML-Elemente können Custom-Events per Data-Attribut auslösen (kein JS nötig)
+- **`MatomoEventApi`**: Neuer REDAXO-API-Endpunkt, der Browser-Events als JSON entgegennimmt und serverseitig an Matomo weiterleitet (`POST index.php?rex-api-call=matomo_event`)
+- **Zwei neue Einstellungen**: "Server-seitiges Tracking" (mit Site-ID) und "Browser-Event-Tracking aktivieren"
 
 ### Version 2.1
 - **YRewrite Integration**: Vollständige Integration mit YRewrite AddOn (nun erforderlich)

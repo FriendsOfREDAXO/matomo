@@ -8,9 +8,9 @@ class rex_api_matomo_test_connection extends rex_api_function
 
     public function execute()
     {
-        $url = rex_request('url', 'string', '');
+        $url = trim(rex_request('url', 'string', rex_request('matomo_url', 'string', '')));
         
-        if (!$url) {
+        if ('' === $url) {
             $this->sendResponse(false, 'Keine URL angegeben');
         }
 
@@ -107,6 +107,8 @@ class rex_api_matomo_test_connection extends rex_api_function
         rex_response::sendJson([
             'success' => $success,
             'message' => $message,
+            'url' => $url,
+            'size' => strlen($response),
             'data' => $data
         ]);
         exit;

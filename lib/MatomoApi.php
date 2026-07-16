@@ -11,6 +11,7 @@ use rex_addon;
 use rex_config;
 use rex_url;
 use rex_request;
+use rex_string;
 use Exception;
 use ZipArchive;
 use RecursiveIteratorIterator;
@@ -45,9 +46,38 @@ class MatomoApi
      */
     public function __construct(string $matomo_url, string $admin_token, ?string $user_token = null)
     {
-        $this->matomo_url = rtrim($matomo_url, '/');
-        $this->admin_token = $admin_token;
-        $this->user_token = $user_token ?? $admin_token;
+        $this->matomo_url = rtrim(trim($matomo_url), '/');
+        $this->admin_token = trim($admin_token);
+        $this->user_token = trim($user_token ?? $admin_token);
+    }
+
+    /**
+     * Prüft, ob das konfigurierte Admin-Token Superuser-Rechte hat.
+     *
+     * @return bool true, wenn Superuser-Zugriff vorhanden ist
+     * @throws Exception bei API-Fehlern
+     */
+    public function hasSuperUserAccess(): bool
+    {
+        $result = $this->apiCall('UsersManager.hasSuperUserAccess');
+
+        if (is_array($result) && isset($result['value'])) {
+            $result = $result['value'];
+        }
+
+        if (is_bool($result)) {
+            return $result;
+        }
+
+        if (is_numeric($result)) {
+            return (int) $result === 1;
+        }
+
+        if (is_string($result)) {
+            return in_array(strtolower($result), ['1', 'true', 'yes'], true);
+        }
+
+        return false;
     }
 
     /**
@@ -198,37 +228,51 @@ class MatomoApi
     public function generateTrackingCode(int $site_id, bool $use_proxy = false, bool $async_tracking = true): string
     {
         $matomo_url = rtrim($this->matomo_url, '/');
+        $serverSideTracking = (bool) rex_config::get('matomo', 'server_side_tracking', false);
+        $eventTrackingJs = (bool) rex_config::get('matomo', 'event_tracking_js', false);
         
         // URLs bestimmen
         if ($use_proxy) {
-            // Proxy über REDAXO API
-            $server = rex::getServer();
-            if ($server !== '') {
-                $base_url = rtrim($server, '/');
-            } else {
-                $base_url = '';
-            }
-            
-            $tracker_url = $base_url . '/index.php?rex-api-call=matomo_proxy';
-            $js_url = $base_url . '/index.php?rex-api-call=matomo_proxy&file=matomo.js';
+            $tracker_url = $this->buildProxyUrl('matomo.php');
+            $js_url = $this->buildProxyUrl('matomo.js');
         } else {
             // Direkte Matomo-URLs
-            $tracker_url = $matomo_url . '/';
+            $tracker_url = $matomo_url . '/matomo.php';
             $js_url = $matomo_url . '/matomo.js';
         }
         
         $async = $async_tracking ? ' async defer' : '';
+        $sections = [];
+
+        if (!$serverSideTracking) {
+            $sections[] = $this->buildClientTrackingSnippet($site_id, $tracker_url, $js_url, $async);
+        }
+
+        if ($eventTrackingJs) {
+            $sections[] = $this->buildManualBrowserEventSnippet();
+        }
+
+        if ([] === $sections) {
+            $sections[] = $this->buildNoSnippetRequiredMessage();
+        }
         
-        $code = <<<JS
+        return implode("\n\n", $sections);
+    }
+
+    private function buildClientTrackingSnippet(int $site_id, string $tracker_url, string $js_url, string $async): string
+    {
+        return <<<JS
+=== 1) Matomo Basis-Tracking ===
+Diesen Block in Consent-Manager oder Template einbinden.
+
 <!-- Matomo -->
 <script{$async}>
   var _paq = window._paq = window._paq || [];
   /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
   _paq.push(['trackPageView']);
   _paq.push(['enableLinkTracking']);
-  (function() {
-    var u="{$tracker_url}";
-    _paq.push(['setTrackerUrl', u+'matomo.php']);
+    (function() {
+        _paq.push(['setTrackerUrl', '{$tracker_url}']);
     _paq.push(['setSiteId', '{$site_id}']);
     var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
     g.async=true; g.src='{$js_url}'; s.parentNode.insertBefore(g,s);
@@ -236,8 +280,105 @@ class MatomoApi
 </script>
 <!-- End Matomo Code -->
 JS;
-        
-        return $code;
+    }
+
+    /**
+         * Optionaler Snippet fuer manuelles Browser-Event-Tracking.
+         * Wird bewusst nicht automatisch injiziert, sondern nur als Copy-Vorlage ausgegeben.
+     */
+    private function buildManualBrowserEventSnippet(): string
+    {
+        $endpoint = $this->buildFrontendApiUrl('matomo_event');
+        $eventsJs = $this->buildFrontendAssetUrl('matomo-events.js');
+
+        return <<<JS
+=== 2) Browser-Event-Tracking ===
+Diesen Block zusaetzlich manuell einbinden, wenn Downloads, Outbound-Links und Formular-Events erfasst werden sollen.
+
+<script>
+  window.MatomoEventsConfig = {
+    endpoint: '{$endpoint}'
+  };
+</script>
+<script defer src="{$eventsJs}"></script>
+JS;
+    }
+
+        private function buildNoSnippetRequiredMessage(): string
+        {
+                return <<<TXT
+=== Kein Frontend-Code erforderlich ===
+Server-seitiges Tracking ist aktiv und Browser-Event-Tracking ist deaktiviert.
+Fuer diese Konfiguration muss kein zusaetzlicher Code in Template oder Consent-Manager eingebunden werden.
+TXT;
+        }
+
+    /**
+     * Erzeugt eine Frontend-Asset-URL fuer Addon-Dateien mit korrektem Webroot.
+     */
+    private function buildFrontendAssetUrl(string $assetFile): string
+    {
+        $frontendIndex = $this->resolveFrontendIndexUrl();
+
+        if (str_ends_with($frontendIndex, '/index.php')) {
+            $base = substr($frontendIndex, 0, -strlen('/index.php'));
+        } else {
+            $base = rtrim(dirname($frontendIndex), '/');
+        }
+
+        return rtrim($base, '/') . '/assets/addons/matomo/' . ltrim($assetFile, '/');
+    }
+
+    /**
+     * Erzeugt eine Frontend-API-URL mit korrektem Webroot (auch bei Unterordner-Installation).
+     */
+    private function buildFrontendApiUrl(string $apiCall): string
+    {
+        $query = rex_string::buildQuery([
+            'rex-api-call' => $apiCall,
+        ]);
+
+        return $this->resolveFrontendIndexUrl() . '?' . $query;
+    }
+
+    /**
+     * Loest den Frontend-Indexpfad zu einer Webroot-korrekten URL auf.
+     */
+    private function resolveFrontendIndexUrl(): string
+    {
+        $frontendIndex = rex_url::frontend('index.php');
+
+        if (preg_match('@^https?://@i', $frontendIndex)) {
+            return $frontendIndex;
+        }
+
+        if (str_starts_with($frontendIndex, './') || str_starts_with($frontendIndex, '../')) {
+            $scriptName = rex_request::server('SCRIPT_NAME', 'string', '');
+            if ('' !== $scriptName) {
+                $backendDir = dirname($scriptName);
+                $frontendBase = dirname($backendDir);
+                $frontendIndex = rtrim($frontendBase, '/') . '/index.php';
+            }
+        }
+
+        if (!str_starts_with($frontendIndex, '/')) {
+            $frontendIndex = '/' . ltrim($frontendIndex, '/');
+        }
+
+        return $frontendIndex;
+    }
+
+    /**
+     * Baut eine Proxy-URL mit korrektem Webroot und rohen Query-Parametern.
+     */
+    private function buildProxyUrl(string $file): string
+    {
+        $query = rex_string::buildQuery([
+            'rex-api-call' => 'matomo_proxy',
+            'file' => $file,
+        ]);
+
+        return $this->resolveFrontendIndexUrl() . '?' . $query;
     }
 
     /**

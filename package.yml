@@ -1,5 +1,5 @@
 package: matomo
-version: '2.3.0'
+version: '2.4.0'
 author: 'Friends Of REDAXO'
 supportpage: https://github.com/FriendsOfREDAXO/matomo
 
@@ -37,4 +37,8 @@ default_config:
     anonymize_ip: false
     cookieless_tracking: false
     respect_dnt: false
+    proxy_enabled: false
     show_top_pages: false
+    server_side_tracking: false
+    server_side_site_id: 0
+    event_tracking_js: false
