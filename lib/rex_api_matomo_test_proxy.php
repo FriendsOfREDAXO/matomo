@@ -13,14 +13,8 @@ class rex_api_matomo_test_proxy extends rex_api_function
             $this->sendResponse(false, 'Matomo URL nicht konfiguriert');
         }
 
-        $proxyUrl = rex_url::frontendController([
-            'rex-api-call' => 'matomo_proxy',
-            'file' => 'matomo.js',
-            'test' => '1',
-        ]);
-
-        $server = rtrim((string) rex::getServer(), '/');
-        $requestUrl = ('' !== $server ? $server : '') . $proxyUrl;
+        $proxyUrl = $this->buildProxyUrl();
+        $requestUrl = $this->toAbsoluteUrl($proxyUrl);
 
         try {
             $socket = rex_socket::factoryUrl($requestUrl);
@@ -55,5 +49,50 @@ class rex_api_matomo_test_proxy extends rex_api_function
             'size' => $size,
         ]);
         exit;
+    }
+
+    private function buildProxyUrl(): string
+    {
+        $query = rex_string::buildQuery([
+            'rex-api-call' => 'matomo_proxy',
+            'file' => 'matomo.js',
+            'test' => '1',
+        ]);
+
+        return $this->resolveFrontendIndexUrl() . '?' . $query;
+    }
+
+    private function resolveFrontendIndexUrl(): string
+    {
+        $frontendIndex = rex_url::frontend('index.php');
+
+        if (preg_match('@^https?://@i', $frontendIndex)) {
+            return $frontendIndex;
+        }
+
+        if (str_starts_with($frontendIndex, './') || str_starts_with($frontendIndex, '../')) {
+            $scriptName = rex_request::server('SCRIPT_NAME', 'string', '');
+            if ('' !== $scriptName) {
+                $backendDir = dirname($scriptName);
+                $frontendBase = dirname($backendDir);
+                $frontendIndex = rtrim($frontendBase, '/') . '/index.php';
+            }
+        }
+
+        if (!str_starts_with($frontendIndex, '/')) {
+            $frontendIndex = '/' . ltrim($frontendIndex, '/');
+        }
+
+        return $frontendIndex;
+    }
+
+    private function toAbsoluteUrl(string $url): string
+    {
+        if (preg_match('@^https?://@i', $url)) {
+            return $url;
+        }
+
+        $server = rtrim((string) rex::getServer(), '/');
+        return $server . '/' . ltrim($url, '/');
     }
 }
