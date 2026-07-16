@@ -114,6 +114,7 @@ $matomo_path = rex_config::get('matomo', 'matomo_path', '');
 $matomo_ready = false;
 $is_external_matomo = false;
 $api_status = 'Nicht getestet';
+$superuser_status = 'Nicht getestet';
 
 if ($matomo_url !== '' && $admin_token !== '') {
     if ($matomo_path !== '') {
@@ -131,8 +132,15 @@ if ($matomo_url !== '' && $admin_token !== '') {
             $api = new MatomoApi($matomo_url, $admin_token, $user_token);
             $sites = $api->getSites();
             $api_status = '✅ Verbunden (' . count($sites) . ' Sites)';
+
+            if ($api->hasSuperUserAccess()) {
+                $superuser_status = '✅ Ja';
+            } else {
+                $superuser_status = '❌ Nein (Token hat keine Superuser-Rechte)';
+            }
         } catch (Exception $e) {
             $api_status = '❌ Fehler: ' . $e->getMessage();
+            $superuser_status = '❌ Nicht prüfbar';
         }
     }
 }
@@ -160,6 +168,10 @@ if ($matomo_url !== '' && $admin_token !== '') {
                     <tr>
                         <td><strong>API Status:</strong></td>
                         <td><?= $api_status ?></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Superuser-Token:</strong></td>
+                        <td><?= $superuser_status ?></td>
                     </tr>
                     <?php if ($matomo_path !== ''): ?>
                     <tr>

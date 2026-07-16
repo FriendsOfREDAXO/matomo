@@ -19,3 +19,4 @@ matomo_track_DonotTrack = Reconocimiento DoNotTrack
 matomo_track_disableCookies = Deshabilitar cookies
 matomo_track_mergeAliasUrls = Ocultar clics en dominios de alias
 matomo_title = Estadísticas de Matomo
+matomo_superuser_required = El token API configurado de Matomo no tiene acceso de superusuario. Para crear o eliminar dominios se requiere un token de una cuenta superusuario de Matomo.

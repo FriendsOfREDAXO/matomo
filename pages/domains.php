@@ -29,6 +29,14 @@ if ($matomo_url !== '' && $admin_token !== '') {
 $message = '';
 $error = '';
 
+$mapPermissionError = static function (string $message, $addon): string {
+    if (false !== stripos($message, "requires a 'superuser' access")) {
+        return $addon->i18n('matomo_superuser_required');
+    }
+
+    return $message;
+};
+
 // Domain hinzufügen
 if (rex_post('add_domain', 'boolean') && $matomo_ready) {
     $domain_name = rex_post('domain_name', 'string', '');
@@ -45,7 +53,7 @@ if (rex_post('add_domain', 'boolean') && $matomo_ready) {
                 $error = $addon->i18n('matomo_domain_add_failed');
             }
         } catch (Exception $e) {
-            $error = $addon->i18n('matomo_domain_add_error', $e->getMessage());
+            $error = $addon->i18n('matomo_domain_add_error', $mapPermissionError($e->getMessage(), $addon));
         }
     } else {
         $error = $addon->i18n('matomo_fill_all_fields');
@@ -91,7 +99,7 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && count($import_dom
                             $import_errors[] = $addon->i18n('matomo_domain_import_error', $domain_name);
                         }
                     } catch (Exception $e) {
-                        $import_errors[] = $addon->i18n('matomo_domain_import_error_details', $domain_name, $e->getMessage());
+                        $import_errors[] = $addon->i18n('matomo_domain_import_error_details', $domain_name, $mapPermissionError($e->getMessage(), $addon));
                     }
                 }
             }
@@ -114,7 +122,7 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && count($import_dom
             }
             
         } catch (Exception $e) {
-            $error = $addon->i18n('matomo_domain_import_general_error', $e->getMessage());
+            $error = $addon->i18n('matomo_domain_import_general_error', $mapPermissionError($e->getMessage(), $addon));
         }
     } else {
         $error = $addon->i18n('matomo_yrewrite_not_available');
@@ -137,7 +145,7 @@ if (rex_post('delete_domain', 'boolean') && $matomo_ready) {
                 $error = $addon->i18n('matomo_domain_delete_error', rex_escape($site_name));
             }
         } catch (Exception $e) {
-            $error = $addon->i18n('matomo_domain_delete_error_details', $e->getMessage());
+            $error = $addon->i18n('matomo_domain_delete_error_details', $mapPermissionError($e->getMessage(), $addon));
         }
     } else {
         $error = $addon->i18n('matomo_domain_delete_invalid_id');

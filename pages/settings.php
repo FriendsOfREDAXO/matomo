@@ -58,14 +58,17 @@ $message = '';
 $error = '';
 
 if (rex_post('save_settings', 'boolean')) {
-    $matomo_path = rex_post('matomo_path', 'string', '');
-    $matomo_url = rex_post('matomo_url', 'string', '');
-    $admin_token = rex_post('admin_token', 'string', '');
-    $matomo_user = rex_post('matomo_user', 'string', '');
+    $matomo_path = trim(rex_post('matomo_path', 'string', ''));
+    $matomo_url = trim(rex_post('matomo_url', 'string', ''));
+    $admin_token = trim(rex_post('admin_token', 'string', ''));
+    $matomo_user = trim(rex_post('matomo_user', 'string', ''));
     $matomo_password = rex_post('matomo_password', 'string', '');
     $show_top_pages = rex_post('show_top_pages', 'boolean', false);
     $verify_ssl = rex_post('verify_ssl', 'boolean', true);
     $proxy_enabled = rex_post('proxy_enabled', 'boolean', false);
+    $server_side_tracking = rex_post('server_side_tracking', 'boolean', false);
+    $server_side_site_id = rex_post('server_side_site_id', 'int', 0);
+    $event_tracking_js = rex_post('event_tracking_js', 'boolean', false);
 
     rex_config::set('matomo', 'matomo_path', $matomo_path);
     rex_config::set('matomo', 'matomo_url', $matomo_url);
@@ -75,6 +78,9 @@ if (rex_post('save_settings', 'boolean')) {
     rex_config::set('matomo', 'show_top_pages', $show_top_pages);
     rex_config::set('matomo', 'verify_ssl', $verify_ssl);
     rex_config::set('matomo', 'proxy_enabled', $proxy_enabled);
+    rex_config::set('matomo', 'server_side_tracking', $server_side_tracking);
+    rex_config::set('matomo', 'server_side_site_id', $server_side_site_id);
+    rex_config::set('matomo', 'event_tracking_js', $event_tracking_js);
 
     $message = $addon->i18n('matomo_config_saved');
 }
@@ -110,10 +116,14 @@ $matomo_password = rex_config::get('matomo', 'matomo_password', '');
 $show_top_pages = rex_config::get('matomo', 'show_top_pages', false);
 $verify_ssl = rex_config::get('matomo', 'verify_ssl', true);
 $proxy_enabled = rex_config::get('matomo', 'proxy_enabled', false);
+$server_side_tracking = rex_config::get('matomo', 'server_side_tracking', false);
+$server_side_site_id = (int) rex_config::get('matomo', 'server_side_site_id', 0);
+$event_tracking_js = rex_config::get('matomo', 'event_tracking_js', false);
 
 // Status prüfen
 $matomo_installed = false;
 $is_external_matomo = false;
+$superuser_status = 'Nicht getestet';
 
 if ($matomo_url !== '' && $admin_token !== '') {
     if ($matomo_path !== '') {
@@ -124,6 +134,19 @@ if ($matomo_url !== '' && $admin_token !== '') {
         // Externe Matomo-Installation - keine lokale Verfügbarkeitsprüfung möglich
         $matomo_installed = true;
         $is_external_matomo = true;
+    }
+
+    if ($matomo_installed) {
+        try {
+            $api = new MatomoApi($matomo_url, $admin_token);
+            if ($api->hasSuperUserAccess()) {
+                $superuser_status = '✅ Ja';
+            } else {
+                $superuser_status = '❌ Nein (Token hat keine Superuser-Rechte)';
+            }
+        } catch (Exception $e) {
+            $superuser_status = '❌ Nicht prüfbar';
+        }
     }
 }
 
@@ -267,6 +290,32 @@ if (!function_exists('curl_init')) {
                     </div>
                     <?php endif; ?>
                     
+                    <hr>
+                    <h4><i class="fa fa-server"></i> <?= $addon->i18n('matomo_server_side_tracking') ?></h4>
+                    
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="server_side_tracking" value="1" <?= (bool)$server_side_tracking ? 'checked' : '' ?>>
+                            <strong><?= $addon->i18n('matomo_server_side_tracking_enable') ?></strong>
+                        </label>
+                        <p class="text-muted"><?= $addon->i18n('matomo_server_side_tracking_help') ?></p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="server_side_site_id"><?= $addon->i18n('matomo_server_side_site_id') ?>:</label>
+                        <input type="number" class="form-control" id="server_side_site_id" name="server_side_site_id"
+                               value="<?= (int)$server_side_site_id ?>" min="1" style="width: 120px;">
+                        <small class="text-muted"><?= $addon->i18n('matomo_server_side_site_id_help') ?></small>
+                    </div>
+
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" name="event_tracking_js" value="1" <?= (bool)$event_tracking_js ? 'checked' : '' ?>>
+                            <strong><?= $addon->i18n('matomo_event_tracking_js') ?></strong>
+                        </label>
+                        <p class="text-muted"><?= $addon->i18n('matomo_event_tracking_js_help') ?></p>
+                    </div>
+
                     <button type="submit" name="save_settings" value="1" class="btn btn-success">
                         <i class="fa fa-save"></i> Einstellungen speichern
                     </button>
@@ -308,6 +357,8 @@ if (!function_exists('curl_init')) {
                 <?php if ($admin_token !== ''): ?>
                 <p><strong>Admin Token:</strong><br>
                 <span class="text-success"><i class="fa fa-check-circle"></i> Konfiguriert</span></p>
+                <p><strong>Superuser-Token:</strong><br>
+                <?= rex_escape($superuser_status) ?></p>
                 <?php endif; ?>
             </div>
         </div>

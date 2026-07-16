@@ -45,9 +45,38 @@ class MatomoApi
      */
     public function __construct(string $matomo_url, string $admin_token, ?string $user_token = null)
     {
-        $this->matomo_url = rtrim($matomo_url, '/');
-        $this->admin_token = $admin_token;
-        $this->user_token = $user_token ?? $admin_token;
+        $this->matomo_url = rtrim(trim($matomo_url), '/');
+        $this->admin_token = trim($admin_token);
+        $this->user_token = trim($user_token ?? $admin_token);
+    }
+
+    /**
+     * Prüft, ob das konfigurierte Admin-Token Superuser-Rechte hat.
+     *
+     * @return bool true, wenn Superuser-Zugriff vorhanden ist
+     * @throws Exception bei API-Fehlern
+     */
+    public function hasSuperUserAccess(): bool
+    {
+        $result = $this->apiCall('UsersManager.hasSuperUserAccess');
+
+        if (is_array($result) && isset($result['value'])) {
+            $result = $result['value'];
+        }
+
+        if (is_bool($result)) {
+            return $result;
+        }
+
+        if (is_numeric($result)) {
+            return (int) $result === 1;
+        }
+
+        if (is_string($result)) {
+            return in_array(strtolower($result), ['1', 'true', 'yes'], true);
+        }
+
+        return false;
     }
 
     /**
@@ -201,19 +230,18 @@ class MatomoApi
         
         // URLs bestimmen
         if ($use_proxy) {
-            // Proxy über REDAXO API
-            $server = rex::getServer();
-            if ($server !== '') {
-                $base_url = rtrim($server, '/');
-            } else {
-                $base_url = '';
-            }
-            
-            $tracker_url = $base_url . '/index.php?rex-api-call=matomo_proxy';
-            $js_url = $base_url . '/index.php?rex-api-call=matomo_proxy&file=matomo.js';
+            // Relative Proxy-URLs: funktionieren immer unter der aktuell laufenden Domain.
+            $tracker_url = rex_url::frontendController([
+                'rex-api-call' => 'matomo_proxy',
+                'file' => 'matomo.php',
+            ]);
+            $js_url = rex_url::frontendController([
+                'rex-api-call' => 'matomo_proxy',
+                'file' => 'matomo.js',
+            ]);
         } else {
             // Direkte Matomo-URLs
-            $tracker_url = $matomo_url . '/';
+            $tracker_url = $matomo_url . '/matomo.php';
             $js_url = $matomo_url . '/matomo.js';
         }
         
@@ -226,9 +254,8 @@ class MatomoApi
   /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
   _paq.push(['trackPageView']);
   _paq.push(['enableLinkTracking']);
-  (function() {
-    var u="{$tracker_url}";
-    _paq.push(['setTrackerUrl', u+'matomo.php']);
+    (function() {
+        _paq.push(['setTrackerUrl', '{$tracker_url}']);
     _paq.push(['setSiteId', '{$site_id}']);
     var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
     g.async=true; g.src='{$js_url}'; s.parentNode.insertBefore(g,s);
