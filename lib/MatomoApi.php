@@ -228,6 +228,8 @@ class MatomoApi
     public function generateTrackingCode(int $site_id, bool $use_proxy = false, bool $async_tracking = true): string
     {
         $matomo_url = rtrim($this->matomo_url, '/');
+        $serverSideTracking = (bool) rex_config::get('matomo', 'server_side_tracking', false);
+        $eventTrackingJs = (bool) rex_config::get('matomo', 'event_tracking_js', false);
         
         // URLs bestimmen
         if ($use_proxy) {
@@ -240,9 +242,29 @@ class MatomoApi
         }
         
         $async = $async_tracking ? ' async defer' : '';
-        $browserEventSnippet = $this->buildManualBrowserEventSnippet();
+        $sections = [];
+
+        if (!$serverSideTracking) {
+            $sections[] = $this->buildClientTrackingSnippet($site_id, $tracker_url, $js_url, $async);
+        }
+
+        if ($eventTrackingJs) {
+            $sections[] = $this->buildManualBrowserEventSnippet();
+        }
+
+        if ([] === $sections) {
+            $sections[] = $this->buildNoSnippetRequiredMessage();
+        }
         
-        $code = <<<JS
+        return implode("\n\n", $sections);
+    }
+
+    private function buildClientTrackingSnippet(int $site_id, string $tracker_url, string $js_url, string $async): string
+    {
+        return <<<JS
+=== 1) Matomo Basis-Tracking ===
+Diesen Block in Consent-Manager oder Template einbinden.
+
 <!-- Matomo -->
 <script{$async}>
   var _paq = window._paq = window._paq || [];
@@ -257,16 +279,12 @@ class MatomoApi
   })();
 </script>
 <!-- End Matomo Code -->
-
-{$browserEventSnippet}
 JS;
-        
-        return $code;
     }
 
     /**
-     * Optionaler Snippet fuer manuelles Browser-Event-Tracking.
-     * Wird bewusst nicht automatisch injiziert, sondern nur als Copy-Vorlage ausgegeben.
+         * Optionaler Snippet fuer manuelles Browser-Event-Tracking.
+         * Wird bewusst nicht automatisch injiziert, sondern nur als Copy-Vorlage ausgegeben.
      */
     private function buildManualBrowserEventSnippet(): string
     {
@@ -274,16 +292,26 @@ JS;
         $eventsJs = $this->buildFrontendAssetUrl('matomo-events.js');
 
         return <<<JS
-<!-- Optional: Browser-Event-Tracking manuell einbinden (Consent-Manager oder Template) -->
+=== 2) Browser-Event-Tracking ===
+Diesen Block zusaetzlich manuell einbinden, wenn Downloads, Outbound-Links und Formular-Events erfasst werden sollen.
+
 <script>
   window.MatomoEventsConfig = {
     endpoint: '{$endpoint}'
   };
 </script>
 <script defer src="{$eventsJs}"></script>
-<!-- End Optional Browser-Event-Tracking -->
 JS;
     }
+
+        private function buildNoSnippetRequiredMessage(): string
+        {
+                return <<<TXT
+=== Kein Frontend-Code erforderlich ===
+Server-seitiges Tracking ist aktiv und Browser-Event-Tracking ist deaktiviert.
+Fuer diese Konfiguration muss kein zusaetzlicher Code in Template oder Consent-Manager eingebunden werden.
+TXT;
+        }
 
     /**
      * Erzeugt eine Frontend-Asset-URL fuer Addon-Dateien mit korrektem Webroot.
