@@ -11,6 +11,7 @@ use rex_addon;
 use rex_config;
 use rex_url;
 use rex_request;
+use rex_string;
 use Exception;
 use ZipArchive;
 use RecursiveIteratorIterator;
@@ -230,15 +231,8 @@ class MatomoApi
         
         // URLs bestimmen
         if ($use_proxy) {
-            // Relative Proxy-URLs: funktionieren immer unter der aktuell laufenden Domain.
-            $tracker_url = rex_url::frontendController([
-                'rex-api-call' => 'matomo_proxy',
-                'file' => 'matomo.php',
-            ]);
-            $js_url = rex_url::frontendController([
-                'rex-api-call' => 'matomo_proxy',
-                'file' => 'matomo.js',
-            ]);
+            $tracker_url = $this->buildProxyUrl('matomo.php');
+            $js_url = $this->buildProxyUrl('matomo.js');
         } else {
             // Direkte Matomo-URLs
             $tracker_url = $matomo_url . '/matomo.php';
@@ -265,6 +259,38 @@ class MatomoApi
 JS;
         
         return $code;
+    }
+
+    /**
+     * Baut eine Proxy-URL mit korrektem Webroot und rohen Query-Parametern.
+     */
+    private function buildProxyUrl(string $file): string
+    {
+        $query = rex_string::buildQuery([
+            'rex-api-call' => 'matomo_proxy',
+            'file' => $file,
+        ]);
+
+        $frontendIndex = rex_url::frontend('index.php');
+
+        if (preg_match('@^https?://@i', $frontendIndex)) {
+            return $frontendIndex . '?' . $query;
+        }
+
+        if (str_starts_with($frontendIndex, './') || str_starts_with($frontendIndex, '../')) {
+            $scriptName = rex_request::server('SCRIPT_NAME', 'string', '');
+            if ('' !== $scriptName) {
+                $backendDir = dirname($scriptName);
+                $frontendBase = dirname($backendDir);
+                $frontendIndex = rtrim($frontendBase, '/') . '/index.php';
+            }
+        }
+
+        if (!str_starts_with($frontendIndex, '/')) {
+            $frontendIndex = '/' . ltrim($frontendIndex, '/');
+        }
+
+        return $frontendIndex . '?' . $query;
     }
 
     /**
