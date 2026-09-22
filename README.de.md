@@ -395,6 +395,9 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 
 ## 📝 Changelog
 
+### Version 2.10.1
+- Der Auto-Login-Block in Einrichtung Schritt 5 erscheint jetzt unabhängig von Verbindung und Superuser-Token, die Aktivierung braucht keine API
+
 ### Version 2.10.0
 - **Auto-Login zurück**: „Matomo öffnen“ meldet Redakteure über Matomos logme-Funktion mit ihrem eigenen Konto an (POST, reguläre Session). Einrichtung Schritt 5 aktiviert `login_allow_logme = 1` bei lokaler Installation per Klick (Matomo-Konsole `config:set`, ersatzweise Datei), bei externem Matomo per Bestätigung. Ohne Auto-Login bleibt der Token-Zugang
 

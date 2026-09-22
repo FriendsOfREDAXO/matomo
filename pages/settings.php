@@ -500,13 +500,6 @@ if (!$connected) {
     <p class="help-block"><?= $addon->i18n('matomo_setup_access_sites_help') ?></p>
     <p class="help-block"><?= $addon->i18n('matomo_setup_access_help') ?></p>
 
-    <h4><i class="fa fa-sign-in-alt"></i> <?= $addon->i18n('matomo_autologin_headline') ?></h4>
-    <p class="help-block"><?= $addon->i18n('matomo_autologin_intro') ?></p>
-    <?php if (AutoLogin::isEnabled()): ?>
-        <p class="text-success"><i class="fa fa-check-circle"></i> <?= $addon->i18n('matomo_autologin_state_on') ?></p>
-    <?php else: ?>
-        <p class="text-warning"><i class="fa fa-exclamation-triangle"></i> <?= $addon->i18n('matomo_autologin_state_off') ?></p>
-    <?php endif; ?>
     <?php if ($is_local && $config_written): ?>
         <?php if (!AutoLogin::isEnabled()): ?>
         <form method="post" style="display:inline"><?= $hidden ?><input type="hidden" name="setup_action" value="autologin_enable"><button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-magic"></i> <?= $addon->i18n('matomo_autologin_enable') ?></button></form>
@@ -521,6 +514,15 @@ login_allow_logme = 1</pre>
     <?php endif; ?>
     <?php
 }
+?>
+    <h4><i class="fa fa-sign-in-alt"></i> <?= $addon->i18n('matomo_autologin_headline') ?></h4>
+    <p class="help-block"><?= $addon->i18n('matomo_autologin_intro') ?></p>
+    <?php if (AutoLogin::isEnabled()): ?>
+        <p class="text-success"><i class="fa fa-check-circle"></i> <?= $addon->i18n('matomo_autologin_state_on') ?></p>
+    <?php else: ?>
+        <p class="text-warning"><i class="fa fa-exclamation-triangle"></i> <?= $addon->i18n('matomo_autologin_state_off') ?></p>
+    <?php endif; ?>
+<?php
 echo $step(5, $addon->i18n('matomo_setup_step_access'), [] !== $access_entries, (string) ob_get_clean());
 ?>
 </div>

@@ -396,6 +396,9 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 ## 📝 Changelog
 
+### Version 2.10.1
+- The auto-login block in setup step 5 now appears regardless of connection and superuser token, enabling it needs no API
+
 ### Version 2.10.0
 - **Auto-login is back**: "Open Matomo" signs editors in through Matomo's logme feature with their own account (POST, regular session). Setup step 5 enables `login_allow_logme = 1` for local installations with one click (Matomo console `config:set`, falling back to the file), for an external Matomo by confirmation. Without auto-login, token access remains
 
