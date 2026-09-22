@@ -473,3 +473,5 @@ matomo_ov_chart_actions = Seitenaufrufe
 matomo_ov_hour_suffix = Uhr
 matomo_ov_table_view = Als Tabelle
 matomo_ov_chart_view = Als Diagramm
+matomo_setup_access_sites_select_all = Alle auswählen
+matomo_setup_access_sites_deselect_all = Auswahl aufheben (= alle)

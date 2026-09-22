@@ -409,7 +409,7 @@ if (!$connected) {
     ?>
     <?php
     $siteSelect = static function (array $selected) use ($sites, $addon): string {
-        $html = '<select name="site_ids[]" class="form-control input-sm" multiple size="' . min(4, max(2, count($sites))) . '" title="' . rex_escape($addon->i18n('matomo_setup_access_sites')) . '">';
+        $html = '<select name="site_ids[]" class="selectpicker" multiple data-width="240px" data-size="8" data-actions-box="true" data-live-search="' . (count($sites) > 8 ? 'true' : 'false') . '" data-selected-text-format="count > 2" data-count-selected-text="{0} ' . rex_escape($addon->i18n('matomo_setup_websites')) . '" data-select-all-text="' . rex_escape($addon->i18n('matomo_setup_access_sites_select_all')) . '" data-deselect-all-text="' . rex_escape($addon->i18n('matomo_setup_access_sites_deselect_all')) . '" data-none-selected-text="' . rex_escape($addon->i18n('matomo_setup_access_sites_all')) . '" title="' . rex_escape($addon->i18n('matomo_setup_access_sites_all')) . '">';
         foreach ($sites as $site) {
             $id = (int) $site['idsite'];
             $host = (string) parse_url((string) ($site['main_url'] ?? ''), PHP_URL_HOST);

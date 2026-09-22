@@ -388,6 +388,9 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 ## 📝 Changelog
 
+### Version 2.7.2
+- The per-user website selection uses the Bootstrap selectpicker (select all, counter, placeholder "All websites") instead of a native multi-select
+
 ### Version 2.7.1
 - **Server load of the overview**: sections load sequentially instead of in parallel, responses are cached server-side (10 minutes, closed periods 6 hours), auto-refresh every 15 minutes only while the tab is visible, fewer Matomo requests per section (no separate Goals call, smaller lists)
 - KPI "Conversions" is now "Converted visits" (from VisitsSummary)

@@ -387,6 +387,9 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 
 ## 📝 Changelog
 
+### Version 2.7.2
+- Auswahl der sichtbaren Websites je Benutzer nutzt den Bootstrap-Selectpicker (Alle auswählen, Zähler, Platzhalter „Alle Websites“) statt eines nativen Multiselects
+
 ### Version 2.7.1
 - **Serverlast der Übersicht**: Abschnitte laden nacheinander statt parallel, Antworten werden serverseitig gecacht (10 Minuten, abgeschlossene Zeiträume 6 Stunden), Auto-Refresh alle 15 Minuten nur bei sichtbarem Tab, weniger Matomo-Requests je Abschnitt (kein separater Goals-Aufruf, kleinere Listen)
 - Kennzahl „Conversions“ heißt jetzt „Besuche mit Conversion“ (aus VisitsSummary)

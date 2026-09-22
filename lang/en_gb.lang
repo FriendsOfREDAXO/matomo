@@ -475,3 +475,5 @@ matomo_ov_chart_actions = Page views
 matomo_ov_hour_suffix = h
 matomo_ov_table_view = As table
 matomo_ov_chart_view = As chart
+matomo_setup_access_sites_select_all = Select all
+matomo_setup_access_sites_deselect_all = Clear selection (= all)
