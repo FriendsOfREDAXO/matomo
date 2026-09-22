@@ -131,16 +131,17 @@ Die Matomo-API erlaubt keine Passwortänderung ohne das aktuelle Passwort. Ist e
 
 Schlägt die Datenbankverbindung mit den Daten aus der config.ini.php fehl (Meldung nennt Datei, Benutzer, Datenbank und die versuchten Wege Socket/TCP), lassen sich unter **Konfiguration → Matomo-Datenbank für Passwort-Reset** eigene Zugangsdaten hinterlegen.
 
-## 👤 Persönliche Zugänge (statt Auto-Login)
+## 👤 Persönliche Zugänge und Auto-Login
 
-Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, Patch der Matomo-`config.ini.php`) ist entfallen. Stattdessen nutzt das AddOn Matomos eigenen Token-Zugang:
+Jeder Redakteur bekommt ein eigenes Matomo-Konto. „Matomo öffnen“ meldet ihn damit an, bevorzugt über Matomos `logme`-Funktion mit regulärer Session (Auto-Login), sonst über sein persönliches Token:
 
 - In der Einrichtung, Schritt 5, bekommt jeder REDAXO-Benutzer per Klick einen **eigenen Matomo-Benutzer** (Leserecht auf alle Websites), ein zufälliges **Passwort** und ein **persönliches App-Token**. Login und E-Mail werden aus dem REDAXO-Benutzer übernommen; ohne gültige E-Mail-Adresse im REDAXO-Benutzer wird kein Zugang angelegt, weil Matomo je Benutzer eine eindeutige Adresse verlangt. Passwort und Token liegen in der REDAXO-Konfiguration (`user_access`), damit der Benutzer sein Passwort auf der Übersicht sehen und ändern kann.
 - „Matomo öffnen“ in der Übersicht ruft dann `index.php?module=CoreHome&…&token_auth=…` auf – Matomo öffnet die komplette Oberfläche als dieser Benutzer, ohne Login und ohne Änderung an der Matomo-Konfiguration.
 - Matomo lässt Token-Zugänge in der Oberfläche nur für Benutzer **ohne** Schreib-/Superuser-Rechte zu. Für die Matomo-Administration meldet man sich weiterhin normal an.
 - **Sichtbare Websites je Benutzer**: In der Zugangstabelle lässt sich je REDAXO-Benutzer festlegen, welche Matomo-Websites er sehen darf (keine Auswahl = alle). Die Auswahl wird als Leserecht je Website in Matomo gesetzt und filtert zusätzlich Übersicht und Widgets in REDAXO.
 - „Entfernen“ löscht Matomo-Benutzer und Token wieder. Die Tokens liegen in der REDAXO-Konfiguration (`user_access`).
-- **Grenze des Token-Zugangs**: Das Token ist kein Login, sondern authentifiziert jede Anfrage einzeln. Matomo reicht es in seinen Links weiter, aber jede URL ohne Token (Logo, Lesezeichen, manche Aktionen) landet auf der Anmeldeseite. Für dauerhaftes Arbeiten in Matomo ist die reguläre Anmeldung mit Passwort der verlässliche Weg, siehe „Mein Matomo-Zugang“.
+- **Auto-Login (logme)**: Ist in Matomos `config.ini.php` `login_allow_logme = 1` gesetzt, meldet „Matomo öffnen“ den Redakteur per POST mit Login und md5-Passwort seines eigenen Kontos an; Matomo legt eine reguläre Session an, die beim Klicken erhalten bleibt. Bei lokaler Installation aktiviert die Einrichtung (Schritt 5) die Einstellung per Klick über Matomos Konsole `config:set`, ersatzweise direkt in der Datei; bei externem Matomo trägt man sie dort ein und bestätigt sie in der Einrichtung. Matomo erlaubt logme nur für Konten ohne Superuser-Rechte, die Zugänge des Addons sind Lesekonten.
+- **Token-Zugang** (ohne Auto-Login): Das Token ist kein Login, sondern authentifiziert jede Anfrage einzeln. Jede URL ohne Token (Logo, Lesezeichen, manche Aktionen) landet auf der Anmeldeseite.
 
 ### Mein Matomo-Zugang (Übersicht)
 
@@ -393,6 +394,9 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.10.0
+- **Auto-Login zurück**: „Matomo öffnen“ meldet Redakteure über Matomos logme-Funktion mit ihrem eigenen Konto an (POST, reguläre Session). Einrichtung Schritt 5 aktiviert `login_allow_logme = 1` bei lokaler Installation per Klick (Matomo-Konsole `config:set`, ersatzweise Datei), bei externem Matomo per Bestätigung. Ohne Auto-Login bleibt der Token-Zugang
 
 ### Version 2.9.0
 - **Passwort je Zugang gespeichert und änderbar**: Das beim Anlegen erzeugte Matomo-Passwort wird zum Zugang gespeichert; „Mein Matomo-Zugang“ zeigt es auf Klick und ändert es über die Matomo-API mit dem eigenen Token. Funktioniert bei lokalem und externem Matomo, ohne Datenbank- oder CLI-Zugriff. Zugänge aus älteren Versionen ohne Passwort werden beim ersten Ändern mit gleichem Login neu angelegt

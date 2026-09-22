@@ -509,3 +509,15 @@ matomo_setup_access_no_email = Skipped because no e-mail address is stored in RE
 matomo_setup_plugins_disabled = Matomo plugin "ProfessionalServices" (advertising for paid services) has been deactivated.
 matomo_setup_plugins_disabled_state = Plugin "ProfessionalServices" is deactivated.
 matomo_setup_plugins_disable_failed = Plugin "ProfessionalServices" could not be deactivated automatically ({0}). Deactivate it in Matomo under Administration → System → Plugins.
+
+# Auto-login (2.10)
+matomo_autologin_headline = Auto-login
+matomo_autologin_intro = With auto-login, "Open Matomo" signs the editor in through Matomo's logme feature with their own credentials and creates a regular Matomo session – unlike token access it persists while clicking around. Requirement: login_allow_logme = 1 in Matomo's config.ini.php. Matomo only allows logme for users without superuser access.
+matomo_autologin_state_on = Auto-login is enabled in Matomo (login_allow_logme = 1).
+matomo_autologin_state_off = Auto-login is not enabled in Matomo; "Open Matomo" uses token access.
+matomo_autologin_enable = Enable auto-login in Matomo
+matomo_autologin_enabled = Auto-login enabled: login_allow_logme = 1 set in Matomo's config.ini.php.
+matomo_autologin_enable_failed = Auto-login could not be enabled: {0}. Please set login_allow_logme = 1 under [General] in config.ini.php manually.
+matomo_autologin_external_confirm = login_allow_logme = 1 is set in Matomo (for an external Matomo add it there in config/config.ini.php)
+matomo_autologin_open = Open Matomo (sign in automatically)
+matomo_autologin_title = Signs you in with your Matomo account

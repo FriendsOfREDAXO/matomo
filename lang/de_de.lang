@@ -507,3 +507,15 @@ matomo_setup_access_no_email = Übersprungen, weil keine E-Mail-Adresse in REDAX
 matomo_setup_plugins_disabled = Matomo-Plugin „ProfessionalServices“ (Werbung für kostenpflichtige Dienste) wurde deaktiviert.
 matomo_setup_plugins_disabled_state = Plugin „ProfessionalServices“ ist deaktiviert.
 matomo_setup_plugins_disable_failed = Plugin „ProfessionalServices“ konnte nicht automatisch deaktiviert werden ({0}). In Matomo unter Administration → System → Plugins deaktivieren.
+
+# Auto-Login (2.10)
+matomo_autologin_headline = Auto-Login
+matomo_autologin_intro = Mit Auto-Login meldet „Matomo öffnen“ den Redakteur über Matomos logme-Funktion mit seinen eigenen Zugangsdaten an und legt eine reguläre Matomo-Session an – anders als der Token-Zugang bleibt sie beim Klicken erhalten. Voraussetzung: login_allow_logme = 1 in Matomos config.ini.php. Matomo lässt logme nur für Benutzer ohne Superuser-Rechte zu.
+matomo_autologin_state_on = Auto-Login ist in Matomo aktiviert (login_allow_logme = 1).
+matomo_autologin_state_off = Auto-Login ist in Matomo nicht aktiviert; „Matomo öffnen“ nutzt den Token-Zugang.
+matomo_autologin_enable = Auto-Login in Matomo aktivieren
+matomo_autologin_enabled = Auto-Login aktiviert: login_allow_logme = 1 in Matomos config.ini.php gesetzt.
+matomo_autologin_enable_failed = Auto-Login konnte nicht aktiviert werden: {0}. Bitte in der config.ini.php unter [General] manuell login_allow_logme = 1 setzen.
+matomo_autologin_external_confirm = In Matomo ist login_allow_logme = 1 gesetzt (bei externem Matomo dort in config/config.ini.php eintragen)
+matomo_autologin_open = Matomo öffnen (automatisch anmelden)
+matomo_autologin_title = Meldet Sie mit Ihrem Matomo-Konto an

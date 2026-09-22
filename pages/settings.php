@@ -1,6 +1,7 @@
 <?php
 
 use FriendsOfRedaxo\Matomo\AdminReset;
+use FriendsOfRedaxo\Matomo\AutoLogin;
 use FriendsOfRedaxo\Matomo\ConsentRegistration;
 use FriendsOfRedaxo\Matomo\MatomoApi;
 use FriendsOfRedaxo\Matomo\MatomoCli;
@@ -98,6 +99,20 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
                     $errors[] = $addon->i18n('matomo_setup_consent_failed', $e->getMessage());
                 }
             }
+            break;
+
+        case 'autologin_enable':
+            $err = AutoLogin::enableLocally();
+            if (null === $err) {
+                $messages[] = $addon->i18n('matomo_autologin_enabled');
+            } else {
+                $errors[] = $addon->i18n('matomo_autologin_enable_failed', $err);
+            }
+            break;
+
+        case 'autologin_external':
+            rex_config::set('matomo', AutoLogin::CONFIG_KEY, rex_post('autologin_confirmed', 'boolean', false));
+            $messages[] = $addon->i18n('matomo_config_saved');
             break;
 
         case 'reset':
@@ -484,6 +499,26 @@ if (!$connected) {
     </table>
     <p class="help-block"><?= $addon->i18n('matomo_setup_access_sites_help') ?></p>
     <p class="help-block"><?= $addon->i18n('matomo_setup_access_help') ?></p>
+
+    <h4><i class="fa fa-sign-in-alt"></i> <?= $addon->i18n('matomo_autologin_headline') ?></h4>
+    <p class="help-block"><?= $addon->i18n('matomo_autologin_intro') ?></p>
+    <?php if (AutoLogin::isEnabled()): ?>
+        <p class="text-success"><i class="fa fa-check-circle"></i> <?= $addon->i18n('matomo_autologin_state_on') ?></p>
+    <?php else: ?>
+        <p class="text-warning"><i class="fa fa-exclamation-triangle"></i> <?= $addon->i18n('matomo_autologin_state_off') ?></p>
+    <?php endif; ?>
+    <?php if ($is_local && $config_written): ?>
+        <?php if (!AutoLogin::isEnabled()): ?>
+        <form method="post" style="display:inline"><?= $hidden ?><input type="hidden" name="setup_action" value="autologin_enable"><button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-magic"></i> <?= $addon->i18n('matomo_autologin_enable') ?></button></form>
+        <?php endif; ?>
+    <?php else: ?>
+        <form method="post" class="form-inline"><?= $hidden ?><input type="hidden" name="setup_action" value="autologin_external">
+            <div class="checkbox"><label><input type="checkbox" name="autologin_confirmed" value="1" <?= AutoLogin::isEnabled() ? 'checked' : '' ?>> <?= $addon->i18n('matomo_autologin_external_confirm') ?></label></div>
+            <button type="submit" class="btn btn-default btn-sm"><i class="fa fa-save"></i> <?= $addon->i18n('matomo_save') ?></button>
+        </form>
+        <pre style="margin-top:8px">[General]
+login_allow_logme = 1</pre>
+    <?php endif; ?>
     <?php
 }
 echo $step(5, $addon->i18n('matomo_setup_step_access'), [] !== $access_entries, (string) ob_get_clean());

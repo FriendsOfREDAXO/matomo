@@ -134,16 +134,17 @@ The Matomo API does not allow a password change without the current password. If
 
 If the database connection with the data from config.ini.php fails (the message names file, user, database and the attempted socket/TCP routes), you can enter your own credentials under **Configuration → Matomo database for password reset**.
 
-## 👤 Personal access (replaces auto-login)
+## 👤 Personal access and auto-login
 
-The former auto-login via `login_allow_logme` (MD5 password in the URL, patching Matomo's `config.ini.php`) has been removed. The add-on now uses Matomo's own token access:
+Every editor gets their own Matomo account. "Open Matomo" signs them in with it, preferably through Matomo's `logme` feature with a regular session (auto-login), otherwise via their personal token:
 
 - In setup step 5 every REDAXO user gets an **own Matomo user** (view access to all websites), a random **password** and a **personal app token** with one click. Login and e-mail come from the REDAXO user; without a valid e-mail address in the REDAXO user no access is created, because Matomo requires a unique address per user. Password and token are stored in the REDAXO configuration (`user_access`) so the user can view and change the password on the overview.
 - "Open Matomo" on the overview then calls `index.php?module=CoreHome&…&token_auth=…` – Matomo opens its full interface as that user, without login and without touching the Matomo configuration.
 - Matomo only allows token access to the UI for users **without** write/superuser permissions. For Matomo administration, log in normally.
 - **Visible websites per user**: in the access table you can define per REDAXO user which Matomo websites they may see (no selection = all). The selection is set as view access per website in Matomo and additionally filters the overview and widgets in REDAXO.
 - "Remove" deletes the Matomo user and token again. Tokens are stored in the REDAXO configuration (`user_access`).
-- **Limit of token access**: the token is not a login, it authenticates each request individually. Matomo carries it along in its links, but any URL without the token (logo, bookmarks, some actions) ends up on the login page. For continuous work in Matomo the regular login with a password is the reliable way, see "My Matomo access".
+- **Auto-login (logme)**: if `login_allow_logme = 1` is set in Matomo's `config.ini.php`, "Open Matomo" signs the editor in via POST with login and md5 password of their own account; Matomo creates a regular session that persists while clicking around. For local installations the setup (step 5) enables the setting with one click through Matomo's console `config:set`, falling back to editing the file; for an external Matomo add it there and confirm it in the setup. Matomo only allows logme for accounts without superuser access, the add-on's accesses are view accounts.
+- **Token access** (without auto-login): the token is not a login, it authenticates each request individually. Any URL without the token (logo, bookmarks, some actions) ends up on the login page.
 
 ### My Matomo access (overview)
 
@@ -394,6 +395,9 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 
 ## 📝 Changelog
+
+### Version 2.10.0
+- **Auto-login is back**: "Open Matomo" signs editors in through Matomo's logme feature with their own account (POST, regular session). Setup step 5 enables `login_allow_logme = 1` for local installations with one click (Matomo console `config:set`, falling back to the file), for an external Matomo by confirmation. Without auto-login, token access remains
 
 ### Version 2.9.0
 - **Password stored per access and changeable**: the Matomo password generated on creation is stored with the access; "My Matomo access" reveals it on click and changes it through the Matomo API with the user's own token. Works for local and external Matomo without database or CLI access. Accesses from older versions without a password are recreated with the same login on the first change

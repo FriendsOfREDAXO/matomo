@@ -1,6 +1,7 @@
 <?php
 
 use FriendsOfRedaxo\Matomo\AdminReset;
+use FriendsOfRedaxo\Matomo\AutoLogin;
 use FriendsOfRedaxo\Matomo\MatomoApi;
 use FriendsOfRedaxo\Matomo\MatomoStatsApi;
 use FriendsOfRedaxo\Matomo\UserAccess;
@@ -84,6 +85,7 @@ $config = [
         'host' => (string) parse_url((string) ($s['main_url'] ?? ''), PHP_URL_HOST),
     ], $sites),
     'openUrlAll' => UserAccess::openUrl(),
+    'autoLogin' => AutoLogin::credentialsForCurrentUser(),
     'showTopPages' => (bool) rex_config::get('matomo', 'show_top_pages', true),
     'locale' => str_replace('_', '-', rex_i18n::getLocale()),
     'i18n' => $i18n,
@@ -116,7 +118,11 @@ $card = static function (string $id, string $title, string $icon, string $extra 
             <span class="matomo-ov-updated text-muted" data-matomo-updated></span>
         </div>
         <div class="matomo-ov-actions">
-            <a href="<?= rex_escape($config['openUrlAll']) ?>" target="_blank" class="btn btn-primary btn-sm" data-matomo-open><i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open_matomo') ?></a>
+            <?php if (null !== $config['autoLogin']): ?>
+                <?= AutoLogin::form(0, $addon->i18n('matomo_open_matomo')) ?>
+            <?php else: ?>
+                <a href="<?= rex_escape($config['openUrlAll']) ?>" target="_blank" class="btn btn-primary btn-sm" data-matomo-open><i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_open_matomo') ?></a>
+            <?php endif; ?>
             <?php if ($is_admin): ?>
                 <a href="<?= rex_url::backendPage('matomo/domains') ?>" class="btn btn-default btn-sm"><i class="fa fa-sitemap"></i> <?= $addon->i18n('matomo_manage_domains') ?></a>
             <?php endif; ?>
@@ -162,7 +168,8 @@ $card = static function (string $id, string $title, string $icon, string $extra 
                         </td></tr>
                         <tr><td><?= $addon->i18n('matomo_self_sites') ?></td><td><?= [] === $my_access['sites'] ? rex_escape($addon->i18n('matomo_setup_access_sites_all')) : rex_escape(implode(', ', array_map(static fn (array $s): string => '' !== $s['host'] ? $s['host'] : $s['name'], array_filter($config['sites'], static fn (array $s): bool => in_array($s['id'], $my_access['sites'], true))))) ?></td></tr>
                     </table>
-                    <a href="<?= rex_escape(rtrim($matomo_url, '/') . '/') ?>" target="_blank" class="btn btn-primary btn-sm"><i class="fa fa-sign-in-alt"></i> <?= $addon->i18n('matomo_self_login_link') ?></a>
+                    <?= AutoLogin::form(0, $addon->i18n('matomo_autologin_open')) ?>
+                    <a href="<?= rex_escape(rtrim($matomo_url, '/') . '/') ?>" target="_blank" class="btn btn-default btn-sm"><i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_self_login_link') ?></a>
                 </div>
                 <div class="col-sm-6">
                     <form method="post" class="rex-form" autocomplete="off">

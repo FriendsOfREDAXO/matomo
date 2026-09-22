@@ -203,10 +203,24 @@
         if (col[1] === 'unique' && data.has_unique === false) { html += '<td class="num">–</td>'; return; }
         html += '<td class="num">' + col[2](cur) + (prev ? '<span class="matomo-ov-delta ' + (cur > prev ? (col[1] === 'bounce_rate' ? 'is-down' : 'is-up') : (cur < prev ? (col[1] === 'bounce_rate' ? 'is-up' : 'is-down') : '')) + '">' + (cur >= prev ? '+' : '') + fmtDec(((cur - prev) / prev) * 100) + ' %</span>' : '') + '</td>';
       });
-      html += '<td class="num"><a class="btn btn-default btn-xs" target="_blank" href="' + esc(site.open_url) + '"><i class="fa fa-external-link-alt"></i> ' + esc(t('open')) + '</a></td></tr>';
+      html += '<td class="num">' + openControl(site) + '</td></tr>';
     });
     body.innerHTML = html + '</tbody></table></div>';
   };
+
+  // "Öffnen" je Website: mit Auto-Login als POST-Formular (logme), sonst Token-Link
+  function openControl(site) {
+    var a = cfg.autoLogin;
+    if (a && a.action) {
+      var target = 'index.php?module=CoreHome&action=index&idSite=' + site.idsite + '&period=day&date=today';
+      return '<form method="post" action="' + esc(a.action) + '" target="_blank" class="matomo-autologin" style="display:inline">'
+        + '<input type="hidden" name="module" value="Login"><input type="hidden" name="action" value="logme">'
+        + '<input type="hidden" name="login" value="' + esc(a.login) + '"><input type="hidden" name="password" value="' + esc(a.hash) + '">'
+        + '<input type="hidden" name="url" value="' + esc(target) + '">'
+        + '<button type="submit" class="btn btn-default btn-xs"><i class="fa fa-sign-in-alt"></i> ' + esc(t('open')) + '</button></form>';
+    }
+    return '<a class="btn btn-default btn-xs" target="_blank" href="' + esc(site.open_url) + '"><i class="fa fa-external-link-alt"></i> ' + esc(t('open')) + '</a>';
+  }
 
   function bars(rows, opts) {
     if (!rows || !rows.length) { return null; }
