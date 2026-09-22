@@ -10,11 +10,11 @@ use rex_config;
 use rex_sql;
 
 /**
- * Registriert Matomo als Dienst im Consent-Tool (consent_kit, consent_manager 6 oder
- * consent_manager 5), sofern eines installiert ist. Der Tracking-Code wird aus den
- * Addon-Einstellungen erzeugt (inkl. Proxy-Option), Cookie-Angaben stammen aus Matomos
- * Standard-Cookies. consent_manager 6 ist der consent_kit-Nachfolger mit gleicher API
- * (Dienste, Presets, Varianten je Domain); consent_manager 5 hat nur domainübergreifende Cookies.
+ * Registriert Matomo als Dienst im Consent-Tool (consent_kit oder consent_manager),
+ * sofern eines installiert ist. Der Tracking-Code wird aus den Addon-Einstellungen
+ * erzeugt (inkl. Proxy-Option), Cookie-Angaben stammen aus Matomos Standard-Cookies.
+ * consent_kit: Dienst aus Preset mit Varianten je Domain (Namespace KLXM\ConsentKit
+ * oder neuer FriendsOfRedaxo\ConsentKit); consent_manager: domainübergreifende Cookies.
  */
 class ConsentRegistration
 {
@@ -42,14 +42,21 @@ class ConsentRegistration
     }
 
     /**
-     * Namespace der Dienst-Verwaltung (consent_kit-API), null = consent_manager 5 (Legacy-Tabellen).
+     * Repository-Klasse von consent_kit (alter oder neuer Namespace), null für consent_manager.
      *
-     * @return class-string|null Repository-Klasse
+     * @return class-string|null
      */
     private static function kitRepository(string $tool): ?string
     {
-        $class = 'consent_kit' === $tool ? 'KLXM\\ConsentKit\\Repository' : 'FriendsOfRedaxo\\ConsentManager\\Repository';
-        return class_exists($class) && method_exists($class, 'saveService') ? $class : null;
+        if ('consent_kit' !== $tool) {
+            return null;
+        }
+        foreach (['FriendsOfRedaxo\\ConsentKit\\Repository', 'KLXM\\ConsentKit\\Repository'] as $class) {
+            if (class_exists($class) && method_exists($class, 'saveService')) {
+                return $class;
+            }
+        }
+        return null;
     }
 
     /**
@@ -114,7 +121,7 @@ class ConsentRegistration
     }
 
     /**
-     * consent_kit / consent_manager 6: Dienst aus dem mitgelieferten Matomo-Preset,
+     * consent_kit: Dienst aus dem mitgelieferten Matomo-Preset,
      * Parameter aus den Addon-Einstellungen. Je Domain des Consent-Tools, die einer
      * Matomo-Site entspricht, entsteht eine Variante mit der passenden Site-ID.
      *
@@ -180,7 +187,7 @@ class ConsentRegistration
     }
 
     /**
-     * consent_manager 5: ein Cookie-Datensatz je Sprache (uid "matomo") in der Gruppe
+     * consent_manager: ein Cookie-Datensatz je Sprache (uid "matomo") in der Gruppe
      * "statistics"; fehlt die Gruppe, wird sie angelegt und allen Domains zugeordnet.
      * Dienste sind in consent_manager domainübergreifend, deshalb wählt der Tracking-Code
      * die Site-ID zur Laufzeit anhand des Hostnamens.

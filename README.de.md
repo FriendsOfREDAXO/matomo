@@ -142,8 +142,8 @@ Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, 
 
 Ist **consent_kit** oder **consent_manager** installiert, legt die Einrichtung (Schritt 4) Matomo dort als Dienst an, inklusive Tracking-Code (auch mit aktiviertem Proxy) und Cookie-Angaben (`_pk_id*`, `_pk_ses*`, `_pk_ref*`):
 
-- **consent_kit / consent_manager 6**: Dienst `matomo` aus dem mitgelieferten Preset, Parameter `matomo_url` und `site_id` aus den Addon-Einstellungen. Für jede consent_kit-Domain, deren Host einer Matomo-Website entspricht, entsteht eine Variante mit der passenden Site-ID. Bereits gepflegte Texte, Gruppe und Domains bleiben beim Aktualisieren erhalten.
-- **consent_manager 5**: Cookie `matomo` in der Gruppe `statistics` für alle Sprachen; fehlt die Gruppe, wird sie angelegt und allen Domains zugeordnet. Da consent_manager Dienste nur domainübergreifend kennt, wählt der hinterlegte Tracking-Code die Site-ID zur Laufzeit anhand des Hostnamens (alle Matomo-Websites, jeweils mit und ohne `www.`); die in der Einrichtung gewählte Website ist der Fallback. Beim Aktualisieren wird nur der Tracking-Code neu geschrieben.
+- **consent_kit** (Namespace `KLXM\ConsentKit` oder neu `FriendsOfRedaxo\ConsentKit`): Dienst `matomo` aus dem mitgelieferten Preset, Parameter `matomo_url` und `site_id` aus den Addon-Einstellungen. Für jede consent_kit-Domain, deren Host einer Matomo-Website entspricht, entsteht eine Variante mit der passenden Site-ID. Bereits gepflegte Texte, Gruppe und Domains bleiben beim Aktualisieren erhalten.
+- **consent_manager**: Cookie `matomo` in der Gruppe `statistics` für alle Sprachen; fehlt die Gruppe, wird sie angelegt und allen Domains zugeordnet. Da consent_manager Dienste nur domainübergreifend kennt, wählt der hinterlegte Tracking-Code die Site-ID zur Laufzeit anhand des Hostnamens (alle Matomo-Websites, jeweils mit und ohne `www.`); die in der Einrichtung gewählte Website ist der Fallback. Beim Aktualisieren wird nur der Tracking-Code neu geschrieben.
 
 ## 🎯 Tracking-Code Integration
 
@@ -385,8 +385,11 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 
 ## 📝 Changelog
 
+### Version 2.6.2
+- **Korrektur zu 2.6.1**: Es gibt kein „consent_manager 6“, consent_manager bleibt wie es ist. Stattdessen wird consent_kit unter dem alten (`KLXM\ConsentKit`) und dem neuen Namespace (`FriendsOfRedaxo\ConsentKit`) unterstützt
+
 ### Version 2.6.1
-- **consent_manager 6** (consent_kit-Nachfolger) wird erkannt und wie consent_kit bedient: Dienst aus dem Preset, Varianten je Domain. consent_manager 5 weiterhin über die Cookie-Tabellen
+- consent_kit-Anbindung über eine gemeinsame Repository-Erkennung (siehe 2.6.2)
 
 ### Version 2.6.0
 - **Admin-Reset**: Passwort des Matomo-Superusers und API-Token bei lokaler Installation direkt zurücksetzen (Einrichtung, Schritt 2); alte Tokens werden verworfen

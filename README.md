@@ -145,8 +145,8 @@ The former auto-login via `login_allow_logme` (MD5 password in the URL, patching
 
 If **consent_kit** or **consent_manager** is installed, setup step 4 creates Matomo as a service there, including the tracking code (also with the proxy enabled) and cookie details (`_pk_id*`, `_pk_ses*`, `_pk_ref*`):
 
-- **consent_kit / consent_manager 6**: service `matomo` from the bundled preset with `matomo_url` and `site_id` from the add-on settings. For every consent_kit domain whose host matches a Matomo website, a variant with the matching site ID is created. Texts, group and domains you already edited are kept on update.
-- **consent_manager 5**: cookie `matomo` in the `statistics` group for all languages; the group is created if missing and assigned to all domains. Since consent_manager only knows services across all domains, the stored tracking code picks the site ID at runtime by hostname (all Matomo websites, each with and without `www.`); the website selected in the setup is the fallback. An update only rewrites the tracking code.
+- **consent_kit** (namespace `KLXM\ConsentKit` or new `FriendsOfRedaxo\ConsentKit`): service `matomo` from the bundled preset with `matomo_url` and `site_id` from the add-on settings. For every consent_kit domain whose host matches a Matomo website, a variant with the matching site ID is created. Texts, group and domains you already edited are kept on update.
+- **consent_manager**: cookie `matomo` in the `statistics` group for all languages; the group is created if missing and assigned to all domains. Since consent_manager only knows services across all domains, the stored tracking code picks the site ID at runtime by hostname (all Matomo websites, each with and without `www.`); the website selected in the setup is the fallback. An update only rewrites the tracking code.
 
 ## 🎯 Tracking Code Integration
 
@@ -386,8 +386,11 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 ## 📝 Changelog
 
+### Version 2.6.2
+- **Correction to 2.6.1**: there is no "consent_manager 6", consent_manager stays as it is. Instead consent_kit is supported under its old (`KLXM\ConsentKit`) and new namespace (`FriendsOfRedaxo\ConsentKit`)
+
 ### Version 2.6.1
-- **consent_manager 6** (successor of consent_kit) is detected and handled like consent_kit: service from the preset, variants per domain. consent_manager 5 still via the cookie tables
+- consent_kit integration via a shared repository detection (see 2.6.2)
 
 ### Version 2.6.0
 - **Admin reset**: reset the Matomo superuser password and API token directly for local installations (setup, step 2); old tokens are revoked
