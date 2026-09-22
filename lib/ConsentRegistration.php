@@ -248,6 +248,7 @@ class ConsentRegistration
         }
 
         $rebuild = [\FriendsOfRedaxo\ConsentManager\Cache::class, 'forceWrite'];
+        // @phpstan-ignore-next-line consent_manager ist optional und nicht immer im Analyse-Scope
         if (is_callable($rebuild)) {
             $rebuild();
         }

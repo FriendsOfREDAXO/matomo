@@ -42,6 +42,7 @@ class MatomoInfoCenterWidget extends AbstractWidget
             if (class_exists('FriendsOfRedaxo\Matomo\YRewriteHelper') && YRewriteHelper::isAvailable()) {
                 $sites = YRewriteHelper::filterMatomoSitesByYRewrite($sites);
             }
+            $sites = UserAccess::filterSites($sites);
             
             return $this->wrapContent($this->renderStats($sites, $api));
             

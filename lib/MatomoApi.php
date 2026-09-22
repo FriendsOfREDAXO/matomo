@@ -207,16 +207,17 @@ class MatomoApi
      * Per Token-Auth verlangt Matomo dafür keine Passwortbestätigung.
      *
      * @param string $access view|write|admin
+     * @param int|string $idSites Site-ID(s), kommagetrennt, oder 'all'
      * @throws Exception
      */
-    public function addUser(string $login, string $password, string $email, string $access = 'view'): void
+    public function addUser(string $login, string $password, string $email, string $access = 'view', $idSites = 'all'): void
     {
         $this->apiCall('UsersManager.addUser', [
             'userLogin' => $login,
             'password' => $password,
             'email' => $email,
         ]);
-        $this->setUserAccess($login, $access);
+        $this->setUserAccess($login, $access, $idSites);
     }
 
     /**

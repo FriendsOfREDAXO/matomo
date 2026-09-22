@@ -1,5 +1,6 @@
 <?php
 
+use FriendsOfRedaxo\Matomo\AdminReset;
 use FriendsOfRedaxo\Matomo\ConsentRegistration;
 use FriendsOfRedaxo\Matomo\MatomoApi;
 use FriendsOfRedaxo\Matomo\UserAccess;
@@ -98,15 +99,30 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
             }
             break;
 
+        case 'reset':
+            try {
+                $result = AdminReset::reset(rex_post('reset_login', 'string', ''), rex_post('reset_password', 'string', ''));
+                $admin_token = $result['token'];
+                $messages[] = rex_i18n::rawMsg('matomo_setup_reset_done', rex_escape(trim(rex_post('reset_login', 'string', ''))), rex_escape($result['password']));
+            } catch (Exception $e) {
+                $errors[] = $addon->i18n('matomo_setup_reset_failed', $e->getMessage());
+            }
+            break;
+
         case 'access_create':
         case 'access_create_all':
         case 'access_remove':
+        case 'access_sites':
             $action = rex_post('setup_action', 'string', '');
             $user_id = rex_post('user_id', 'int', 0);
+            $site_ids = array_values(array_map('intval', rex_post('site_ids', 'array', [])));
             try {
                 if ('access_remove' === $action) {
                     UserAccess::remove($api(), $user_id);
                     $messages[] = $addon->i18n('matomo_setup_access_removed');
+                } elseif ('access_sites' === $action) {
+                    UserAccess::updateSites($api(), $user_id, $site_ids);
+                    $messages[] = $addon->i18n('matomo_setup_access_sites_saved', rex_user::get($user_id)?->getLogin() ?? (string) $user_id);
                 } else {
                     $targets = [];
                     foreach (UserAccess::redaxoUsers() as $ru) {
@@ -119,7 +135,7 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
                         if (null === $rex_user) {
                             continue;
                         }
-                        $entry = UserAccess::create($api(), $matomo_url, $rex_user);
+                        $entry = UserAccess::create($api(), $matomo_url, $rex_user, 'access_create_all' === $action ? [] : $site_ids);
                         $messages[] = $addon->i18n('matomo_setup_access_created', $rex_user->getLogin(), $entry['login']);
                     }
                 }
@@ -295,6 +311,35 @@ ob_start();
     </div>
     <button type="submit" class="btn btn-primary"><i class="fa fa-save"></i> <?= $addon->i18n('matomo_setup_save_connection') ?></button>
 </form>
+
+<hr>
+<details>
+    <summary style="cursor:pointer"><strong><i class="fa fa-life-ring"></i> <?= $addon->i18n('matomo_setup_reset_headline') ?></strong></summary>
+    <p class="help-block" style="margin-top:10px"><?= $addon->i18n('matomo_setup_reset_intro') ?></p>
+    <?php if (AdminReset::isAvailable()): ?>
+    <form method="post" class="rex-form" autocomplete="off" onsubmit="return confirm('<?= rex_escape($addon->i18n('matomo_setup_reset_confirm'), 'js') ?>')">
+        <?= $hidden ?>
+        <input type="hidden" name="setup_action" value="reset">
+        <div class="row">
+            <div class="col-sm-5">
+                <div class="form-group">
+                    <label for="reset_login"><?= $addon->i18n('matomo_setup_reset_login') ?></label>
+                    <input type="text" id="reset_login" name="reset_login" class="form-control" value="admin" required autocomplete="off">
+                </div>
+            </div>
+            <div class="col-sm-7">
+                <div class="form-group">
+                    <label for="reset_password"><?= $addon->i18n('matomo_setup_reset_password') ?></label>
+                    <input type="password" id="reset_password" name="reset_password" class="form-control" autocomplete="new-password">
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-danger btn-sm"><i class="fa fa-key"></i> <?= $addon->i18n('matomo_setup_reset_button') ?></button>
+    </form>
+    <?php else: ?>
+        <p class="text-muted"><?= $addon->i18n('matomo_setup_reset_unavailable') ?></p>
+    <?php endif; ?>
+</details>
 <?php
 echo $step(2, $addon->i18n('matomo_setup_step_connection'), $connected && $superuser, (string) ob_get_clean(), $connected ? ($superuser ? 'success' : 'warning') : 'default');
 
@@ -362,11 +407,22 @@ if (!$connected) {
 } else {
     echo '<p>' . $addon->i18n('matomo_setup_access_intro') . '</p>';
     ?>
+    <?php
+    $siteSelect = static function (array $selected) use ($sites, $addon): string {
+        $html = '<select name="site_ids[]" class="form-control input-sm" multiple size="' . min(4, max(2, count($sites))) . '" title="' . rex_escape($addon->i18n('matomo_setup_access_sites')) . '">';
+        foreach ($sites as $site) {
+            $id = (int) $site['idsite'];
+            $host = (string) parse_url((string) ($site['main_url'] ?? ''), PHP_URL_HOST);
+            $html .= '<option value="' . $id . '"' . (in_array($id, $selected, true) ? ' selected' : '') . '>' . rex_escape('' !== $host ? $host : (string) $site['name']) . ' (ID ' . $id . ')</option>';
+        }
+        return $html . '</select>';
+    };
+    ?>
     <table class="table table-condensed table-hover">
         <thead><tr>
             <th><?= $addon->i18n('matomo_setup_access_redaxo_user') ?></th>
             <th><?= $addon->i18n('matomo_setup_access_matomo_user') ?></th>
-            <th class="text-right">
+            <th class="text-right"><?= $addon->i18n('matomo_setup_access_sites') ?>
                 <?php if ($access_missing > 0): ?>
                 <form method="post" style="display:inline"><?= $hidden ?><input type="hidden" name="setup_action" value="access_create_all"><button type="submit" class="btn btn-primary btn-xs"><i class="fa fa-users"></i> <?= $addon->i18n('matomo_setup_access_create_all', $access_missing) ?></button></form>
                 <?php endif; ?>
@@ -378,22 +434,23 @@ if (!$connected) {
                 <td><strong><?= rex_escape($ru['login']) ?></strong> <small class="text-muted"><?= rex_escape($ru['name']) ?></small><?= $ru['admin'] ? ' <span class="label label-default">Admin</span>' : '' ?></td>
                 <td><?= null !== $entry ? '<i class="fa fa-check text-success"></i> ' . rex_escape($entry['login']) . ' <small class="text-muted">' . rex_escape($entry['created']) . '</small>' : '<span class="text-muted">–</span>' ?></td>
                 <td class="text-right">
-                    <form method="post" style="display:inline">
-                        <?= $hidden ?>
-                        <input type="hidden" name="user_id" value="<?= $ru['id'] ?>">
-                        <?php if (null !== $entry): ?>
-                            <input type="hidden" name="setup_action" value="access_remove">
-                            <button type="submit" class="btn btn-default btn-xs" onclick="return confirm('<?= rex_escape($addon->i18n('matomo_setup_access_remove_confirm', $entry['login']), 'js') ?>')"><i class="fa fa-times"></i> <?= $addon->i18n('matomo_setup_access_remove') ?></button>
-                        <?php else: ?>
-                            <input type="hidden" name="setup_action" value="access_create">
-                            <button type="submit" class="btn btn-primary btn-xs"><i class="fa fa-user-plus"></i> <?= $addon->i18n('matomo_setup_access_create') ?></button>
-                        <?php endif; ?>
+                    <form method="post" class="form-inline">
+                    <?= $hidden ?>
+                    <input type="hidden" name="user_id" value="<?= $ru['id'] ?>">
+                    <?= $siteSelect(null !== $entry ? $entry['sites'] : []) ?>
+                    <?php if (null !== $entry): ?>
+                        <button type="submit" name="setup_action" value="access_sites" class="btn btn-default btn-xs"><i class="fa fa-save"></i> <?= $addon->i18n('matomo_setup_access_sites_save') ?></button>
+                        <button type="submit" name="setup_action" value="access_remove" class="btn btn-default btn-xs" onclick="return confirm('<?= rex_escape($addon->i18n('matomo_setup_access_remove_confirm', $entry['login']), 'js') ?>')"><i class="fa fa-times"></i> <?= $addon->i18n('matomo_setup_access_remove') ?></button>
+                    <?php else: ?>
+                        <button type="submit" name="setup_action" value="access_create" class="btn btn-primary btn-xs"><i class="fa fa-user-plus"></i> <?= $addon->i18n('matomo_setup_access_create') ?></button>
+                    <?php endif; ?>
                     </form>
                 </td>
             </tr>
         <?php endforeach; ?>
         </tbody>
     </table>
+    <p class="help-block"><?= $addon->i18n('matomo_setup_access_sites_help') ?></p>
     <p class="help-block"><?= $addon->i18n('matomo_setup_access_help') ?></p>
     <?php
 }

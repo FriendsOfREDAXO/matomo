@@ -115,6 +115,8 @@ try {
     } else {
         $filtered_sites = $all_sites;
     }
+    // Persönlicher Zugang kann auf einzelne Websites beschränkt sein
+    $filtered_sites = UserAccess::filterSites($filtered_sites);
     
     // Domain-Filterung anwenden
     $sites = [];

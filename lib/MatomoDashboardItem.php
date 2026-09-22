@@ -41,6 +41,7 @@ class MatomoDashboardItem extends Item
             if (class_exists('FriendsOfRedaxo\Matomo\YRewriteHelper') && YRewriteHelper::isAvailable()) {
                 $sites = YRewriteHelper::filterMatomoSitesByYRewrite($sites);
             }
+            $sites = UserAccess::filterSites($sites);
             
             return $this->renderStats($sites, $api);
             

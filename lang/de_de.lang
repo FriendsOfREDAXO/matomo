@@ -418,3 +418,19 @@ matomo_setup_help_4 = Websites prüfen bzw. YRewrite-Domains importieren, Matomo
 matomo_setup_help_5 = Persönliche Zugänge für die Redaktion anlegen
 matomo_setup_help_config = Tracking- und Datenschutz-Optionen: <a href="{0}">Konfiguration</a>
 matomo_site_name_repaired = Site {0}: Name „{1}“ war ein YRewrite-Titelschema und wurde zu „{2}“ korrigiert.
+
+# Admin-Reset & Domain-Rechte (2.6)
+matomo_setup_reset_headline = Admin-Passwort und Token zurücksetzen
+matomo_setup_reset_intro = Passwort des Matomo-Superusers verloren? Die Matomo-API erlaubt keine Passwortänderung ohne das aktuelle Passwort. Bei lokaler Installation setzt das AddOn das Passwort direkt in der Matomo-Datenbank neu, verwirft alle Tokens dieses Benutzers und erzeugt ein neues Token.
+matomo_setup_reset_unavailable = Nur bei lokaler Installation mit lesbarer config/config.ini.php möglich. Bei externem Matomo dort „Passwort vergessen“ nutzen und anschließend hier das Token neu erzeugen lassen.
+matomo_setup_reset_login = Matomo-Superuser
+matomo_setup_reset_password = Neues Passwort (leer = wird erzeugt)
+matomo_setup_reset_button = Passwort und Token zurücksetzen
+matomo_setup_reset_confirm = Passwort des Matomo-Superusers wirklich zurücksetzen? Alle bestehenden Tokens dieses Benutzers werden ungültig.
+matomo_setup_reset_done = Passwort von „{0}“ zurückgesetzt und neues Token gespeichert. Neues Passwort (wird nur jetzt angezeigt): <code>{1}</code>
+matomo_setup_reset_failed = Reset fehlgeschlagen: {0}
+matomo_setup_access_sites = Sichtbare Websites
+matomo_setup_access_sites_all = Alle Websites
+matomo_setup_access_sites_save = Websites speichern
+matomo_setup_access_sites_saved = Websites für „{0}“ gespeichert.
+matomo_setup_access_sites_help = Ohne Auswahl sieht der Benutzer alle Websites. Die Auswahl gilt in Matomo selbst (Leserecht je Website) und für die Übersicht und Widgets in REDAXO.

@@ -123,6 +123,10 @@ Das AddOn braucht genau **ein Token eines Matomo-Superusers** (für Domains, Con
 
 Der frühere getrennte „User Token“ entfällt; ein vorhandener Eintrag wird beim Update entfernt.
 
+### Admin-Passwort und Token zurücksetzen
+
+Die Matomo-API erlaubt keine Passwortänderung ohne das aktuelle Passwort. Ist es verloren, bietet die Einrichtung (Schritt 2, aufklappbar) bei **lokaler Installation** einen Reset: Das AddOn liest die Datenbankzugangsdaten aus Matomos `config/config.ini.php`, setzt das Passwort des angegebenen Superusers direkt in der Benutzertabelle neu (wie in Matomos FAQ zum vergessenen Passwort), verwirft alle Tokens dieses Benutzers und erzeugt ein neues Token. Das neue Passwort wird einmalig angezeigt. Bei externem Matomo dort „Passwort vergessen“ nutzen und anschließend hier das Token neu erzeugen lassen.
+
 ## 👤 Persönliche Zugänge (statt Auto-Login)
 
 Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, Patch der Matomo-`config.ini.php`) ist entfallen. Stattdessen nutzt das AddOn Matomos eigenen Token-Zugang:
@@ -130,6 +134,7 @@ Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, 
 - In der Einrichtung, Schritt 5, bekommt jeder REDAXO-Benutzer per Klick einen **eigenen Matomo-Benutzer** (Leserecht auf alle Websites) und ein **persönliches App-Token**. Login und E-Mail werden aus dem REDAXO-Benutzer übernommen, das Passwort wird zufällig erzeugt und nicht gespeichert.
 - „Matomo öffnen“ in der Übersicht ruft dann `index.php?module=CoreHome&…&token_auth=…` auf – Matomo öffnet die komplette Oberfläche als dieser Benutzer, ohne Login und ohne Änderung an der Matomo-Konfiguration.
 - Matomo lässt Token-Zugänge in der Oberfläche nur für Benutzer **ohne** Schreib-/Superuser-Rechte zu. Für die Matomo-Administration meldet man sich weiterhin normal an.
+- **Sichtbare Websites je Benutzer**: In der Zugangstabelle lässt sich je REDAXO-Benutzer festlegen, welche Matomo-Websites er sehen darf (keine Auswahl = alle). Die Auswahl wird als Leserecht je Website in Matomo gesetzt und filtert zusätzlich Übersicht und Widgets in REDAXO.
 - „Entfernen“ löscht Matomo-Benutzer und Token wieder. Die Tokens liegen in der REDAXO-Konfiguration (`user_access`).
 - Voraussetzung: In Matomo darf `only_allow_secure_auth_tokens` nicht aktiv sein (Standard: inaktiv).
 
@@ -379,6 +384,10 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.6.0
+- **Admin-Reset**: Passwort des Matomo-Superusers und API-Token bei lokaler Installation direkt zurücksetzen (Einrichtung, Schritt 2); alte Tokens werden verworfen
+- **Sichtbare Websites je Benutzer**: Persönliche Zugänge lassen sich auf ausgewählte Matomo-Websites beschränken; gilt in Matomo (Leserecht je Website) und für Übersicht und Widgets in REDAXO
 
 ### Version 2.5.2
 - **Fix Site-Namen**: Der YRewrite-Import nutzte das Seitentitel-Schema der Domain (z. B. `%T / %SN`) als Matomo-Site-Name. Jetzt ist der Host der Site-Name; bereits falsch benannte Sites werden beim Aufruf von Einrichtung oder Domains automatisch umbenannt (mit Hinweis)

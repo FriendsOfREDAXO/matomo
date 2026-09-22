@@ -11,8 +11,8 @@ use rex_user;
 /**
  * Persönliche Matomo-Zugänge für REDAXO-Benutzer.
  *
- * Je REDAXO-Benutzer wird ein Matomo-Benutzer mit Leserecht auf alle Websites
- * angelegt und dafür ein App-Token erzeugt. Mit diesem Token öffnet Matomo die
+ * Je REDAXO-Benutzer wird ein Matomo-Benutzer mit Leserecht auf alle oder
+ * ausgewählte Websites angelegt und dafür ein App-Token erzeugt. Mit diesem Token öffnet Matomo die
  * komplette Oberfläche ohne Login (token_auth in der URL). Das ersetzt den
  * alten "logme"-Auto-Login, der login_allow_logme in der config.ini.php brauchte.
  * Matomo lässt dafür nur Tokens ohne Schreib-/Superuser-Rechte zu.
@@ -22,7 +22,7 @@ class UserAccess
     private const CONFIG_KEY = 'user_access';
 
     /**
-     * @return array<int, array{login: string, token: string, created: string}>
+     * @return array<int, array{login: string, token: string, created: string, sites: list<int>}> sites leer = alle Websites
      */
     public static function all(): array
     {
@@ -39,13 +39,14 @@ class UserAccess
                 'login' => (string) $entry['login'],
                 'token' => (string) $entry['token'],
                 'created' => (string) ($entry['created'] ?? ''),
+                'sites' => self::normalizeSites((array) ($entry['sites'] ?? [])),
             ];
         }
         return $out;
     }
 
     /**
-     * @return array{login: string, token: string, created: string}|null
+     * @return array{login: string, token: string, created: string, sites: list<int>}|null
      */
     public static function get(int $userId): ?array
     {
@@ -53,7 +54,7 @@ class UserAccess
     }
 
     /**
-     * @return array{login: string, token: string, created: string}|null
+     * @return array{login: string, token: string, created: string, sites: list<int>}|null
      */
     public static function forCurrentUser(): ?array
     {
@@ -66,12 +67,14 @@ class UserAccess
      * Matomo schon vergeben (fremdes Konto), bekommt der neue Benutzer einen Suffix;
      * fremde Passwörter werden nie angefasst.
      *
-     * @return array{login: string, token: string, created: string}
+     * @param list<int> $siteIds leer = alle Websites
+     * @return array{login: string, token: string, created: string, sites: list<int>}
      *
      * @throws Exception
      */
-    public static function create(MatomoApi $api, string $matomoUrl, rex_user $user): array
+    public static function create(MatomoApi $api, string $matomoUrl, rex_user $user, array $siteIds = []): array
     {
+        $siteIds = self::normalizeSites($siteIds);
         $existing = self::get($user->getId());
         if (null !== $existing && $api->userExists($existing['login'])) {
             $api->deleteUser($existing['login']);
@@ -90,24 +93,84 @@ class UserAccess
         }
 
         $password = self::randomPassword();
+        $access = [] === $siteIds ? 'all' : implode(',', $siteIds);
         try {
-            $api->addUser($login, $password, self::email($user, $matomoUrl, $login), 'view');
+            $api->addUser($login, $password, self::email($user, $matomoUrl, $login), 'view', $access);
         } catch (Exception $e) {
             // E-Mail-Adressen sind in Matomo eindeutig; dann mit generierter Adresse anlegen
             if (false === stripos($e->getMessage(), 'mail')) {
                 throw $e;
             }
-            $api->addUser($login, $password, self::generatedEmail($matomoUrl, $login), 'view');
+            $api->addUser($login, $password, self::generatedEmail($matomoUrl, $login), 'view', $access);
         }
 
         $token = MatomoApi::createTokenWithCredentials($matomoUrl, $login, $password, 'REDAXO ' . rex::getServerName() . ' / ' . $user->getLogin());
 
-        $entry = ['login' => $login, 'token' => $token, 'created' => date('Y-m-d H:i:s')];
+        $entry = ['login' => $login, 'token' => $token, 'created' => date('Y-m-d H:i:s'), 'sites' => $siteIds];
         $all = self::all();
         $all[$user->getId()] = $entry;
         rex_config::set('matomo', self::CONFIG_KEY, $all);
 
         return $entry;
+    }
+
+    /**
+     * Ändert, welche Websites ein Benutzer sehen darf (leer = alle).
+     *
+     * @param list<int> $siteIds
+     * @throws Exception
+     */
+    public static function updateSites(MatomoApi $api, int $userId, array $siteIds): void
+    {
+        $all = self::all();
+        if (!isset($all[$userId])) {
+            throw new Exception('Kein Matomo-Zugang für Benutzer ' . $userId);
+        }
+        $siteIds = self::normalizeSites($siteIds);
+        $login = $all[$userId]['login'];
+        $api->setUserAccess($login, 'noaccess', 'all');
+        $api->setUserAccess($login, 'view', [] === $siteIds ? 'all' : implode(',', $siteIds));
+        $all[$userId]['sites'] = $siteIds;
+        rex_config::set('matomo', self::CONFIG_KEY, $all);
+    }
+
+    /**
+     * Websites, die der aktuelle Benutzer im REDAXO-Backend sehen darf.
+     * null = keine Einschränkung (kein persönlicher Zugang oder "alle").
+     *
+     * @return list<int>|null
+     */
+    public static function allowedSiteIds(): ?array
+    {
+        $access = self::forCurrentUser();
+        if (null === $access || [] === $access['sites']) {
+            return null;
+        }
+        return $access['sites'];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $sites Matomo-Sites
+     * @return array<int, array<string, mixed>>
+     */
+    public static function filterSites(array $sites): array
+    {
+        $allowed = self::allowedSiteIds();
+        if (null === $allowed) {
+            return $sites;
+        }
+        return array_values(array_filter($sites, static fn (array $site): bool => in_array((int) ($site['idsite'] ?? 0), $allowed, true)));
+    }
+
+    /**
+     * @param array<mixed> $siteIds
+     * @return list<int>
+     */
+    private static function normalizeSites(array $siteIds): array
+    {
+        $out = array_values(array_unique(array_filter(array_map('intval', $siteIds), static fn (int $id): bool => $id > 0)));
+        sort($out);
+        return $out;
     }
 
     /**
@@ -145,7 +208,7 @@ class UserAccess
         $params = [
             'module' => 'CoreHome',
             'action' => 'index',
-            'idSite' => $siteId > 0 ? $siteId : self::firstSiteId(),
+            'idSite' => $siteId > 0 ? $siteId : ([] !== $access['sites'] ? $access['sites'][0] : self::firstSiteId()),
             'period' => $period,
             'date' => $date,
             'token_auth' => $access['token'],

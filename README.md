@@ -126,6 +126,10 @@ The add-on needs exactly **one token of a Matomo superuser** (domains, consent r
 
 The former separate "user token" is gone; an existing value is removed on update.
 
+### Reset admin password and token
+
+The Matomo API does not allow a password change without the current password. If it is lost, the setup (step 2, collapsible) offers a reset for **local installations**: the add-on reads the database credentials from Matomo's `config/config.ini.php`, resets the password of the given superuser directly in the user table (as described in Matomo's FAQ for lost passwords), revokes all tokens of that user and creates a new token. The new password is shown once. For an external Matomo use "Forgot password" there, then let the token be regenerated here.
+
 ## 👤 Personal access (replaces auto-login)
 
 The former auto-login via `login_allow_logme` (MD5 password in the URL, patching Matomo's `config.ini.php`) has been removed. The add-on now uses Matomo's own token access:
@@ -133,6 +137,7 @@ The former auto-login via `login_allow_logme` (MD5 password in the URL, patching
 - In setup step 5 every REDAXO user gets an **own Matomo user** (view access to all websites) plus a **personal app token** with one click. Login and e-mail come from the REDAXO user, the password is random and not stored.
 - "Open Matomo" on the overview then calls `index.php?module=CoreHome&…&token_auth=…` – Matomo opens its full interface as that user, without login and without touching the Matomo configuration.
 - Matomo only allows token access to the UI for users **without** write/superuser permissions. For Matomo administration, log in normally.
+- **Visible websites per user**: in the access table you can define per REDAXO user which Matomo websites they may see (no selection = all). The selection is set as view access per website in Matomo and additionally filters the overview and widgets in REDAXO.
 - "Remove" deletes the Matomo user and token again. Tokens are stored in the REDAXO configuration (`user_access`).
 - Requirement: `only_allow_secure_auth_tokens` must not be enabled in Matomo (default: off).
 
@@ -380,6 +385,10 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 
 ## 📝 Changelog
+
+### Version 2.6.0
+- **Admin reset**: reset the Matomo superuser password and API token directly for local installations (setup, step 2); old tokens are revoked
+- **Visible websites per user**: personal access can be limited to selected Matomo websites; applies in Matomo (view access per website) and to the overview and widgets in REDAXO
 
 ### Version 2.5.2
 - **Fix site names**: the YRewrite import used the domain's page title scheme (e.g. `%T / %SN`) as Matomo site name. The host is the site name now; sites already named wrongly are renamed automatically when the setup or domains page is opened (with a notice)
