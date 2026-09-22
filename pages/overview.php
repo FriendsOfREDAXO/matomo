@@ -1,5 +1,6 @@
 <?php
 
+use FriendsOfRedaxo\Matomo\AdminReset;
 use FriendsOfRedaxo\Matomo\MatomoApi;
 use FriendsOfRedaxo\Matomo\MatomoStatsApi;
 use FriendsOfRedaxo\Matomo\UserAccess;
@@ -21,6 +22,26 @@ if (!$matomo_ready) {
 
 $user = rex::getUser();
 $is_admin = $user instanceof rex_user && $user->isAdmin();
+
+// Mein Matomo-Zugang: Login anzeigen, Passwort setzen (nur bei lokalem Matomo möglich)
+$my_access = UserAccess::forCurrentUser();
+$self_csrf = rex_csrf_token::factory('matomo_self');
+if (null !== $my_access && 'password' === rex_post('matomo_self_action', 'string', '')) {
+    if (!$self_csrf->isValid()) {
+        echo rex_view::error(rex_i18n::msg('csrf_token_invalid'));
+    } else {
+        $own_password = rex_post('own_password', 'string', '');
+        if ('' === $own_password) {
+            $own_password = AdminReset::randomPassword();
+        }
+        try {
+            AdminReset::setPassword($my_access['login'], $own_password);
+            echo rex_view::success(rex_i18n::rawMsg('matomo_self_password_set', rex_escape($my_access['login']), rex_escape($own_password)));
+        } catch (Exception $e) {
+            echo rex_view::error($addon->i18n('matomo_self_password_failed', $e->getMessage()));
+        }
+    }
+}
 
 // Nur die Website-Liste wird synchron geladen (ein API-Aufruf), alle Kennzahlen kommen per Ajax.
 try {
@@ -121,4 +142,38 @@ $card = static function (string $id, string $title, string $icon, string $extra 
     </div>
 
     <?= $card('sites', $addon->i18n('matomo_domain_statistics'), 'fa-sitemap') ?>
+
+    <?php if (null !== $my_access): ?>
+    <details class="panel panel-default matomo-ov-self">
+        <summary class="panel-heading" style="cursor:pointer"><h3 class="panel-title" style="display:inline"><i class="fa fa-user"></i> <?= $addon->i18n('matomo_self_title') ?></h3></summary>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-sm-5">
+                    <p><?= $addon->i18n('matomo_self_intro') ?></p>
+                    <table class="table table-condensed" style="margin-bottom:10px">
+                        <tr><td><?= $addon->i18n('matomo_self_login') ?></td><td><code><?= rex_escape($my_access['login']) ?></code></td></tr>
+                        <tr><td><?= $addon->i18n('matomo_self_sites') ?></td><td><?= [] === $my_access['sites'] ? rex_escape($addon->i18n('matomo_setup_access_sites_all')) : rex_escape(implode(', ', array_map(static fn (array $s): string => '' !== $s['host'] ? $s['host'] : $s['name'], array_filter($config['sites'], static fn (array $s): bool => in_array($s['id'], $my_access['sites'], true))))) ?></td></tr>
+                    </table>
+                    <a href="<?= rex_escape(rtrim($matomo_url, '/') . '/') ?>" target="_blank" class="btn btn-default btn-sm"><i class="fa fa-sign-in-alt"></i> <?= $addon->i18n('matomo_self_login_link') ?></a>
+                </div>
+                <div class="col-sm-7">
+                    <?php if (AdminReset::isAvailable()): ?>
+                    <form method="post" class="rex-form" autocomplete="off">
+                        <input type="hidden" name="matomo_self_action" value="password">
+                        <?= $self_csrf->getHiddenField() ?>
+                        <div class="form-group">
+                            <label for="matomo-own-password"><?= $addon->i18n('matomo_self_password') ?></label>
+                            <input type="password" id="matomo-own-password" name="own_password" class="form-control" minlength="8" autocomplete="new-password" placeholder="<?= rex_escape($addon->i18n('matomo_self_password_placeholder')) ?>">
+                            <p class="help-block"><?= $addon->i18n('matomo_self_password_help') ?></p>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-key"></i> <?= $addon->i18n('matomo_self_password_button') ?></button>
+                    </form>
+                    <?php else: ?>
+                        <p class="text-muted"><?= $addon->i18n('matomo_self_password_unavailable') ?></p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </details>
+    <?php endif; ?>
 </div>

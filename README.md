@@ -141,6 +141,11 @@ The former auto-login via `login_allow_logme` (MD5 password in the URL, patching
 - Matomo only allows token access to the UI for users **without** write/superuser permissions. For Matomo administration, log in normally.
 - **Visible websites per user**: in the access table you can define per REDAXO user which Matomo websites they may see (no selection = all). The selection is set as view access per website in Matomo and additionally filters the overview and widgets in REDAXO.
 - "Remove" deletes the Matomo user and token again. Tokens are stored in the REDAXO configuration (`user_access`).
+- **Limit of token access**: the token is not a login, it authenticates each request individually. Matomo carries it along in its links, but any URL without the token (logo, bookmarks, some actions) ends up on the login page. For continuous work in Matomo the regular login with a password is the reliable way, see "My Matomo access".
+
+### My Matomo access (overview)
+
+Editors with personal access see their Matomo username, their visible websites and a link to the Matomo login at the bottom of the overview. For local installations they can **set a Matomo password** there themselves (or have one generated); it is shown once and not stored in REDAXO. This enables the regular Matomo login including "Remember me". For an external Matomo, "Forgot password" in Matomo remains (e-mail address from REDAXO).
 - Requirement: `only_allow_secure_auth_tokens` must not be enabled in Matomo (default: off).
 
 ## 🍪 Consent registration
@@ -387,6 +392,11 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 
 ## 📝 Changelog
+
+### Version 2.8.0
+- **My Matomo access** on the overview: editors see their username and visible websites, get to the Matomo login and set their own Matomo password for local installations
+- README: limit of token access documented (not a login, URLs without token end up on the login page)
+- **Fix admin reset**: config.ini.php is read the way Matomo does (escaped quotes and backslashes in the password, `unix_socket`, `port`); the database connection used to fail for passwords with special characters
 
 ### Version 2.7.2
 - The per-user website selection uses the Bootstrap selectpicker (select all, counter, placeholder "All websites") instead of a native multi-select

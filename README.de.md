@@ -138,6 +138,11 @@ Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, 
 - Matomo lässt Token-Zugänge in der Oberfläche nur für Benutzer **ohne** Schreib-/Superuser-Rechte zu. Für die Matomo-Administration meldet man sich weiterhin normal an.
 - **Sichtbare Websites je Benutzer**: In der Zugangstabelle lässt sich je REDAXO-Benutzer festlegen, welche Matomo-Websites er sehen darf (keine Auswahl = alle). Die Auswahl wird als Leserecht je Website in Matomo gesetzt und filtert zusätzlich Übersicht und Widgets in REDAXO.
 - „Entfernen“ löscht Matomo-Benutzer und Token wieder. Die Tokens liegen in der REDAXO-Konfiguration (`user_access`).
+- **Grenze des Token-Zugangs**: Das Token ist kein Login, sondern authentifiziert jede Anfrage einzeln. Matomo reicht es in seinen Links weiter, aber jede URL ohne Token (Logo, Lesezeichen, manche Aktionen) landet auf der Anmeldeseite. Für dauerhaftes Arbeiten in Matomo ist die reguläre Anmeldung mit Passwort der verlässliche Weg, siehe „Mein Matomo-Zugang“.
+
+### Mein Matomo-Zugang (Übersicht)
+
+Redakteure mit persönlichem Zugang sehen unten auf der Übersicht ihren Matomo-Benutzernamen, ihre sichtbaren Websites und einen Link zur Matomo-Anmeldung. Bei lokaler Installation können sie sich dort selbst ein **Matomo-Passwort setzen** (oder erzeugen lassen); es wird einmalig angezeigt und nicht in REDAXO gespeichert. Damit ist die reguläre Anmeldung in Matomo inklusive „Angemeldet bleiben“ möglich. Bei externem Matomo bleibt „Passwort vergessen“ in Matomo (E-Mail-Adresse aus REDAXO).
 - Voraussetzung: In Matomo darf `only_allow_secure_auth_tokens` nicht aktiv sein (Standard: inaktiv).
 
 ## 🍪 Consent-Registrierung
@@ -386,6 +391,11 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.8.0
+- **Mein Matomo-Zugang** auf der Übersicht: Redakteure sehen Benutzername und sichtbare Websites, gelangen zur Matomo-Anmeldung und setzen sich bei lokaler Installation selbst ein Matomo-Passwort
+- README: Grenze des Token-Zugangs dokumentiert (kein Login, URLs ohne Token landen auf der Anmeldeseite)
+- **Fix Admin-Reset**: config.ini.php wird wie von Matomo gelesen (maskierte Anführungszeichen und Backslashes im Passwort, `unix_socket`, `port`); bisher scheiterte die Datenbankverbindung bei Passwörtern mit Sonderzeichen
 
 ### Version 2.7.2
 - Auswahl der sichtbaren Websites je Benutzer nutzt den Bootstrap-Selectpicker (Alle auswählen, Zähler, Platzhalter „Alle Websites“) statt eines nativen Multiselects

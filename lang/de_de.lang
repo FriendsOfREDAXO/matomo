@@ -475,3 +475,17 @@ matomo_ov_table_view = Als Tabelle
 matomo_ov_chart_view = Als Diagramm
 matomo_setup_access_sites_select_all = Alle auswählen
 matomo_setup_access_sites_deselect_all = Auswahl aufheben (= alle)
+
+# Mein Matomo-Zugang (2.8)
+matomo_self_title = Mein Matomo-Zugang
+matomo_self_intro = Mit diesen Zugangsdaten melden Sie sich direkt in Matomo an. „Matomo öffnen“ nutzt Ihr persönliches Token und funktioniert nur, solange Matomo es in seinen Links weitergibt; für dauerhaftes Arbeiten in Matomo ist die reguläre Anmeldung mit Passwort der verlässliche Weg.
+matomo_self_login = Benutzername
+matomo_self_sites = Sichtbare Websites
+matomo_self_login_link = Zur Matomo-Anmeldung
+matomo_self_password = Matomo-Passwort setzen
+matomo_self_password_placeholder = leer lassen = Passwort wird erzeugt
+matomo_self_password_help = Mindestens 8 Zeichen. Das Passwort wird nur einmal angezeigt und nicht in REDAXO gespeichert.
+matomo_self_password_button = Passwort setzen
+matomo_self_password_set = Passwort für „{0}“ gesetzt. Ihr Passwort (wird nur jetzt angezeigt): <code>{1}</code>
+matomo_self_password_failed = Passwort konnte nicht gesetzt werden: {0}
+matomo_self_password_unavailable = Bei externem Matomo kann das Passwort hier nicht gesetzt werden. Nutzen Sie in Matomo „Passwort vergessen“ mit Ihrer E-Mail-Adresse.

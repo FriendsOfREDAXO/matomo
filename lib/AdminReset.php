@@ -32,23 +32,47 @@ class AdminReset
     }
 
     /**
+     * Superuser-Reset: neues Passwort, alle Tokens verworfen, neues Addon-Token.
+     *
      * @return array{password: string, token: string}
      * @throws Exception
      */
     public static function reset(string $login, string $newPassword = ''): array
     {
+        $login = trim($login);
+        if ('' === $newPassword) {
+            $newPassword = self::randomPassword();
+        }
+        self::setPassword($login, $newPassword, true, true);
+
+        $matomoUrl = (string) rex_config::get('matomo', 'matomo_url', '');
+        $token = MatomoApi::createTokenWithCredentials($matomoUrl, $login, $newPassword, 'REDAXO ' . rex::getServerName());
+        rex_config::set('matomo', 'admin_token', $token);
+
+        return ['password' => $newPassword, 'token' => $token];
+    }
+
+    /**
+     * Setzt das Passwort eines Matomo-Benutzers direkt in der Datenbank.
+     *
+     * @param bool $requireSuperuser nur Superuser zulassen (Admin-Reset)
+     * @param bool $revokeTokens alle Tokens des Benutzers verwerfen
+     * @throws Exception
+     */
+    public static function setPassword(string $login, string $newPassword, bool $requireSuperuser = false, bool $revokeTokens = false): void
+    {
         if (!self::isAvailable()) {
-            throw new Exception('Reset ist nur bei lokaler Matomo-Installation mit lesbarer config/config.ini.php möglich');
+            throw new Exception('Nur bei lokaler Matomo-Installation mit lesbarer config/config.ini.php möglich');
         }
         $login = trim($login);
         if ('' === $login) {
             throw new Exception('Kein Matomo-Benutzername angegeben');
         }
-        if ('' === $newPassword) {
-            $newPassword = self::randomPassword();
+        if (strlen($newPassword) < 8) {
+            throw new Exception('Das Passwort muss mindestens 8 Zeichen haben');
         }
-        if (strlen($newPassword) < 6) {
-            throw new Exception('Das Passwort muss mindestens 6 Zeichen haben');
+        if (strlen(count_chars($newPassword, 3)) < 2) {
+            throw new Exception('Das Passwort ist zu schwach');
         }
 
         $config = self::readConfig();
@@ -61,7 +85,7 @@ class AdminReset
         if (false === $row) {
             throw new Exception('Matomo-Benutzer "' . $login . '" nicht gefunden');
         }
-        if (1 !== (int) $row['superuser_access']) {
+        if ($requireSuperuser && 1 !== (int) $row['superuser_access']) {
             throw new Exception('"' . $login . '" ist kein Matomo-Superuser; nur Superuser können hier zurückgesetzt werden');
         }
 
@@ -70,17 +94,17 @@ class AdminReset
 
         $pdo->prepare('UPDATE `' . $prefix . 'user` SET password = ?, ts_password_modified = NOW() WHERE login = ?')
             ->execute([$hash, $login]);
-        $pdo->prepare('DELETE FROM `' . $prefix . 'user_token_auth` WHERE login = ?')->execute([$login]);
-
-        $matomoUrl = (string) rex_config::get('matomo', 'matomo_url', '');
-        $token = MatomoApi::createTokenWithCredentials($matomoUrl, $login, $newPassword, 'REDAXO ' . rex::getServerName());
-        rex_config::set('matomo', 'admin_token', $token);
-
-        return ['password' => $newPassword, 'token' => $token];
+        if ($revokeTokens) {
+            $pdo->prepare('DELETE FROM `' . $prefix . 'user_token_auth` WHERE login = ?')->execute([$login]);
+        }
     }
 
     /**
-     * @return array{host: string, port: int, username: string, password: string, dbname: string, tables_prefix: string, charset: string, password_hash_algorithm: string}
+     * Liest config.ini.php so wie Matomos IniReader: parse_ini_string im Normalmodus
+     * (löst die von Matomo mit addcslashes maskierten Anführungszeichen und Backslashes
+     * auf), bei Parserfehlern zeilenweise mit manueller Demaskierung.
+     *
+     * @return array{host: string, port: int, unix_socket: string, username: string, password: string, dbname: string, tables_prefix: string, charset: string, password_hash_algorithm: string}
      * @throws Exception
      */
     private static function readConfig(): array
@@ -88,42 +112,80 @@ class AdminReset
         $raw = (string) file_get_contents(self::configFile());
         // erste Zeile ist der PHP-Exit-Schutz
         $raw = (string) preg_replace('/^;.*\R/', '', $raw, 1);
-        $ini = parse_ini_string($raw, true, INI_SCANNER_RAW);
-        if (false === $ini || !isset($ini['database']) || !is_array($ini['database'])) {
+
+        $ini = @parse_ini_string($raw, true);
+        if (false === $ini) {
+            $ini = self::parseIniFallback($raw);
+        }
+        if (!isset($ini['database']) || !is_array($ini['database'])) {
             throw new Exception('config.ini.php enthält keinen [database]-Abschnitt');
         }
         $db = $ini['database'];
         $general = isset($ini['General']) && is_array($ini['General']) ? $ini['General'] : [];
 
         return [
-            'host' => trim((string) ($db['host'] ?? 'localhost'), '"'),
-            'port' => (int) trim((string) ($db['port'] ?? 3306), '"'),
-            'username' => trim((string) ($db['username'] ?? ''), '"'),
-            'password' => trim((string) ($db['password'] ?? ''), '"'),
-            'dbname' => trim((string) ($db['dbname'] ?? ''), '"'),
-            'tables_prefix' => trim((string) ($db['tables_prefix'] ?? 'matomo_'), '"'),
-            'charset' => trim((string) ($db['charset'] ?? 'utf8mb4'), '"'),
-            'password_hash_algorithm' => trim((string) ($general['password_hash_algorithm'] ?? 'default'), '"'),
+            'host' => (string) ($db['host'] ?? 'localhost'),
+            'port' => (int) ($db['port'] ?? 3306),
+            'unix_socket' => (string) ($db['unix_socket'] ?? ''),
+            'username' => (string) ($db['username'] ?? ''),
+            'password' => (string) ($db['password'] ?? ''),
+            'dbname' => (string) ($db['dbname'] ?? ''),
+            'tables_prefix' => (string) ($db['tables_prefix'] ?? 'matomo_'),
+            'charset' => (string) ($db['charset'] ?? 'utf8mb4'),
+            'password_hash_algorithm' => (string) ($general['password_hash_algorithm'] ?? 'default'),
         ];
     }
 
     /**
-     * @param array{host: string, port: int, username: string, password: string, dbname: string, tables_prefix: string, charset: string, password_hash_algorithm: string} $config
+     * Zeilenweiser Ersatzparser: key = "wert" mit \" und \\ als Maskierung (Matomo IniWriter).
+     *
+     * @return array<string, array<string, string>>
+     */
+    private static function parseIniFallback(string $raw): array
+    {
+        $result = [];
+        $section = '';
+        foreach (preg_split('/\R/', $raw) ?: [] as $line) {
+            $line = trim($line);
+            if ('' === $line || ';' === $line[0]) {
+                continue;
+            }
+            if (preg_match('/^\[(.+)\]$/', $line, $m)) {
+                $section = $m[1];
+                continue;
+            }
+            if (!preg_match('/^([A-Za-z0-9_.]+)(?:\[\])?\s*=\s*(.*)$/', $line, $m)) {
+                continue;
+            }
+            $value = trim($m[2]);
+            if (strlen($value) >= 2 && '"' === $value[0] && '"' === substr($value, -1)) {
+                $value = stripcslashes(substr($value, 1, -1));
+            }
+            $result[$section][$m[1]] = $value;
+        }
+        return $result;
+    }
+
+    /**
+     * Verbindet wie Matomos PDO-Adapter: unix_socket hat Vorrang, sonst host + port.
+     *
+     * @param array{host: string, port: int, unix_socket: string, username: string, password: string, dbname: string, tables_prefix: string, charset: string, password_hash_algorithm: string} $config
      * @throws Exception
      */
     private static function connect(array $config): PDO
     {
-        $host = $config['host'];
         $dsn = 'mysql:dbname=' . $config['dbname'] . ';charset=' . $config['charset'];
-        if (str_starts_with($host, '/')) {
-            $dsn .= ';unix_socket=' . $host;
+        if ('' !== $config['unix_socket']) {
+            $dsn .= ';unix_socket=' . $config['unix_socket'];
+        } elseif (str_starts_with($config['host'], '/')) {
+            $dsn .= ';unix_socket=' . $config['host'];
         } else {
-            $dsn .= ';host=' . $host . ';port=' . ($config['port'] > 0 ? $config['port'] : 3306);
+            $dsn .= ';host=' . $config['host'] . ';port=' . ($config['port'] > 0 ? $config['port'] : 3306);
         }
         try {
             return new PDO($dsn, $config['username'], $config['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         } catch (\PDOException $e) {
-            throw new Exception('Verbindung zur Matomo-Datenbank fehlgeschlagen: ' . $e->getMessage());
+            throw new Exception('Verbindung zur Matomo-Datenbank fehlgeschlagen (' . $config['username'] . '@' . ('' !== $config['unix_socket'] ? $config['unix_socket'] : $config['host']) . '): ' . $e->getMessage());
         }
     }
 
