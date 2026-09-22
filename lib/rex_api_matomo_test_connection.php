@@ -56,7 +56,7 @@ class rex_api_matomo_test_connection extends rex_api_function
         }
 
         // SSL Verify Option
-        if (!$addon->getConfig('ssl_verify')) {
+        if (!\FriendsOfRedaxo\Matomo\MatomoApi::verifySsl()) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         }

@@ -12,7 +12,7 @@ rex_api_function::register('matomo_event', MatomoEventApi::class);
 rex_api_function::register('matomo_test_connection', 'rex_api_matomo_test_connection');
 rex_api_function::register('matomo_test_proxy', 'rex_api_matomo_test_proxy');
 
-if (rex::isBackend() && rex_be_controller::getCurrentPage() === 'matomo/config') {
+if (rex::isBackend() && in_array(rex_be_controller::getCurrentPage(), ['matomo/config', 'matomo/settings'], true)) {
     rex_view::addJsFile(rex_addon::get('matomo')->getAssetsUrl('matomo-config.js'));
 }
 

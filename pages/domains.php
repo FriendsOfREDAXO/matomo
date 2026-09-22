@@ -8,7 +8,6 @@ $addon = rex_addon::get('matomo');
 // Prüfen ob Matomo konfiguriert ist
 $matomo_url = rex_config::get('matomo', 'matomo_url', '');
 $admin_token = rex_config::get('matomo', 'admin_token', '');
-$user_token = rex_config::get('matomo', 'user_token', '');
 $matomo_path = rex_config::get('matomo', 'matomo_path', '');
 
 $matomo_ready = false;
@@ -44,7 +43,7 @@ if (rex_post('add_domain', 'boolean') && $matomo_ready) {
 
     if ($domain_name !== '' && $domain_url !== '') {
         try {
-            $api = new MatomoApi($matomo_url, $admin_token, $user_token);
+            $api = new MatomoApi($matomo_url, $admin_token);
             $site_id = $api->addSite($domain_name, $domain_url);
             
             if ($site_id !== null) {
@@ -70,7 +69,7 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && count($import_dom
         $import_errors = [];
         
         try {
-            $api = new MatomoApi($matomo_url, $admin_token, $user_token);
+            $api = new MatomoApi($matomo_url, $admin_token);
             
             // Erst alle existierenden Matomo-Sites laden um Duplikate zu vermeiden
             $existing_sites = $api->getSites();
@@ -136,7 +135,7 @@ if (rex_post('delete_domain', 'boolean') && $matomo_ready) {
     
     if ($site_id > 0) {
         try {
-            $api = new MatomoApi($matomo_url, $admin_token, $user_token);
+            $api = new MatomoApi($matomo_url, $admin_token);
             $success = $api->deleteSite($site_id);
             
             if ($success) {
@@ -161,7 +160,7 @@ if ($error !== '') {
 }
 
 if (!$matomo_ready) {
-    echo html_entity_decode(rex_view::warning($addon->i18n('matomo_not_configured', rex_url::currentBackendPage(['page' => 'matomo/settings']))));
+    echo rex_view::warning(rex_i18n::rawMsg('matomo_not_configured', rex_url::backendPage('matomo/settings')));
     return;
 }
 

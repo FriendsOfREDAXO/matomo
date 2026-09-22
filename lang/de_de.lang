@@ -1,7 +1,6 @@
 matomo_title = Matomo
 matomo_overview = Übersicht
 
-matomo_settings = Matomo-Setup
 matomo_config = Konfiguration
 matomo_domains = Domains
 matomo_help = Hilfe
@@ -16,7 +15,7 @@ matomo_domain_add_failed = Domain konnte nicht erstellt werden
 matomo_domain_add_error = Fehler beim Hinzufügen: {0}
 matomo_superuser_required = Das hinterlegte Matomo-API-Token hat keine Superuser-Rechte. Für Domains anlegen/löschen wird ein Token eines Matomo-Superusers benötigt.
 matomo_sites_load_error = Fehler beim Laden der Domains: {0}
-matomo_not_configured = Matomo ist nicht vollständig konfiguriert. Bitte gehen Sie zu den <a href="{0}">Einstellungen</a> und konfigurieren Sie Matomo zuerst.
+matomo_not_configured = Matomo ist nicht vollständig konfiguriert. Bitte zuerst die <a href="{0}">Einrichtung</a> abschließen.
 
 # Formulare & Labels
 matomo_url = Matomo URL
@@ -25,8 +24,6 @@ matomo_path = Matomo Pfad
 matomo_path_help = Pfad relativ zum Web-Root (z.B. "matomo" für /pfad/zu/webroot/matomo/)
 matomo_admin_token = Admin API Token
 matomo_admin_token_help = API Token für Admin-Funktionen (Sites anlegen, löschen)
-matomo_user_token = User Token
-matomo_user_token_help = API Token für Statistiken (optional)
 matomo_api_timeout = API Timeout
 matomo_api_timeout_help = Timeout für API-Requests in Sekunden
 matomo_verify_ssl = SSL-Zertifikat verifizieren
@@ -114,9 +111,6 @@ matomo_timeout_10s = 10 Sekunden
 matomo_timeout_30s = 30 Sekunden
 matomo_timeout_60s = 60 Sekunden
 matomo_timeout_120s = 120 Sekunden
-matomo_ssl_verify = SSL Zertifikat verifizieren
-matomo_ssl_verify_option = SSL-Zertifikate bei HTTPS-Verbindungen prüfen
-matomo_ssl_verify_help = Deaktivieren Sie dies nur bei selbstsignierten Zertifikaten
 
 # Config page - Tracking Options
 matomo_tracking_options = Tracking Optionen
@@ -220,16 +214,6 @@ matomo_tracking_code_not_found = Tracking-Code konnte nicht geladen werden.
 
 # Help section
 matomo_help_first_steps = Erste Schritte
-matomo_help_step1 = Laden Sie Matomo auf der <a href="{0}">Download-Seite</a> herunter
-matomo_help_step2 = Folgen Sie dem Installationsassistenten
-matomo_help_step3 = Kopieren Sie die API Tokens hierher
-matomo_help_step4 = Fügen Sie Ihre Domains hinzu
-matomo_help_tokens = API Tokens erklärt
-matomo_help_admin_token = Admin Token
-matomo_help_admin_token_desc = Benötigt für Verwaltungsaufgaben wie Sites anlegen/löschen
-matomo_help_user_token = User Token (optional)
-matomo_help_user_token_desc = Benötigt für Statistiken. Kann leer bleiben, dann wird der Admin Token verwendet.
-matomo_help_token_location = API Token finden in Matomo
 
 # JavaScript
 matomo_copied = Kopiert
@@ -349,22 +333,9 @@ matomo_no_domain_permissions = Sie haben keine Berechtigung für Domain-Statisti
 matomo_actions_today = Aktionen heute
 matomo_actions_this_week = Aktionen diese Woche
 matomo_open = Öffnen
-matomo_auto_login = Automatisch anmelden
-matomo_configure_login = Login konfigurieren
 matomo_analytics_overview = Analytics Übersicht
-matomo_auto_login_not_available = Auto-Login nicht verfügbar
 matomo_problem = Problem
-matomo_auto_login_not_configured = Matomo Auto-Login ist nicht konfiguriert
-matomo_debug = Debug
 matomo_solution = Lösung
-matomo_auto_repair = Automatisch reparieren
-matomo_or_manually_add_to = oder manuell in
-matomo_manual_config_required = Manuelle Konfiguration in Ihrer Matomo-Installation erforderlich
-matomo_manual_solution_required = Manuelle Lösung erforderlich
-matomo_add_to = Fügen Sie in
-matomo_add_to_your_matomo = Fügen Sie in Ihrer Matomo
-matomo_file_not_writable = Die Datei ist nicht beschreibbar - bitte manuell bearbeiten
-matomo_external_installation_edit_on_server = Externe Matomo-Installation - Bearbeitung nur auf dem Matomo-Server möglich
 matomo_conversions = Conversions
 matomo_goals = Ziele
 matomo_avg_duration = Ø Dauer
@@ -378,3 +349,71 @@ matomo_highest_engagement = Höchstes Engagement
 # Socket Settings
 matomo_socket_timeout = Socket Timeout
 matomo_socket_timeout_help = Maximale Wartezeit für den Verbindungsaufbau beim Tracking (in Sekunden). Standard: 1
+
+# Setup (2.5)
+matomo_settings = Einrichtung
+matomo_config_intro = Verbindung, Token, Consent-Tool und persönliche Zugänge werden unter <a href="{0}">Einrichtung</a> verwaltet. Hier stehen die Tracking- und Datenschutz-Optionen.
+matomo_setup_step_install = Matomo bereitstellen
+matomo_setup_step_connection = Verbindung zu Matomo
+matomo_setup_step_sites = Websites
+matomo_setup_step_consent = Consent-Tool
+matomo_setup_step_access = Persönliche Zugänge
+matomo_setup_install_intro = Matomo wird in einen Ordner unterhalb des Web-Roots heruntergeladen. Anschließend öffnen Sie Matomo und durchlaufen dessen Installationsassistenten (Datenbank, Superuser, erste Website).
+matomo_setup_external_hint = Sie haben bereits eine Matomo-Installation (auch auf einem anderen Server)? Dann diesen Schritt überspringen und in Schritt 2 nur die URL eintragen.
+matomo_setup_installed_local = Matomo liegt unter <code>{0}</code>.
+matomo_setup_installed_external = Externe Matomo-Installation unter <code>{0}</code>.
+matomo_setup_wizard_pending = Matomo ist heruntergeladen, aber noch nicht eingerichtet (keine config/config.ini.php).
+matomo_setup_open_wizard = Installationsassistent öffnen
+matomo_setup_invalid_path = Ungültiger Pfad.
+matomo_setup_invalid_url = Bitte eine gültige Matomo-URL eingeben.
+matomo_setup_test = Testen
+matomo_setup_path_help = Nur bei lokaler Installation: Ordner relativ zum Web-Root. Leer lassen bei externem Matomo.
+matomo_setup_token_headline = API-Token
+matomo_setup_token_intro = Das AddOn braucht ein einziges Token eines Matomo-Superusers. Am einfachsten lassen Sie es hier aus Login und Passwort erzeugen; das Passwort wird nicht gespeichert.
+matomo_setup_token_auto = Token automatisch erzeugen
+matomo_setup_login = Matomo-Benutzername
+matomo_setup_password = Matomo-Passwort
+matomo_setup_password_help = Wird nur einmal an Matomo gesendet, um das Token zu erzeugen.
+matomo_setup_token_manual = Oder vorhandenes Token eintragen
+matomo_setup_token = Token (token_auth)
+matomo_setup_token_keep = Token ist hinterlegt – leer lassen zum Beibehalten
+matomo_setup_token_manual_help = In Matomo unter Administration → Persönlich → Sicherheit → Auth-Tokens.
+matomo_setup_token_created = Token für „{0}“ erzeugt und gespeichert.
+matomo_setup_token_failed = Token konnte nicht erzeugt werden: {0}
+matomo_setup_save_connection = Verbindung speichern
+matomo_setup_needs_connection = Zuerst die Verbindung in Schritt 2 einrichten.
+matomo_setup_needs_superuser = Das hinterlegte Token hat keine Superuser-Rechte. Für diesen Schritt ein Token eines Matomo-Superusers verwenden.
+matomo_setup_needs_sites = Zuerst mindestens eine Website in Matomo anlegen (Schritt 3).
+matomo_setup_sites_count = {0} Website(s) in Matomo.
+matomo_setup_manage_sites = Websites verwalten / YRewrite-Domains importieren
+matomo_setup_websites = Websites
+matomo_setup_superuser = Superuser-Token
+matomo_setup_superuser_no = Nein
+matomo_setup_external = extern
+matomo_setup_consent_none = Kein Consent-Tool installiert (unterstützt: consent_kit, consent_manager). Der Tracking-Code steht unter „Domains“ zum Kopieren bereit.
+matomo_setup_consent_intro = Legt Matomo als Dienst mit Tracking-Code und Cookie-Angaben im Consent-Tool an. Die gewählte Website bestimmt die Standard-Site-ID.
+matomo_setup_consent_registered_label = registriert
+matomo_setup_consent_missing_label = nicht registriert
+matomo_setup_consent_register = Registrieren
+matomo_setup_consent_update = Aktualisieren
+matomo_setup_consent_registered = Matomo wurde in {0} registriert.
+matomo_setup_consent_failed = Registrierung fehlgeschlagen: {0}
+matomo_setup_consent_help = consent_kit: Dienst „matomo“ aus dem mitgelieferten Preset, je Domain mit passender Matomo-Website eine Variante. consent_manager: Cookie „matomo“ in der Gruppe „statistics“ für alle Sprachen. Bereits gepflegte Texte bleiben erhalten.
+matomo_setup_access_intro = Jeder REDAXO-Benutzer bekommt einen eigenen Matomo-Benutzer mit Leserecht auf alle Websites und ein persönliches Token. Damit öffnet „Matomo öffnen“ die Oberfläche direkt ohne Login – ohne Änderungen an der Matomo-Konfiguration.
+matomo_setup_access_redaxo_user = REDAXO-Benutzer
+matomo_setup_access_matomo_user = Matomo-Zugang
+matomo_setup_access_create = Zugang anlegen
+matomo_setup_access_create_all = Für alle anlegen ({0})
+matomo_setup_access_remove = Entfernen
+matomo_setup_access_remove_confirm = Matomo-Benutzer „{0}“ und Token wirklich entfernen?
+matomo_setup_access_created = Zugang für „{0}“ angelegt (Matomo-Benutzer „{1}“).
+matomo_setup_access_removed = Zugang entfernt.
+matomo_setup_access_failed = Zugang konnte nicht angelegt werden: {0}
+matomo_setup_access_help = Matomo lässt Token-Zugänge in der Oberfläche nur mit Leserechten zu. Für Administration in Matomo weiterhin regulär anmelden. Die Tokens liegen in der REDAXO-Konfiguration.
+matomo_setup_access_hint = Persönlichen Zugang unter Einrichtung anlegen
+matomo_setup_help_1 = Matomo herunterladen oder URL einer bestehenden Installation eintragen
+matomo_setup_help_2 = Matomo-Assistenten durchlaufen (Datenbank, Superuser, erste Website)
+matomo_setup_help_3 = Verbindung speichern – Token aus Login und Passwort erzeugen lassen
+matomo_setup_help_4 = Websites prüfen bzw. YRewrite-Domains importieren, Matomo im Consent-Tool registrieren
+matomo_setup_help_5 = Persönliche Zugänge für die Redaktion anlegen
+matomo_setup_help_config = Tracking- und Datenschutz-Optionen: <a href="{0}">Konfiguration</a>

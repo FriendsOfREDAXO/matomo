@@ -37,3 +37,13 @@ if (rex_version::compare($addon->getVersion(), '2.0.0', '<')) {
     }
 }
 
+// Update auf 2.5: ein API-Token statt Admin-/User-Token, Token-Zugang statt logme-Auto-Login,
+// einheitlicher Schlüssel verify_ssl (config.php schrieb bisher ssl_verify, gelesen wurde verify_ssl)
+if (rex_version::compare($addon->getVersion(), '2.5.0', '<')) {
+    if (null !== $addon->getConfig('ssl_verify') && null === $addon->getConfig('verify_ssl')) {
+        rex_config::set('matomo', 'verify_ssl', (bool) $addon->getConfig('ssl_verify'));
+    }
+    foreach (['ssl_verify', 'user_token', 'matomo_user', 'matomo_password'] as $key) {
+        rex_config::remove('matomo', $key);
+    }
+}

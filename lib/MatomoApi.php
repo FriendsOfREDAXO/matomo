@@ -48,7 +48,7 @@ class MatomoApi
     {
         $this->matomo_url = rtrim(trim($matomo_url), '/');
         $this->admin_token = trim($admin_token);
-        $this->user_token = trim($user_token ?? $admin_token);
+        $this->user_token = '' !== trim((string) $user_token) ? trim((string) $user_token) : trim($admin_token);
     }
 
     /**
@@ -65,24 +65,12 @@ class MatomoApi
             $result = $result['value'];
         }
 
-        if (is_bool($result)) {
-            return $result;
-        }
-
-        if (is_numeric($result)) {
-            return (int) $result === 1;
-        }
-
-        if (is_string($result)) {
-            return in_array(strtolower($result), ['1', 'true', 'yes'], true);
-        }
-
-        return false;
+        return self::toBool($result);
     }
 
     /**
      * API-Aufruf mit rex_socket
-     * 
+     *
      * @param string $method API-Methode (z.B. 'SitesManager.getSites')
      * @param array<string, mixed> $params zusätzliche Parameter für den API-Aufruf
      * @param bool $use_user_token true = User-Token verwenden, false = Admin-Token verwenden
@@ -91,60 +79,183 @@ class MatomoApi
      */
     private function apiCall(string $method, array $params = [], bool $use_user_token = false)
     {
+        return self::request($this->matomo_url, $method, $params, $use_user_token ? $this->user_token : $this->admin_token);
+    }
+
+    /**
+     * Roher API-Request. Ohne Token nur für Methoden, die Matomo anonym erlaubt
+     * (z.B. UsersManager.createAppSpecificTokenAuth mit Login + Passwort).
+     *
+     * @param array<string, mixed> $params
+     * @return mixed
+     * @throws Exception
+     */
+    private static function request(string $matomo_url, string $method, array $params, ?string $token)
+    {
         $params['module'] = 'API';
         $params['method'] = $method;
         $params['format'] = 'json';
-        $params['token_auth'] = $use_user_token ? $this->user_token : $this->admin_token;
+        if (null !== $token && '' !== $token) {
+            $params['token_auth'] = $token;
+        }
 
         try {
-            // Socket-Verbindung erstellen
-            $socket = rex_socket::factoryUrl($this->matomo_url . '/index.php');
-            
-            // SSL-Verifizierung aus Config auslesen (Standard: true für Sicherheit)
-            $verify_ssl = (bool) rex_config::get('matomo', 'verify_ssl', true);
-            
-            // SSL-Optionen setzen
-            if (false === $verify_ssl) {
-                // Nur bei deaktivierter Verifizierung (z.B. selbstsignierte Zertifikate)
+            $socket = rex_socket::factoryUrl(rtrim(trim($matomo_url), '/') . '/index.php');
+
+            if (!self::verifySsl()) {
                 $socket->setOptions([
                     'ssl' => [
                         'verify_peer' => false,
-                        'verify_peer_name' => false
-                    ]
+                        'verify_peer_name' => false,
+                    ],
                 ]);
             }
-            
-            // Timeout setzen
-            $socket->setTimeout(10);
-            
-            // POST-Request senden
+
+            $socket->setTimeout(max(1, (int) rex_config::get('matomo', 'api_timeout', 30)));
+
             $response = $socket->doPost($params);
-            
-            // Antwort prüfen
+
             if (!$response->isSuccessful()) {
                 throw new Exception('HTTP Fehler: ' . $response->getStatusCode() . ' ' . $response->getStatusMessage());
             }
-            
+
             $body = $response->getBody();
-            
+
             if ('' === $body) {
                 throw new Exception('Keine Antwort vom Matomo Server');
             }
-            
+
             $data = json_decode($body, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new Exception('Ungültige JSON-Antwort: ' . substr($body, 0, 200));
             }
-            
-            if (isset($data['result']) && $data['result'] === 'error') {
+
+            if (is_array($data) && isset($data['result']) && $data['result'] === 'error') {
                 throw new Exception($data['message'] ?? 'Unbekannter API-Fehler');
             }
-            
+
             return $data;
-            
         } catch (rex_socket_exception $e) {
             throw new Exception('Socket-Fehler: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * SSL-Zertifikate prüfen? Standard: ja. Nur für selbstsignierte Zertifikate deaktivieren.
+     */
+    public static function verifySsl(): bool
+    {
+        return (bool) rex_config::get('matomo', 'verify_ssl', true);
+    }
+
+    /**
+     * Erzeugt ein App-Token aus Matomo-Login und Passwort. Matomo erlaubt diesen
+     * Aufruf ohne bestehendes Token, das Passwort wird nicht gespeichert.
+     *
+     * @throws Exception bei falschen Zugangsdaten oder API-Fehlern
+     */
+    public static function createTokenWithCredentials(string $matomo_url, string $login, string $password, string $description): string
+    {
+        $result = self::request($matomo_url, 'UsersManager.createAppSpecificTokenAuth', [
+            'userLogin' => $login,
+            'passwordConfirmation' => $password,
+            'description' => $description,
+        ], null);
+
+        $token = is_array($result) ? ($result['value'] ?? '') : '';
+        if (!is_string($token) || '' === $token) {
+            throw new Exception('Matomo hat kein Token zurückgegeben');
+        }
+
+        return $token;
+    }
+
+    /**
+     * Alle Matomo-Benutzer (benötigt Superuser-Token).
+     *
+     * @return list<array{login: string, email: string, superuser_access: bool}>
+     * @throws Exception
+     */
+    public function getUsers(): array
+    {
+        $result = $this->apiCall('UsersManager.getUsers');
+        $users = [];
+        foreach (is_array($result) ? $result : [] as $row) {
+            if (!is_array($row) || !isset($row['login'])) {
+                continue;
+            }
+            $users[] = [
+                'login' => (string) $row['login'],
+                'email' => (string) ($row['email'] ?? ''),
+                'superuser_access' => !empty($row['superuser_access']),
+            ];
+        }
+        return $users;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function userExists(string $login): bool
+    {
+        $result = $this->apiCall('UsersManager.userExists', ['userLogin' => $login]);
+        return self::toBool(is_array($result) ? ($result['value'] ?? false) : $result);
+    }
+
+    /**
+     * Legt einen Matomo-Benutzer an und gibt ihm den gewünschten Zugriff auf alle Websites.
+     * Per Token-Auth verlangt Matomo dafür keine Passwortbestätigung.
+     *
+     * @param string $access view|write|admin
+     * @throws Exception
+     */
+    public function addUser(string $login, string $password, string $email, string $access = 'view'): void
+    {
+        $this->apiCall('UsersManager.addUser', [
+            'userLogin' => $login,
+            'password' => $password,
+            'email' => $email,
+        ]);
+        $this->setUserAccess($login, $access);
+    }
+
+    /**
+     * @param string $access view|write|admin|noaccess
+     * @param int|string $idSites Site-ID(s) oder 'all'
+     * @throws Exception
+     */
+    public function setUserAccess(string $login, string $access, $idSites = 'all'): void
+    {
+        $this->apiCall('UsersManager.setUserAccess', [
+            'userLogin' => $login,
+            'access' => $access,
+            'idSites' => $idSites,
+        ]);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function deleteUser(string $login): void
+    {
+        $this->apiCall('UsersManager.deleteUser', ['userLogin' => $login]);
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function toBool($value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        if (is_numeric($value)) {
+            return (int) $value === 1;
+        }
+        if (is_string($value)) {
+            return in_array(strtolower($value), ['1', 'true', 'yes'], true);
+        }
+        return false;
     }
 
     /**
@@ -259,12 +370,31 @@ class MatomoApi
         return implode("\n\n", $sections);
     }
 
+    /**
+     * Reiner Tracking-Code (ohne Erklärtext) für Consent-Tools und Templates.
+     */
+    public function trackingSnippet(int $site_id, bool $use_proxy = false): string
+    {
+        if ($use_proxy) {
+            $tracker_url = $this->buildProxyUrl('matomo.php');
+            $js_url = $this->buildProxyUrl('matomo.js');
+        } else {
+            $tracker_url = $this->matomo_url . '/matomo.php';
+            $js_url = $this->matomo_url . '/matomo.js';
+        }
+
+        return $this->buildTrackingHtml($site_id, $tracker_url, $js_url, ' async defer');
+    }
+
     private function buildClientTrackingSnippet(int $site_id, string $tracker_url, string $js_url, string $async): string
     {
-        return <<<JS
-=== 1) Matomo Basis-Tracking ===
-Diesen Block in Consent-Manager oder Template einbinden.
+        return "=== 1) Matomo Basis-Tracking ===\nDiesen Block in Consent-Manager oder Template einbinden.\n\n"
+            . $this->buildTrackingHtml($site_id, $tracker_url, $js_url, $async);
+    }
 
+    private function buildTrackingHtml(int $site_id, string $tracker_url, string $js_url, string $async): string
+    {
+        return <<<JS
 <!-- Matomo -->
 <script{$async}>
   var _paq = window._paq = window._paq || [];
@@ -401,11 +531,7 @@ TXT;
             // Socket-Verbindung für Download
             $socket = rex_socket::factoryUrl($download_url);
             
-            // SSL-Verifizierung aus Config auslesen (Standard: true)
-            $verify_ssl = (bool) rex_config::get('matomo', 'verify_ssl', true);
-            
-            // SSL-Optionen setzen
-            if (false === $verify_ssl) {
+            if (!self::verifySsl()) {
                 $socket->setOptions([
                     'ssl' => [
                         'verify_peer' => false,

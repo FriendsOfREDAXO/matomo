@@ -12,56 +12,45 @@ if (rex_post('save_config', 'boolean')) {
     if (!$csrf->isValid()) {
         $error = rex_i18n::msg('csrf_token_invalid');
     } else {
-        $matomoUrl = trim(rex_post('matomo_url', 'string', ''));
-        if ('' !== $matomoUrl && false === filter_var($matomoUrl, FILTER_VALIDATE_URL)) {
-            $error = 'Bitte eine gültige Matomo URL eingeben.';
-        } else {
-            $cookieLifetime = rex_post('cookie_lifetime', 'int', 2592000);
-            $allowedCookieLifetimes = [1800, 3600, 86400, 604800, 2592000, 31536000];
-            if (!in_array($cookieLifetime, $allowedCookieLifetimes, true)) {
-                $cookieLifetime = 2592000;
-            }
-
-            $apiTimeout = rex_post('api_timeout', 'int', 30);
-            $allowedApiTimeouts = [10, 30, 60, 120];
-            if (!in_array($apiTimeout, $allowedApiTimeouts, true)) {
-                $apiTimeout = 30;
-            }
-
-            $socketTimeout = (float) rex_post('socket_timeout', 'float', 1.0);
-            if ($socketTimeout < 0.1) {
-                $socketTimeout = 0.1;
-            }
-
-            rex_config::set('matomo', 'matomo_url', $matomoUrl);
-            rex_config::set('matomo', 'matomo_path', trim(rex_post('matomo_path', 'string', '')));
-            rex_config::set('matomo', 'admin_token', trim(rex_post('admin_token', 'string', '')));
-            rex_config::set('matomo', 'user_token', trim(rex_post('user_token', 'string', '')));
-            rex_config::set('matomo', 'api_timeout', $apiTimeout);
-            rex_config::set('matomo', 'ssl_verify', rex_post('ssl_verify', 'boolean', false));
-            rex_config::set('matomo', 'socket_timeout', $socketTimeout);
-            rex_config::set('matomo', 'anonymize_ip', rex_post('anonymize_ip', 'boolean', false));
-            rex_config::set('matomo', 'cookieless_tracking', rex_post('cookieless_tracking', 'boolean', false));
-            rex_config::set('matomo', 'show_top_pages', rex_post('show_top_pages', 'boolean', false));
-            rex_config::set('matomo', 'proxy_enabled', rex_post('proxy_enabled', 'boolean', false));
-            rex_config::set('matomo', 'server_side_tracking', rex_post('server_side_tracking', 'boolean', false));
-            rex_config::set('matomo', 'server_side_site_id', max(0, rex_post('server_side_site_id', 'int', 0)));
-            rex_config::set('matomo', 'event_tracking_js', rex_post('event_tracking_js', 'boolean', false));
-            rex_config::set('matomo', 'respect_dnt', rex_post('respect_dnt', 'boolean', false));
-            rex_config::set('matomo', 'cookie_lifetime', $cookieLifetime);
-
-            $message = $addon->i18n('matomo_config_saved');
+        $cookieLifetime = rex_post('cookie_lifetime', 'int', 2592000);
+        $allowedCookieLifetimes = [1800, 3600, 86400, 604800, 2592000, 31536000];
+        if (!in_array($cookieLifetime, $allowedCookieLifetimes, true)) {
+            $cookieLifetime = 2592000;
         }
+
+        $apiTimeout = rex_post('api_timeout', 'int', 30);
+        $allowedApiTimeouts = [10, 30, 60, 120];
+        if (!in_array($apiTimeout, $allowedApiTimeouts, true)) {
+            $apiTimeout = 30;
+        }
+
+        $socketTimeout = (float) rex_post('socket_timeout', 'float', 1.0);
+        if ($socketTimeout < 0.1) {
+            $socketTimeout = 0.1;
+        }
+
+        rex_config::set('matomo', 'api_timeout', $apiTimeout);
+        rex_config::set('matomo', 'verify_ssl', rex_post('verify_ssl', 'boolean', false));
+        rex_config::set('matomo', 'socket_timeout', $socketTimeout);
+        rex_config::set('matomo', 'anonymize_ip', rex_post('anonymize_ip', 'boolean', false));
+        rex_config::set('matomo', 'cookieless_tracking', rex_post('cookieless_tracking', 'boolean', false));
+        rex_config::set('matomo', 'show_top_pages', rex_post('show_top_pages', 'boolean', false));
+        rex_config::set('matomo', 'proxy_enabled', rex_post('proxy_enabled', 'boolean', false));
+        rex_config::set('matomo', 'server_side_tracking', rex_post('server_side_tracking', 'boolean', false));
+        rex_config::set('matomo', 'server_side_site_id', max(0, rex_post('server_side_site_id', 'int', 0)));
+        rex_config::set('matomo', 'event_tracking_js', rex_post('event_tracking_js', 'boolean', false));
+        rex_config::set('matomo', 'respect_dnt', rex_post('respect_dnt', 'boolean', false));
+        rex_config::set('matomo', 'cookie_lifetime', $cookieLifetime);
+
+        $message = $addon->i18n('matomo_config_saved');
     }
 }
 
-// Status-Panel
+// Status
 $matomo_url = rex_config::get('matomo', 'matomo_url', '');
 $admin_token = rex_config::get('matomo', 'admin_token', '');
-$user_token = rex_config::get('matomo', 'user_token', '');
-$matomo_path = rex_config::get('matomo', 'matomo_path', '');
 $api_timeout = (int) rex_config::get('matomo', 'api_timeout', 30);
-$ssl_verify = (bool) rex_config::get('matomo', 'ssl_verify', false);
+$verify_ssl = MatomoApi::verifySsl();
 $socket_timeout = (float) rex_config::get('matomo', 'socket_timeout', 1.0);
 $anonymize_ip = (bool) rex_config::get('matomo', 'anonymize_ip', false);
 $cookieless_tracking = (bool) rex_config::get('matomo', 'cookieless_tracking', false);
@@ -73,37 +62,13 @@ $event_tracking_js = (bool) rex_config::get('matomo', 'event_tracking_js', false
 $respect_dnt = (bool) rex_config::get('matomo', 'respect_dnt', false);
 $cookie_lifetime = (int) rex_config::get('matomo', 'cookie_lifetime', 2592000);
 
-$matomo_ready = false;
-$is_external_matomo = false;
-$api_status = 'Nicht getestet';
-$superuser_status = 'Nicht getestet';
-
+$api_status = '';
 if ($matomo_url !== '' && $admin_token !== '') {
-    if ($matomo_path !== '') {
-        // Lokale Matomo-Installation - prüfe ob verfügbar
-        $full_path = rex_path::frontend($matomo_path . '/');
-        $matomo_ready = file_exists($full_path . 'index.php');
-    } else {
-        // Externe Matomo-Installation - keine lokale Verfügbarkeitsprüfung möglich
-        $matomo_ready = true;
-        $is_external_matomo = true;
-    }
-    
-    if ($matomo_ready) {
-        try {
-            $api = new MatomoApi($matomo_url, $admin_token, $user_token);
-            $sites = $api->getSites();
-            $api_status = '✅ Verbunden (' . count($sites) . ' Sites)';
-
-            if ($api->hasSuperUserAccess()) {
-                $superuser_status = '✅ Ja';
-            } else {
-                $superuser_status = '❌ Nein (Token hat keine Superuser-Rechte)';
-            }
-        } catch (Exception $e) {
-            $api_status = '❌ Fehler: ' . $e->getMessage();
-            $superuser_status = '❌ Nicht prüfbar';
-        }
+    try {
+        $api = new MatomoApi($matomo_url, $admin_token);
+        $api_status = '<span class="text-success"><i class="fa fa-check-circle"></i> ' . $addon->i18n('matomo_connected') . ' (' . count($api->getSites()) . ' ' . $addon->i18n('matomo_setup_websites') . ')</span>';
+    } catch (Exception $e) {
+        $api_status = '<span class="text-danger"><i class="fa fa-times-circle"></i> ' . rex_escape($e->getMessage()) . '</span>';
     }
 }
 
@@ -117,52 +82,18 @@ if ($matomo_url !== '' && $admin_token !== '') {
 <?php endif; ?>
 
 <div class="alert alert-info">
-    <i class="fas fa-info-circle"></i>
-    <strong>Konfiguration:</strong> Alle Tracking-Optionen sind hier zentral gebündelt. Das Matomo-Setup enthält nur noch Installation und Grund-Setup.
+    <i class="fa fa-info-circle"></i>
+    <?= rex_i18n::rawMsg('matomo_config_intro', rex_url::backendPage('matomo/settings')) ?>
+    <?= '' !== $api_status ? '<br>' . $api_status : '' ?>
 </div>
 
 <div id="matomo-config-endpoints"
-    data-test-connection-url="<?= rex_escape(rex_url::backendController(['rex-api-call' => 'matomo_test_connection'])) ?>"
     data-test-proxy-url="<?= rex_escape(rex_url::backendController(['rex-api-call' => 'matomo_test_proxy'])) ?>"></div>
 
 <form method="post" class="rex-form">
     <?= $csrf->getHiddenField() ?>
     <div class="row">
         <div class="col-sm-6">
-            <div class="panel panel-default">
-                <div class="panel-heading"><h3 class="panel-title"><i class="fas fa-globe"></i> Basis & Zugang</h3></div>
-                <div class="panel-body">
-                    <div class="form-group">
-                        <label for="matomo_url"><?= $addon->i18n('matomo_url') ?></label>
-                        <div class="input-group">
-                            <input type="url" id="matomo_url" name="matomo_url" class="form-control" value="<?= rex_escape($matomo_url) ?>" placeholder="https://ihre-domain.de/matomo">
-                            <span class="input-group-btn">
-                                <button type="button" id="test-connection" class="btn btn-default" title="Verbindung testen">
-                                    <i class="fas fa-plug"></i> Test
-                                </button>
-                            </span>
-                        </div>
-                        <p class="help-block"><?= $addon->i18n('matomo_url_help') ?></p>
-                        <div id="test-result"></div>
-                    </div>
-                    <div class="form-group">
-                        <label for="matomo_path"><?= $addon->i18n('matomo_path') ?></label>
-                        <input type="text" id="matomo_path" name="matomo_path" class="form-control" value="<?= rex_escape($matomo_path) ?>" placeholder="matomo">
-                        <p class="help-block"><?= $addon->i18n('matomo_path_help') ?></p>
-                    </div>
-                    <div class="form-group">
-                        <label for="admin_token"><?= $addon->i18n('matomo_admin_token') ?></label>
-                        <input type="password" id="admin_token" name="admin_token" class="form-control" value="<?= rex_escape($admin_token) ?>">
-                        <p class="help-block"><?= $addon->i18n('matomo_admin_token_help') ?></p>
-                    </div>
-                    <div class="form-group">
-                        <label for="user_token"><?= $addon->i18n('matomo_user_token') ?></label>
-                        <input type="password" id="user_token" name="user_token" class="form-control" value="<?= rex_escape($user_token) ?>">
-                        <p class="help-block"><?= $addon->i18n('matomo_user_token_help') ?></p>
-                    </div>
-                </div>
-            </div>
-
             <div class="panel panel-default">
                 <div class="panel-heading"><h3 class="panel-title"><i class="fas fa-plug"></i> API & Verbindung</h3></div>
                 <div class="panel-body">
@@ -178,13 +109,14 @@ if ($matomo_url !== '' && $admin_token !== '') {
                     </div>
                     <div class="checkbox">
                         <label>
-                            <input type="checkbox" name="ssl_verify" value="1" <?= $ssl_verify ? 'checked' : '' ?>>
-                            <?= $addon->i18n('matomo_ssl_verify_option') ?>
+                            <input type="checkbox" name="verify_ssl" value="1" <?= $verify_ssl ? 'checked' : '' ?>>
+                            <?= $addon->i18n('matomo_verify_ssl') ?>
                         </label>
-                        <p class="help-block"><?= $addon->i18n('matomo_ssl_verify_help') ?></p>
+                        <p class="help-block"><?= $addon->i18n('matomo_verify_ssl_help') ?></p>
                     </div>
                     <div class="form-group">
-                        <label for="socket_timeout">Socket Timeout (Sekunden)</label>
+                        <label for="socket_timeout"><?= $addon->i18n('matomo_socket_timeout') ?></label>
+                        <p class="help-block"><?= $addon->i18n('matomo_socket_timeout_help') ?></p>
                         <input type="number" id="socket_timeout" name="socket_timeout" class="form-control" min="0.1" step="0.1" value="<?= rex_escape((string) $socket_timeout) ?>">
                     </div>
                 </div>
@@ -284,78 +216,3 @@ if ($matomo_url !== '' && $admin_token !== '') {
         </div>
     </div>
 </form>
-
-<div class="row">
-    <div class="col-sm-6">
-        <div class="panel panel-<?= $matomo_ready ? 'success' : 'warning' ?>">
-            <div class="panel-heading">
-                <h3 class="panel-title">📊 Matomo Status</h3>
-            </div>
-            <div class="panel-body">
-                <table class="table table-condensed">
-                    <tr>
-                        <td><strong>Installation:</strong></td>
-                        <td class="text-<?= $matomo_ready ? 'success' : 'danger' ?>">
-                            <?php if ($is_external_matomo): ?>
-                                🌐 Externe Installation
-                            <?php else: ?>
-                                <?= $matomo_ready ? '✅ Gefunden' : '❌ Nicht gefunden' ?>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>API Status:</strong></td>
-                        <td><?= rex_escape($api_status) ?></td>
-                    </tr>
-                    <tr>
-                        <td><strong>Superuser-Token:</strong></td>
-                        <td><?= rex_escape($superuser_status) ?></td>
-                    </tr>
-                    <?php if ($matomo_path !== ''): ?>
-                    <tr>
-                        <td><strong>Pfad:</strong></td>
-                        <td><code><?= rex_escape($matomo_path) ?></code></td>
-                    </tr>
-                    <?php endif; ?>
-                    <?php if ($matomo_url !== ''): ?>
-                    <tr>
-                        <td><strong>URL:</strong></td>
-                        <td>
-                            <a href="<?= rex_escape($matomo_url) ?>" target="_blank" class="btn btn-xs btn-primary">
-                                🔗 Öffnen
-                            </a>
-                        </td>
-                    </tr>
-                    <?php endif; ?>
-                </table>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-sm-6">
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">💡 Hilfe</h3>
-            </div>
-            <div class="panel-body">
-                <h5><?= $addon->i18n('matomo_help_first_steps') ?>:</h5>
-                <ol>
-                    <li><?= $addon->i18n('matomo_help_step1', rex_url::currentBackendPage(['page' => 'matomo/settings'])) ?></li>
-                    <li><?= $addon->i18n('matomo_help_step2') ?></li>
-                    <li><?= $addon->i18n('matomo_help_step3') ?></li>
-                    <li><?= $addon->i18n('matomo_help_step4') ?></li>
-                </ol>
-                
-                <h5><?= $addon->i18n('matomo_help_tokens') ?>:</h5>
-                <p><strong><?= $addon->i18n('matomo_help_admin_token') ?>:</strong><br>
-                <?= $addon->i18n('matomo_help_admin_token_desc') ?></p>
-                
-                <p><strong><?= $addon->i18n('matomo_help_user_token') ?>:</strong><br>
-                <?= $addon->i18n('matomo_help_user_token_desc') ?></p>
-                
-                <p><?= $addon->i18n('matomo_help_token_location') ?>:<br>
-                <code>Administration → Platform → API → User Authentication</code></p>
-            </div>
-        </div>
-    </div>
-</div>

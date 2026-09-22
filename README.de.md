@@ -13,7 +13,7 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 - **Kompakte Übersichtsseite** mit Statistiken aller Domains
 - **Top 5 Seiten Feature** - zeigt meistbesuchte Seiten der aktuellen Woche
 - **Echtzeitdaten** mit automatischem Refresh (alle 5 Minuten)
-- **Automatisches Login-System** für nahtlosen Matomo-Zugang
+- **Persönliche Zugänge** – Matomo öffnet sich direkt ohne Login (Token-Zugang, keine Änderung an der Matomo-Konfiguration)
 - **Direkte Links** zu spezifischen Matomo-Dashboards
 
 ### 🌐 **Domain-Management**
@@ -23,12 +23,13 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 - **Domain-Löschung** - Entfernung von Domains aus Matomo mit Bestätigung
 - **Tracking-Code Generierung** für jede Domain
 - **Copy-to-Clipboard Funktionalität** für Tracking-Codes
-- **Consent-Manager Integration** Empfehlungen
+- **Consent-Registrierung** – Matomo per Klick in consent_kit oder consent_manager anlegen
 
 ### ⚙️ **Erweiterte Konfiguration**
 - **Flexible API-Einstellungen** (Timeout, SSL-Verifikation)
 - **Datenschutz-Optionen** (IP-Anonymisierung, Cookie-freies Tracking)
-- **Multi-Token Support** (Admin + User Token)
+- **Ein API-Token**, auf Wunsch direkt aus Matomo-Login und Passwort erzeugt
+- **Consent-Registrierung**: Matomo per Klick in consent_kit oder consent_manager anlegen
 
 ### 🔒 **DSGVO-Konformität**
 - **IP-Anonymisierung** aktivierbar
@@ -59,20 +60,24 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 
 1. **AddOn installieren** über den REDAXO Installer oder manuell
 2. **AddOn aktivieren** im REDAXO Backend
-3. **Matomo-Setup** aufrufen und Installation durchführen
+3. **Matomo → Einrichtung** aufrufen und die fünf Schritte durchgehen
 
 ## 📖 Verwendung
 
-### 1. **Matomo-Setup**
-Unter **Matomo → Matomo-Setup**:
-- Matomo automatisch herunterladen und installieren
-- Oder manuelle Konfiguration von Pfad, URL und API-Token
+### 1. **Einrichtung**
+Unter **Matomo → Einrichtung** führt eine Seite in fünf Schritten durch die Ersteinrichtung. Jeder Schritt zeigt, ob er erledigt ist:
+
+1. **Matomo bereitstellen** – Matomo in einen Ordner unterhalb des Web-Roots herunterladen und anschließend den Matomo-Installationsassistenten (Datenbank, Superuser, erste Website) durchlaufen. Wer bereits ein Matomo hat (auch extern), überspringt den Schritt.
+2. **Verbindung** – Matomo-URL eintragen und das API-Token hinterlegen. Am einfachsten: Matomo-Benutzername und Passwort eines Superusers eingeben, das AddOn erzeugt das Token selbst (das Passwort wird nicht gespeichert). Alternativ ein vorhandenes Token eintragen.
+3. **Websites** – zeigt die in Matomo angelegten Websites, mit Sprung zur Domain-Verwaltung (YRewrite-Import).
+4. **Consent-Tool** – legt Matomo als Dienst in **consent_kit** oder **consent_manager** an, sofern installiert (siehe unten).
+5. **Persönliche Zugänge** – je REDAXO-Benutzer einen Matomo-Zugang anlegen (siehe unten).
 
 ### 2. **Konfiguration**
-Unter **Matomo → Konfiguration**:
-- API-Einstellungen (Timeout, SSL-Verifikation)
-- Tracking-Optionen (IP-Anonymisierung, Cookie-freies Tracking)
-- Datenschutz-Einstellungen konfigurieren
+Unter **Matomo → Konfiguration** liegen nur noch die Optionen:
+- API-Einstellungen (Timeout, SSL-Verifikation, Socket-Timeout)
+- Tracking-Features (Proxy, serverseitiges Tracking, Browser-Events, Top 5 Seiten)
+- Datenschutz (IP-Anonymisierung, Cookie-freies Tracking, Do Not Track, Cookie-Lebensdauer)
 
 ### 3. **Domains verwalten**
 Under **Matomo → Domains**:
@@ -90,7 +95,7 @@ Under **Matomo → Domains**:
 
 ### 4. **Statistiken ansehen**
 - **Matomo → Übersicht**: Kompakte Statistiken aller Domains mit optionalen Top 5 Seiten
-- **Automatisch anmelden**: Nahtloser Zugang zu Matomo ohne manuelle Anmeldung
+- **Matomo öffnen**: Mit persönlichem Zugang landet der Benutzer direkt in Matomo, ohne Login
 - **Direkte Domain-Links**: Schneller Zugriff auf spezifische Domain-Statistiken
 
 ### 5. **Dashboard & Info-Center Widgets** 📊
@@ -109,37 +114,39 @@ Under **Matomo → Domains**:
 - **Größeres Format**: 2-spaltig für mehr Informationen
 - **YRewrite-Integration**: Automatische Filterung auf YRewrite-Domains
 
-## 🔐 API-Token einrichten
+## 🔐 API-Token
 
-### Admin Token (erforderlich)
-Für Verwaltungsaufgaben wie Domain-Erstellung:
-1. In Matomo anmelden
-2. **Administration → Platform → API → User Authentication**
-3. **Admin Token** kopieren und in REDAXO einfügen
+Das AddOn braucht genau **ein Token eines Matomo-Superusers** (für Domains, Consent-Registrierung, Zugänge und Statistiken). Zwei Wege:
 
-### User Token (optional)
-Für Statistik-Zugriff:
-1. **User Authentication** in Matomo öffnen
-2. **User Token** kopieren (falls nicht vorhanden, wird Admin Token verwendet)
+- **Automatisch (empfohlen)**: In der Einrichtung Matomo-Benutzername und Passwort eingeben. Das AddOn ruft `UsersManager.createAppSpecificTokenAuth` auf, Matomo erlaubt das ohne bestehendes Token. Das Passwort wird nur für diesen Aufruf verwendet und nicht gespeichert.
+- **Manuell**: In Matomo unter **Administration → Persönlich → Sicherheit → Auth-Tokens** ein Token erzeugen und eintragen.
 
-### Auto-Login Setup (optional)
-Für automatischen Login über "Automatisch anmelden" Buttons:
-1. **Matomo Username und Passwort** in den Einstellungen hinterlegen
-2. **Automatische Konfiguration**: Das AddOn kann `login_allow_logme = 1` automatisch in der Matomo `config.ini.php` setzen
-3. **Manuelle Konfiguration**: Falls automatisch nicht möglich, manuell in `config/config.ini.php` hinzufügen:
-   ```ini
-   [General]
-   login_allow_logme = 1
-   ```
+Der frühere getrennte „User Token“ entfällt; ein vorhandener Eintrag wird beim Update entfernt.
+
+## 👤 Persönliche Zugänge (statt Auto-Login)
+
+Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, Patch der Matomo-`config.ini.php`) ist entfallen. Stattdessen nutzt das AddOn Matomos eigenen Token-Zugang:
+
+- In der Einrichtung, Schritt 5, bekommt jeder REDAXO-Benutzer per Klick einen **eigenen Matomo-Benutzer** (Leserecht auf alle Websites) und ein **persönliches App-Token**. Login und E-Mail werden aus dem REDAXO-Benutzer übernommen, das Passwort wird zufällig erzeugt und nicht gespeichert.
+- „Matomo öffnen“ in der Übersicht ruft dann `index.php?module=CoreHome&…&token_auth=…` auf – Matomo öffnet die komplette Oberfläche als dieser Benutzer, ohne Login und ohne Änderung an der Matomo-Konfiguration.
+- Matomo lässt Token-Zugänge in der Oberfläche nur für Benutzer **ohne** Schreib-/Superuser-Rechte zu. Für die Matomo-Administration meldet man sich weiterhin normal an.
+- „Entfernen“ löscht Matomo-Benutzer und Token wieder. Die Tokens liegen in der REDAXO-Konfiguration (`user_access`).
+- Voraussetzung: In Matomo darf `only_allow_secure_auth_tokens` nicht aktiv sein (Standard: inaktiv).
+
+## 🍪 Consent-Registrierung
+
+Ist **consent_kit** oder **consent_manager** installiert, legt die Einrichtung (Schritt 4) Matomo dort als Dienst an, inklusive Tracking-Code (auch mit aktiviertem Proxy) und Cookie-Angaben (`_pk_id*`, `_pk_ses*`, `_pk_ref*`):
+
+- **consent_kit**: Dienst `matomo` aus dem mitgelieferten Preset, Parameter `matomo_url` und `site_id` aus den Addon-Einstellungen. Für jede consent_kit-Domain, deren Host einer Matomo-Website entspricht, entsteht eine Variante mit der passenden Site-ID. Bereits gepflegte Texte, Gruppe und Domains bleiben beim Aktualisieren erhalten.
+- **consent_manager**: Cookie `matomo` in der Gruppe `statistics` für alle Sprachen; fehlt die Gruppe, wird sie angelegt. Beim Aktualisieren wird nur der Tracking-Code neu geschrieben.
 
 ## 🎯 Tracking-Code Integration
 
 **Wichtig**: Das AddOn bindet Tracking-Codes **nicht automatisch** ein. 
 
 ### Empfohlene Integration:
-1. **Consent-Manager AddOn** verwenden (empfohlen: "Consent Manager")
-2. **Tracking-Code kopieren** aus der Domains-Seite
-3. **Manuell in Templates** einfügen oder über Consent-Manager verwalten
+1. **consent_kit** oder **consent_manager** installieren und Matomo in der Einrichtung (Schritt 4) registrieren – Tracking-Code und Cookie-Angaben werden dort automatisch hinterlegt
+2. Ohne Consent-Tool: **Tracking-Code kopieren** von der Domains-Seite und **manuell in Templates** einfügen
 
 ### DSGVO-konforme Optionen:
 - IP-Anonymisierung aktivieren
@@ -151,7 +158,7 @@ Für automatischen Login über "Automatisch anmelden" Buttons:
 
 ### API-Einstellungen
 - `api_timeout`: Request-Timeout (10-120 Sekunden)
-- `ssl_verify`: SSL-Zertifikat Verifikation
+- `verify_ssl`: SSL-Zertifikat Verifikation (Standard: an)
 
 ### Tracking-Optionen
 - `anonymize_ip`: IP-Adressen anonymisieren
@@ -162,9 +169,9 @@ Für automatischen Login über "Automatisch anmelden" Buttons:
 ### Statistik-Features
 - `show_top_pages`: Top 5 Seiten Feature aktivieren/deaktivieren
 
-### Auto-Login
-- `matomo_user`: Matomo Benutzername für automatischen Login
-- `matomo_password`: Matomo Passwort für automatischen Login
+### Verbindung & Zugänge
+- `matomo_url`, `matomo_path`, `admin_token`: Verbindung (Einrichtung, Schritt 2)
+- `user_access`: persönliche Zugänge je REDAXO-Benutzer-ID (Matomo-Login + Token)
 
 ## 🔄 API-Integration
 
@@ -188,7 +195,7 @@ Unter **Matomo → Konfiguration**:
 
 ### Was wird automatisch erfasst
 - Seitenaufrufe (Titel + URL) aller REDAXO-Artikel
-- Echte Besucher-IP (wenn Admin-Token hinterlegt)
+- Echte Besucher-IP (wenn API-Token hinterlegt)
 - User-Agent + Accept-Language
 - HTTP-Referer
 - YCom-Benutzer als User-ID (wenn YCom installiert)
@@ -341,7 +348,7 @@ $tracker->trackEcommerceOrder(
 
 ### Automatische Daten
 Der Tracker ermittelt automatisch:
-- **IP-Adresse**: Wird an Matomo übergeben (benötigt Admin-Token in der Config)
+- **IP-Adresse**: Wird an Matomo übergeben (benötigt das API-Token aus der Einrichtung)
 - **User Agent**: Wird aus dem aktuellen Request übernommen
 - **Visitor ID**: Wird aus IP/UA Hash oder Cookie generiert
 - **Zeit/Datum**: Aktuelle Serverzeit
@@ -350,7 +357,7 @@ Der Tracker ermittelt automatisch:
 
 Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matomo nötig:
 
-1.  **Admin Token**: Damit Matomo die User-IP (`cip`) akzeptiert, benötigt der Request einen Token mit **Write**- oder **Admin**-Rechten. Das erledigt die Klasse automatisch, wenn im AddOn der Admin-Token hinterlegt ist.
+1.  **API-Token**: Damit Matomo die User-IP (`cip`) akzeptiert, benötigt der Request einen Token mit **Write**- oder **Admin**-Rechten. Das erledigt die Klasse automatisch mit dem in der Einrichtung hinterlegten Token.
 2.  **E-Commerce**: Falls `trackEcommerceOrder()` genutzt wird, muss für die Webseite in Matomo E-Commerce aktiviert sein (**Einstellungen > Messgrößen > Verwalten > Webseite bearbeiten**).
 3.  **Custom Dimensions**: Vor Nutzung von `setCustomDimension()` muss die Dimension in Matomo angelegt sein.
 4.  **Site Search**: Die interne Suche muss in den Webseiten-Einstellungen aktiviert sein, damit sie in den Berichten auftaucht.
@@ -358,20 +365,28 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 ## 🆘 Troubleshooting
 
 ### Matomo nicht gefunden
-- Prüfen Sie Pfad und URL in der Konfiguration
+- Pfad und URL in der Einrichtung prüfen
 - Stellen Sie sicher, dass Matomo korrekt installiert ist
 
 ### API-Fehler
-- Überprüfen Sie die API-Tokens
+- API-Token in der Einrichtung prüfen bzw. neu erzeugen lassen
 - Testen Sie die Matomo-URL im Browser
 - Prüfen Sie SSL-Einstellungen bei HTTPS
 
 ### Dashboard lädt nicht
-- User Token konfigurieren oder Admin Token verwenden
+- API-Token unter „Einrichtung“ prüfen (Superuser-Token nötig)
 - Browser-Console auf Fehler prüfen
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.5.0
+- **Einrichtung in fünf Schritten**: Die Seiten „Matomo-Setup“ und „Konfiguration“ überschnitten sich (URL, Pfad, Token doppelt). Jetzt: eine geführte Einrichtungsseite (Bereitstellen, Verbindung, Websites, Consent-Tool, Zugänge) und eine Konfigurationsseite nur für Tracking-/Datenschutz-Optionen
+- **Ein API-Token**: Admin- und User-Token zusammengelegt (der User-Token fiel ohnehin auf den Admin-Token zurück). Token wird auf Wunsch direkt aus Matomo-Login und Passwort erzeugt, Passwort wird nicht gespeichert
+- **Persönliche Zugänge statt Auto-Login**: Je REDAXO-Benutzer ein Matomo-Benutzer mit Leserecht plus App-Token; „Matomo öffnen“ nutzt Matomos Token-Zugang. Der `logme`-Auto-Login samt Patch der `config.ini.php` und gespeichertem Matomo-Passwort ist entfernt
+- **Consent-Registrierung**: Matomo per Klick in consent_kit (Preset + Domain-Varianten) oder consent_manager (Gruppe „statistics“, alle Sprachen) anlegen
+- **Fix**: Die Konfigurationsseite speicherte `ssl_verify`, gelesen wurde `verify_ssl` – die Einstellung war wirkungslos. Jetzt einheitlich `verify_ssl` (Update migriert den Wert)
+- **Fix**: `api_timeout` wurde gespeichert, aber die API nutzte fest 10 Sekunden
 
 ### Version 2.4.0
 - **Server-Side Page Tracking**: REDAXO sendet bei jedem Frontend-Aufruf einen direkten Request an die Matomo Tracking API – ohne JavaScript, ohne Cookies, ohne Adblocker-Problem

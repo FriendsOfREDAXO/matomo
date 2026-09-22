@@ -1,5 +1,5 @@
 package: matomo
-version: '2.4.0'
+version: '2.5.0'
 author: 'Friends Of REDAXO'
 supportpage: https://github.com/FriendsOfREDAXO/matomo
 
@@ -10,11 +10,9 @@ page:
     icon: 'rex-icon rex-icon-seo'
     subpages:
         overview: { title: 'translate:matomo_overview', icon: 'rex-icon rex-icon-template', perm: matomo[overview]}
-        config: { title: 'translate:matomo_config', icon: 'rex-icon rex-icon-config', perm: admin}
+        settings: { title: 'translate:matomo_settings', icon: 'rex-icon fa-magic', perm: admin}
         domains: { title: 'translate:matomo_domains', icon: 'rex-icon rex-icon-structure', perm: admin}
-        settings:
-                title: 'translate:matomo_settings'
-                perm: admin
+        config: { title: 'translate:matomo_config', icon: 'rex-icon rex-icon-config', perm: admin}
         help: { title: 'translate:matomo_help', itemclass: pull-right, icon: 'rex-icon fa-question-circle', subPath: README.md}        
 
 requires:
@@ -29,11 +27,8 @@ default_config:
     matomo_url: ''
     matomo_path: ''
     admin_token: ''
-    user_token: ''
-    matomo_user: ''
-    matomo_password: ''
     api_timeout: 30
-    ssl_verify: false
+    verify_ssl: true
     anonymize_ip: false
     cookieless_tracking: false
     respect_dnt: false
