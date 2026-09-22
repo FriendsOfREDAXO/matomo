@@ -94,7 +94,9 @@ Under **Matomo → Domains**:
 - **Domain-Synchronisation**: Matomo und YRewrite-Domains synchron halten
 
 ### 4. **Statistiken ansehen**
-- **Matomo → Übersicht**: Kompakte Statistiken aller Domains mit optionalen Top 5 Seiten
+- **Matomo → Übersicht**: Kennzahlen (Besuche, eindeutige Besucher, Seitenaufrufe, Absprungrate, Ø Besuchsdauer, Aktionen je Besuch, Conversions, Konversionsrate) jeweils mit Vergleich zur Vorperiode, Verlaufsdiagramm (stündlich, täglich oder monatlich, auch als Tabelle), Top-Seiten, Herkunft, Geräte, Länder und eine Tabelle je Domain
+- **Filter** nach Domain und Zeitraum (heute, gestern, 7 Tage, 30 Tage, Monat, Jahr); die Auswahl bleibt im Browser gespeichert
+- **Nicht blockierend**: Die Seite erscheint sofort, alle Abschnitte laden parallel über `rex-api-call=matomo_stats` nach und aktualisieren sich alle 5 Minuten
 - **Matomo öffnen**: Mit persönlichem Zugang landet der Benutzer direkt in Matomo, ohne Login
 - **Direkte Domain-Links**: Schneller Zugriff auf spezifische Domain-Statistiken
 
@@ -172,7 +174,7 @@ Ist **consent_kit** oder **consent_manager** installiert, legt die Einrichtung (
 - `cookie_lifetime`: Cookie-Lebensdauer
 
 ### Statistik-Features
-- `show_top_pages`: Top 5 Seiten Feature aktivieren/deaktivieren
+- `show_top_pages`: Top-Seiten in der Übersicht anzeigen
 
 ### Verbindung & Zugänge
 - `matomo_url`, `matomo_path`, `admin_token`: Verbindung (Einrichtung, Schritt 2)
@@ -384,6 +386,12 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.7.0
+- **Übersicht neu**: Kennzahlen mit Vergleich zur Vorperiode, Verlaufsdiagramm mit Hover-Tooltip und Tabellenansicht, Top-Seiten, Herkunft (Typen und Websites), Geräte, Länder, Domain-Tabelle; Dark Mode
+- **Filter** nach Domain und Zeitraum, Auswahl bleibt gespeichert; „Matomo öffnen“ folgt dem Domain-Filter
+- **Nicht blockierend**: Seite rendert sofort, Abschnitte laden parallel per API nach (`matomo_stats`, gebündelte Matomo-Bulk-Requests, Session wird freigegeben)
+- **Fix**: YRewrite-Domainfilter vergleicht Hosts ohne Port und `www.` (Domains mit Port wurden ausgeblendet)
 
 ### Version 2.6.2
 - **Korrektur zu 2.6.1**: Es gibt kein „consent_manager 6“, consent_manager bleibt wie es ist. Stattdessen wird consent_kit unter dem alten (`KLXM\ConsentKit`) und dem neuen Namespace (`FriendsOfRedaxo\ConsentKit`) unterstützt

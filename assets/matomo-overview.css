@@ -1,0 +1,77 @@
+/* Matomo Übersicht: Kennzahlen, Verlauf, Listen. Eine Datenfarbe, Text in Textfarben. */
+.matomo-ov { --mov-accent: #2f7fcf; --mov-accent-soft: rgba(47, 127, 207, .14); --mov-grid: rgba(128, 128, 128, .22); --mov-muted: #7a8391; --mov-good: #2e8b57; --mov-bad: #c8463e; --mov-skeleton: rgba(128, 128, 128, .12); }
+.rex-theme-dark .matomo-ov { --mov-accent: #6fb1f0; --mov-accent-soft: rgba(111, 177, 240, .18); --mov-muted: #9aa4b1; --mov-good: #5fc37f; --mov-bad: #ef7b73; }
+@media (prefers-color-scheme: dark) { body:not(.rex-theme-light) .matomo-ov { --mov-accent: #6fb1f0; --mov-accent-soft: rgba(111, 177, 240, .18); --mov-muted: #9aa4b1; --mov-good: #5fc37f; --mov-bad: #ef7b73; } }
+
+.matomo-ov-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+.matomo-ov-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.matomo-ov-filters .form-control { width: auto; min-width: 160px; display: inline-block; }
+.matomo-ov-updated { font-size: 12px; }
+.matomo-ov-actions { display: flex; gap: 6px; }
+
+.matomo-ov-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 15px; }
+@media (min-width: 1200px) { .matomo-ov-kpis { grid-template-columns: repeat(4, 1fr); } }
+.matomo-ov-kpi { border: 1px solid var(--mov-grid); border-radius: 4px; padding: 14px 16px; min-height: 92px; background: transparent; position: relative; }
+.matomo-ov-kpi-value { font-size: 26px; font-weight: 700; line-height: 1.15; letter-spacing: -.01em; white-space: nowrap; }
+.matomo-ov-kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--mov-muted); margin-top: 4px; }
+.matomo-ov-kpi-delta { font-size: 12px; margin-top: 8px; color: var(--mov-muted); }
+.matomo-ov-kpi-delta.is-up { color: var(--mov-good); }
+.matomo-ov-kpi-delta.is-down { color: var(--mov-bad); }
+.matomo-ov-kpi-delta .fa { margin-right: 3px; }
+
+.matomo-ov-card .panel-title { display: flex; align-items: center; gap: 6px; }
+.matomo-ov-card-tools { margin-left: auto; }
+.matomo-ov-card-tools .btn-link { padding: 0; font-size: 12px; }
+.matomo-ov-body { min-height: 120px; position: relative; }
+.matomo-ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 15px; }
+.matomo-ov-grid .panel { margin-bottom: 0; height: 100%; }
+.matomo-ov-grid-wide { grid-column: 1 / -1; }
+@media (min-width: 1400px) { .matomo-ov-grid { grid-template-columns: repeat(3, 1fr); } }
+
+.matomo-ov-skeleton { height: 60px; border-radius: 4px; background: linear-gradient(90deg, var(--mov-skeleton) 25%, transparent 50%, var(--mov-skeleton) 75%); background-size: 200% 100%; animation: matomo-ov-shimmer 1.4s infinite; }
+@keyframes matomo-ov-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.matomo-ov-empty, .matomo-ov-error { color: var(--mov-muted); padding: 20px 0; text-align: center; }
+.matomo-ov-error { color: var(--mov-bad); }
+
+/* Balkenlisten: Label, Balken, Wert (direkt beschriftet) */
+.matomo-ov-bars { list-style: none; margin: 0; padding: 0; }
+.matomo-ov-bar { display: grid; grid-template-columns: minmax(90px, 40%) 1fr auto; gap: 10px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--mov-grid); font-size: 13px; }
+.matomo-ov-bar:last-child { border-bottom: 0; }
+.matomo-ov-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.matomo-ov-bar-label small { color: var(--mov-muted); }
+.matomo-ov-bar-track { height: 10px; background: var(--mov-accent-soft); border-radius: 0 4px 4px 0; overflow: hidden; }
+.matomo-ov-bar-fill { height: 100%; background: var(--mov-accent); border-radius: 0 4px 4px 0; transition: width .5s ease; }
+.matomo-ov-bar-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.matomo-ov-bar-value small { color: var(--mov-muted); }
+.matomo-ov-flag { display: inline-block; width: 18px; text-align: center; margin-right: 4px; }
+
+/* Verlaufsdiagramm */
+.matomo-ov-chart { position: relative; }
+.matomo-ov-chart svg { width: 100%; height: 220px; display: block; overflow: visible; }
+.matomo-ov-chart .mov-grid line { stroke: var(--mov-grid); stroke-width: 1; }
+.matomo-ov-chart .mov-axis text { fill: var(--mov-muted); font-size: 11px; }
+.matomo-ov-chart .mov-area { fill: var(--mov-accent-soft); }
+.matomo-ov-chart .mov-line { fill: none; stroke: var(--mov-accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.matomo-ov-chart .mov-dot { fill: var(--mov-accent); stroke: transparent; stroke-width: 6; r: 4; opacity: 0; }
+.matomo-ov-chart .mov-dot.is-active { opacity: 1; }
+.matomo-ov-chart .mov-crosshair { stroke: var(--mov-muted); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; }
+.matomo-ov-chart .mov-hit { fill: transparent; }
+.matomo-ov-tooltip { position: absolute; pointer-events: none; background: #1f2933; color: #fff; font-size: 12px; padding: 6px 8px; border-radius: 4px; white-space: nowrap; transform: translate(-50%, -110%); opacity: 0; transition: opacity .1s; z-index: 5; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.matomo-ov-tooltip.is-visible { opacity: 1; }
+.matomo-ov-tooltip strong { display: block; }
+.matomo-ov-legend { display: flex; gap: 14px; font-size: 12px; color: var(--mov-muted); margin-top: 6px; }
+.matomo-ov-legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--mov-accent); margin-right: 5px; vertical-align: -1px; }
+.matomo-ov-chart-table { width: 100%; font-size: 13px; }
+.matomo-ov-chart-table td, .matomo-ov-chart-table th { padding: 4px 8px; border-bottom: 1px solid var(--mov-grid); text-align: right; }
+.matomo-ov-chart-table td:first-child, .matomo-ov-chart-table th:first-child { text-align: left; }
+
+/* Domain-Tabelle */
+.matomo-ov-sites { width: 100%; font-size: 13px; }
+.matomo-ov-sites th, .matomo-ov-sites td { padding: 8px 10px; border-bottom: 1px solid var(--mov-grid); vertical-align: middle; }
+.matomo-ov-sites th { font-weight: 600; color: var(--mov-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.matomo-ov-sites td.num, .matomo-ov-sites th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.matomo-ov-sites tr:last-child td { border-bottom: 0; }
+.matomo-ov-sites .matomo-ov-delta { font-size: 11px; color: var(--mov-muted); display: block; }
+.matomo-ov-sites .matomo-ov-delta.is-up { color: var(--mov-good); }
+.matomo-ov-sites .matomo-ov-delta.is-down { color: var(--mov-bad); }
+.matomo-ov-sites tr.is-active td { background: var(--mov-accent-soft); }

@@ -113,7 +113,9 @@ Under **Matomo → Domains**:
 - **Domain synchronization**: Keep Matomo and YRewrite domains in sync
 
 ### 4. **View Statistics**
-- **Matomo → Overview**: Compact statistics for all domains with optional Top 5 pages
+- **Matomo → Overview**: KPIs (visits, unique visitors, page views, bounce rate, avg. visit duration, actions per visit, conversions, conversion rate) each compared to the previous period, a trend chart (hourly, daily or monthly, also as a table), top pages, referrers, devices, countries and a per-domain table
+- **Filters** by domain and period (today, yesterday, 7 days, 30 days, month, year); the selection is remembered in the browser
+- **Non-blocking**: the page appears immediately, all sections load in parallel via `rex-api-call=matomo_stats` and refresh every 5 minutes
 - **Open Matomo**: With personal access the user lands directly in Matomo, no login
 - **Direct Domain Links**: Quick access to specific domain statistics
 
@@ -175,7 +177,7 @@ If **consent_kit** or **consent_manager** is installed, setup step 4 creates Mat
 - `cookie_lifetime`: Cookie lifetime
 
 ### Statistics Features
-- `show_top_pages`: Enable/disable Top 5 Pages feature
+- `show_top_pages`: show top pages on the overview
 
 ### Connection & access
 - `matomo_url`, `matomo_path`, `admin_token`: connection (setup step 2)
@@ -385,6 +387,12 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 
 ## 📝 Changelog
+
+### Version 2.7.0
+- **New overview**: KPIs compared to the previous period, trend chart with hover tooltip and table view, top pages, referrers (types and websites), devices, countries, per-domain table; dark mode
+- **Filters** by domain and period, selection is remembered; "Open Matomo" follows the domain filter
+- **Non-blocking**: the page renders immediately, sections load in parallel via API (`matomo_stats`, bundled Matomo bulk requests, session lock released)
+- **Fix**: the YRewrite domain filter compares hosts without port and `www.` (domains with a port were hidden)
 
 ### Version 2.6.2
 - **Correction to 2.6.1**: there is no "consent_manager 6", consent_manager stays as it is. Instead consent_kit is supported under its old (`KLXM\ConsentKit`) and new namespace (`FriendsOfRedaxo\ConsentKit`)

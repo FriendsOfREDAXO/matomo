@@ -4,16 +4,22 @@ use FriendsOfRedaxo\Matomo\MatomoInfoCenterWidget;
 use FriendsOfRedaxo\Matomo\MatomoDashboardItem;
 use FriendsOfRedaxo\Matomo\MatomoProxyApi;
 use FriendsOfRedaxo\Matomo\MatomoEventApi;
+use FriendsOfRedaxo\Matomo\MatomoStatsApi;
 use FriendsOfRedaxo\Matomo\Tracker;
 
 // API-Funktionen registrieren
 rex_api_function::register('matomo_proxy', MatomoProxyApi::class);
 rex_api_function::register('matomo_event', MatomoEventApi::class);
+rex_api_function::register('matomo_stats', MatomoStatsApi::class);
 rex_api_function::register('matomo_test_connection', 'rex_api_matomo_test_connection');
 rex_api_function::register('matomo_test_proxy', 'rex_api_matomo_test_proxy');
 
 if (rex::isBackend() && in_array(rex_be_controller::getCurrentPage(), ['matomo/config', 'matomo/settings'], true)) {
     rex_view::addJsFile(rex_addon::get('matomo')->getAssetsUrl('matomo-config.js'));
+}
+if (rex::isBackend() && rex_be_controller::getCurrentPage() === 'matomo/overview') {
+    rex_view::addCssFile(rex_addon::get('matomo')->getAssetsUrl('matomo-overview.css'));
+    rex_view::addJsFile(rex_addon::get('matomo')->getAssetsUrl('matomo-overview.js'));
 }
 
 // ── Server-Side Tracking (kein JS, keine Cookies) ──────────────────────────

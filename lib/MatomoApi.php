@@ -664,6 +664,31 @@ TXT;
     }
 
     /**
+     * Mehrere Reports in einem Aufruf (API.getBulkRequest). Jeder Eintrag ist ein
+     * Parameter-Array mit method, idSite, period, date usw.; die Antworten kommen in
+     * derselben Reihenfolge zurück.
+     *
+     * @param list<array<string, mixed>> $requests
+     * @return list<mixed>
+     * @throws Exception bei API-Fehlern
+     */
+    public function bulk(array $requests): array
+    {
+        if ([] === $requests) {
+            return [];
+        }
+        $urls = [];
+        foreach ($requests as $request) {
+            $urls[] = http_build_query($request, '', '&');
+        }
+        $result = $this->apiCall('API.getBulkRequest', ['urls' => $urls]);
+        if (!is_array($result)) {
+            throw new Exception('Unerwartete Antwort auf Bulk-Request');
+        }
+        return array_values($result);
+    }
+
+    /**
      * Dashboard-Statistiken abrufen (verwendet User Token)
      * 
      * @param int $site_id Site-ID der Website
@@ -822,30 +847,36 @@ class YRewriteHelper
             return $matomo_sites;
         }
         
-        $yrewrite_domains = self::getAvailableDomains();
-        $yrewrite_hosts = array_column($yrewrite_domains, 'host');
-        
+        $yrewrite_hosts = array_map([self::class, 'normalizeHost'], array_column(self::getAvailableDomains(), 'host'));
+
         // Default Domain auch erlauben
         $default_domain = \rex_yrewrite::getDomainByName('default');
         if (null !== $default_domain) {
-            $yrewrite_hosts[] = $default_domain->getHost();
+            $yrewrite_hosts[] = self::normalizeHost($default_domain->getHost());
         }
-        
+
         $filtered_sites = [];
-        
         foreach ($matomo_sites as $site) {
-            $site_url = $site['main_url'] ?? '';
-            $site_host = parse_url($site_url, PHP_URL_HOST);
-            
-            // Prüfe ob Site-Host in YRewrite Domains enthalten ist
-            if (in_array($site_host, $yrewrite_hosts, true)) {
+            $site_host = self::normalizeHost((string) parse_url((string) ($site['main_url'] ?? ''), PHP_URL_HOST));
+            if ('' !== $site_host && in_array($site_host, $yrewrite_hosts, true)) {
                 $filtered_sites[] = $site;
             }
         }
-        
+
         return $filtered_sites;
     }
     
+    /**
+     * Hostvergleich ohne Port, Schema und "www." (YRewrite-Domains können Ports enthalten).
+     */
+    public static function normalizeHost(string $host): string
+    {
+        $host = strtolower(trim($host));
+        $host = (string) preg_replace('~^https?://~', '', $host);
+        $host = (string) preg_replace('~[:/].*$~', '', $host);
+        return (string) preg_replace('/^www\./', '', $host);
+    }
+
     /**
      * Holt YRewrite Domain Info für einen Host
      * 
@@ -860,8 +891,9 @@ class YRewriteHelper
         
         $yrewrite_domains = \rex_yrewrite::getDomains();
         
+        $host = self::normalizeHost($host);
         foreach ($yrewrite_domains as $name => $domain) {
-            if ($domain->getHost() === $host) {
+            if (self::normalizeHost($domain->getHost()) === $host) {
                 return [
                     'name' => $name,
                     'title' => self::domainTitle($domain, $name),
