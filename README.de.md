@@ -127,7 +127,7 @@ Der frühere getrennte „User Token“ entfällt; ein vorhandener Eintrag wird 
 
 ### Admin-Passwort und Token zurücksetzen
 
-Die Matomo-API erlaubt keine Passwortänderung ohne das aktuelle Passwort. Ist es verloren, bietet die Einrichtung (Schritt 2, aufklappbar) bei **lokaler Installation** einen Reset: Das AddOn liest die Datenbankzugangsdaten aus Matomos `config/config.ini.php`, setzt das Passwort des angegebenen Superusers direkt in der Benutzertabelle neu (wie in Matomos FAQ zum vergessenen Passwort), verwirft alle Tokens dieses Benutzers und erzeugt ein neues Token. Das neue Passwort wird einmalig angezeigt. Bei externem Matomo dort „Passwort vergessen“ nutzen und anschließend hier das Token neu erzeugen lassen.
+Die Matomo-API erlaubt keine Passwortänderung ohne das aktuelle Passwort. Ist es verloren, bietet die Einrichtung (Schritt 2, aufklappbar) bei **lokaler Installation** einen Reset. Bevorzugt ruft das AddOn dafür per PHP-CLI `bin/matomo-user-password.php` auf: Das Script bootstrappt Matomo selbst und setzt das Passwort über Matomos UsersManager-API, also mit Matomos eigener Datenbankverbindung. Steht keine CLI zur Verfügung (kein `proc_open`, kein PHP-Binary), liest das AddOn die Datenbankzugangsdaten aus `config/config.ini.php` und setzt das Passwort direkt in der Benutzertabelle. Anschließend werden alle Tokens des Superusers verworfen und ein neues Token erzeugt. Das neue Passwort wird einmalig angezeigt. Bei externem Matomo dort „Passwort vergessen“ nutzen und anschließend hier das Token neu erzeugen lassen.
 
 Schlägt die Datenbankverbindung mit den Daten aus der config.ini.php fehl (Meldung nennt Datei, Benutzer, Datenbank und die versuchten Wege Socket/TCP), lassen sich unter **Konfiguration → Matomo-Datenbank für Passwort-Reset** eigene Zugangsdaten hinterlegen.
 
@@ -393,6 +393,9 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.8.2
+- **Passwort setzen über Matomo selbst**: Admin-Reset und „Mein Matomo-Zugang“ nutzen jetzt bevorzugt `bin/matomo-user-password.php` per PHP-CLI, das Matomo bootstrappt und dessen UsersManager-API mit Matomos eigener Datenbankverbindung verwendet. Der direkte Datenbankzugriff bleibt als Fallback; Fehlermeldungen nennen beide Wege
 
 ### Version 2.8.1
 - **Passwort-Reset**: Verbindung zur Matomo-Datenbank probiert bei „localhost“ zusätzlich TCP (127.0.0.1) und umgekehrt; die Fehlermeldung nennt Konfigurationsdatei, Benutzer, Datenbank, Passwortlänge und alle Versuche
