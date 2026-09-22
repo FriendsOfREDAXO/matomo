@@ -395,6 +395,9 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 
 ## 📝 Changelog
 
+### Version 2.10.2
+- **Fix**: Der obere Knopf „Matomo öffnen“ zielte ohne Website-Einschränkung fest auf Site-ID 1; existiert die nicht, schlug die Anmeldung fehl. Ohne gewählte Domain öffnet Matomo jetzt die Standard-Website des Benutzers
+
 ### Version 2.10.1
 - Der Auto-Login-Block in Einrichtung Schritt 5 erscheint jetzt unabhängig von Verbindung und Superuser-Token, die Aktivierung braucht keine API
 

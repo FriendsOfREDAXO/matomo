@@ -260,11 +260,15 @@ class UserAccess
                 ? $base . '/index.php?module=CoreHome&action=index&idSite=' . $siteId . '&period=' . $period . '&date=' . $date
                 : $base . '/';
         }
+        if ($siteId <= 0 && [] === $access['sites']) {
+            // Token-Zugang braucht eine Site-ID; ohne bekannte Website Matomo selbst wählen lassen
+            return $base . '/index.php?token_auth=' . rawurlencode($access['token']);
+        }
 
         $params = [
             'module' => 'CoreHome',
             'action' => 'index',
-            'idSite' => $siteId > 0 ? $siteId : ([] !== $access['sites'] ? $access['sites'][0] : self::firstSiteId()),
+            'idSite' => $siteId > 0 ? $siteId : $access['sites'][0],
             'period' => $period,
             'date' => $date,
             'token_auth' => $access['token'],
@@ -333,10 +337,5 @@ class UserAccess
     public static function randomPassword(): string
     {
         return rtrim(strtr(base64_encode(random_bytes(24)), '+/', '-_'), '=') . 'A1!';
-    }
-
-    private static function firstSiteId(): int
-    {
-        return max(1, (int) rex_config::get('matomo', 'server_side_site_id', 0));
     }
 }

@@ -104,13 +104,13 @@ class AutoLogin
     }
 
     /**
-     * Ziel-URL innerhalb von Matomo nach der Anmeldung.
+     * Ziel-URL innerhalb von Matomo nach der Anmeldung. Ohne Site-ID öffnet Matomo
+     * die Standard-Website des Benutzers (eine feste ID wie 1 existiert nicht überall).
      */
     public static function targetUrl(int $siteId = 0): string
     {
         if ($siteId <= 0) {
-            $access = UserAccess::forCurrentUser();
-            $siteId = null !== $access && [] !== $access['sites'] ? $access['sites'][0] : max(1, (int) rex_config::get('matomo', 'server_side_site_id', 0));
+            return 'index.php';
         }
         return 'index.php?module=CoreHome&action=index&idSite=' . $siteId . '&period=day&date=today';
     }

@@ -396,6 +396,9 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 ## 📝 Changelog
 
+### Version 2.10.2
+- **Fix**: the top "Open Matomo" button targeted site ID 1 when no website restriction was set; if that site does not exist, the login failed. Without a selected domain Matomo now opens the user's default website
+
 ### Version 2.10.1
 - The auto-login block in setup step 5 now appears regardless of connection and superuser token, enabling it needs no API
 

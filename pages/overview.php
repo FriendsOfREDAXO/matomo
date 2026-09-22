@@ -84,7 +84,7 @@ $config = [
         'name' => (string) $s['name'],
         'host' => (string) parse_url((string) ($s['main_url'] ?? ''), PHP_URL_HOST),
     ], $sites),
-    'openUrlAll' => UserAccess::openUrl(),
+    'openUrlAll' => UserAccess::openUrl((int) ($sites[0]['idsite'] ?? 0)),
     'autoLogin' => AutoLogin::credentialsForCurrentUser(),
     'showTopPages' => (bool) rex_config::get('matomo', 'show_top_pages', true),
     'locale' => str_replace('_', '-', rex_i18n::getLocale()),
