@@ -71,10 +71,31 @@ class ConsentRegistration
             return;
         }
         if ('consent_manager' === $tool) {
-            self::registerConsentManager($snippet);
+            self::registerConsentManager($api->trackingSnippet($siteId, $useProxy, self::hostSiteMap($sites)));
             return;
         }
         throw new Exception('Unbekanntes Consent-Tool: ' . $tool);
+    }
+
+    /**
+     * Hostname => Site-ID aus den Matomo-Websites, jeweils mit und ohne "www.".
+     *
+     * @param array<int, array<string, mixed>> $sites
+     * @return array<string, int>
+     */
+    public static function hostSiteMap(array $sites): array
+    {
+        $map = [];
+        foreach ($sites as $site) {
+            $host = strtolower((string) parse_url((string) ($site['main_url'] ?? ''), PHP_URL_HOST));
+            $host = (string) preg_replace('/^www\./', '', $host);
+            if ('' === $host || !str_contains($host, '.')) {
+                continue;
+            }
+            $map[$host] = (int) $site['idsite'];
+            $map['www.' . $host] = (int) $site['idsite'];
+        }
+        return $map;
     }
 
     /**
@@ -142,7 +163,9 @@ class ConsentRegistration
 
     /**
      * consent_manager: ein Cookie-Datensatz je Sprache (uid "matomo") in der Gruppe
-     * "statistics"; fehlt die Gruppe, wird sie angelegt.
+     * "statistics"; fehlt die Gruppe, wird sie angelegt und allen Domains zugeordnet.
+     * Dienste sind in consent_manager domainübergreifend, deshalb wählt der Tracking-Code
+     * die Site-ID zur Laufzeit anhand des Hostnamens.
      */
     private static function registerConsentManager(string $snippet): void
     {
@@ -158,6 +181,10 @@ class ConsentRegistration
 
         $cookieId = self::datasetId($cookieTable, self::SERVICE_KEY);
         $groupId = self::datasetId($groupTable, 'statistics');
+
+        // Gruppen erscheinen nur auf zugeordneten Domains
+        $domainIds = array_column(rex_sql::factory()->getArray('SELECT id FROM ' . rex::getTable('consent_manager_domain')), 'id');
+        $allDomains = [] === $domainIds ? '' : '|' . implode('|', array_map('intval', $domainIds)) . '|';
 
         foreach (rex_clang::getAllIds() as $clangId) {
             $sql = rex_sql::factory();
@@ -204,7 +231,7 @@ class ConsentRegistration
                 rex_sql::factory()->setTable($groupTable)
                     ->setValue('id', $groupId)
                     ->setValue('clang_id', $clangId)
-                    ->setValue('domain', '')
+                    ->setValue('domain', $allDomains)
                     ->setValue('uid', 'statistics')
                     ->setValue('prio', 2)
                     ->setValue('required', null)

@@ -372,8 +372,11 @@ class MatomoApi
 
     /**
      * Reiner Tracking-Code (ohne Erklärtext) für Consent-Tools und Templates.
+     *
+     * @param array<string, int> $hostSiteMap Hostname => Site-ID; wenn gesetzt, wählt der
+     *                                        Code die Site-ID zur Laufzeit anhand von location.hostname
      */
-    public function trackingSnippet(int $site_id, bool $use_proxy = false): string
+    public function trackingSnippet(int $site_id, bool $use_proxy = false, array $hostSiteMap = []): string
     {
         if ($use_proxy) {
             $tracker_url = $this->buildProxyUrl('matomo.php');
@@ -383,7 +386,7 @@ class MatomoApi
             $js_url = $this->matomo_url . '/matomo.js';
         }
 
-        return $this->buildTrackingHtml($site_id, $tracker_url, $js_url, ' async defer');
+        return $this->buildTrackingHtml($site_id, $tracker_url, $js_url, ' async defer', $hostSiteMap);
     }
 
     private function buildClientTrackingSnippet(int $site_id, string $tracker_url, string $js_url, string $async): string
@@ -392,8 +395,17 @@ class MatomoApi
             . $this->buildTrackingHtml($site_id, $tracker_url, $js_url, $async);
     }
 
-    private function buildTrackingHtml(int $site_id, string $tracker_url, string $js_url, string $async): string
+    /**
+     * @param array<string, int> $hostSiteMap
+     */
+    private function buildTrackingHtml(int $site_id, string $tracker_url, string $js_url, string $async, array $hostSiteMap = []): string
     {
+        $siteIdExpr = "'{$site_id}'";
+        if ([] !== $hostSiteMap) {
+            $map = json_encode(array_map('strval', $hostSiteMap), JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            $siteIdExpr = "({$map})[location.hostname] || '{$site_id}'";
+        }
+
         return <<<JS
 <!-- Matomo -->
 <script{$async}>
@@ -403,7 +415,7 @@ class MatomoApi
   _paq.push(['enableLinkTracking']);
     (function() {
         _paq.push(['setTrackerUrl', '{$tracker_url}']);
-    _paq.push(['setSiteId', '{$site_id}']);
+    _paq.push(['setSiteId', {$siteIdExpr}]);
     var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
     g.async=true; g.src='{$js_url}'; s.parentNode.insertBefore(g,s);
   })();
@@ -744,7 +756,7 @@ class YRewriteHelper
             $domains[$name] = [
                 'name' => $name,
                 'url' => $domain->getUrl(),
-                'title' => $domain->getTitle() !== '' ? $domain->getTitle() : $name,
+                'title' => self::domainTitle($domain, $name),
                 'host' => $domain->getHost()
             ];
         }
@@ -752,6 +764,18 @@ class YRewriteHelper
         return $domains;
     }
     
+    /**
+     * YRewrite-Titel enthalten oft Platzhalter (%T, %SN); als Site-Name taugt dann nur der Host.
+     */
+    private static function domainTitle(\rex_yrewrite_domain $domain, string $name): string
+    {
+        $title = trim($domain->getTitle());
+        if ('' === $title || str_contains($title, '%')) {
+            return '' !== $domain->getHost() ? $domain->getHost() : $name;
+        }
+        return $title;
+    }
+
     /**
      * Filtert Matomo Sites nach YRewrite Domains
      * 
@@ -806,7 +830,7 @@ class YRewriteHelper
             if ($domain->getHost() === $host) {
                 return [
                     'name' => $name,
-                    'title' => $domain->getTitle() !== '' ? $domain->getTitle() : $name
+                    'title' => self::domainTitle($domain, $name),
                 ];
             }
         }

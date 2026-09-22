@@ -141,7 +141,7 @@ The former auto-login via `login_allow_logme` (MD5 password in the URL, patching
 If **consent_kit** or **consent_manager** is installed, setup step 4 creates Matomo as a service there, including the tracking code (also with the proxy enabled) and cookie details (`_pk_id*`, `_pk_ses*`, `_pk_ref*`):
 
 - **consent_kit**: service `matomo` from the bundled preset with `matomo_url` and `site_id` from the add-on settings. For every consent_kit domain whose host matches a Matomo website, a variant with the matching site ID is created. Texts, group and domains you already edited are kept on update.
-- **consent_manager**: cookie `matomo` in the `statistics` group for all languages; the group is created if missing. An update only rewrites the tracking code.
+- **consent_manager**: cookie `matomo` in the `statistics` group for all languages; the group is created if missing and assigned to all domains. Since consent_manager only knows services across all domains, the stored tracking code picks the site ID at runtime by hostname (all Matomo websites, each with and without `www.`); the website selected in the setup is the fallback. An update only rewrites the tracking code.
 
 ## 🎯 Tracking Code Integration
 
@@ -380,6 +380,10 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 
 ## 📝 Changelog
+
+### Version 2.5.1
+- **Fix multi-domain in consent_manager**: the `matomo` service carried a single site ID. The tracking code now picks the site ID at runtime by hostname, and a newly created `statistics` group is assigned to all domains
+- **Fix YRewrite import**: domain titles with placeholders (e.g. `%T / %SN`) are no longer used as Matomo site names, the host is used instead
 
 ### Version 2.5.0
 - **Five-step setup**: "Matomo Setup" and "Configuration" overlapped (URL, path, token twice). Now one guided setup page (provide, connection, websites, consent tool, access) and a configuration page for tracking/privacy options only

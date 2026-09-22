@@ -138,7 +138,7 @@ Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, 
 Ist **consent_kit** oder **consent_manager** installiert, legt die Einrichtung (Schritt 4) Matomo dort als Dienst an, inklusive Tracking-Code (auch mit aktiviertem Proxy) und Cookie-Angaben (`_pk_id*`, `_pk_ses*`, `_pk_ref*`):
 
 - **consent_kit**: Dienst `matomo` aus dem mitgelieferten Preset, Parameter `matomo_url` und `site_id` aus den Addon-Einstellungen. Für jede consent_kit-Domain, deren Host einer Matomo-Website entspricht, entsteht eine Variante mit der passenden Site-ID. Bereits gepflegte Texte, Gruppe und Domains bleiben beim Aktualisieren erhalten.
-- **consent_manager**: Cookie `matomo` in der Gruppe `statistics` für alle Sprachen; fehlt die Gruppe, wird sie angelegt. Beim Aktualisieren wird nur der Tracking-Code neu geschrieben.
+- **consent_manager**: Cookie `matomo` in der Gruppe `statistics` für alle Sprachen; fehlt die Gruppe, wird sie angelegt und allen Domains zugeordnet. Da consent_manager Dienste nur domainübergreifend kennt, wählt der hinterlegte Tracking-Code die Site-ID zur Laufzeit anhand des Hostnamens (alle Matomo-Websites, jeweils mit und ohne `www.`); die in der Einrichtung gewählte Website ist der Fallback. Beim Aktualisieren wird nur der Tracking-Code neu geschrieben.
 
 ## 🎯 Tracking-Code Integration
 
@@ -379,6 +379,10 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.5.1
+- **Fix Multidomain in consent_manager**: Der Dienst „matomo“ trug nur eine Site-ID. Der Tracking-Code wählt die Site-ID jetzt zur Laufzeit anhand des Hostnamens, eine neu angelegte Gruppe „statistics“ wird allen Domains zugeordnet
+- **Fix YRewrite-Import**: Domain-Titel mit Platzhaltern (z. B. `%T / %SN`) werden nicht mehr als Matomo-Site-Name übernommen, stattdessen der Host
 
 ### Version 2.5.0
 - **Einrichtung in fünf Schritten**: Die Seiten „Matomo-Setup“ und „Konfiguration“ überschnitten sich (URL, Pfad, Token doppelt). Jetzt: eine geführte Einrichtungsseite (Bereitstellen, Verbindung, Websites, Consent-Tool, Zugänge) und eine Konfigurationsseite nur für Tracking-/Datenschutz-Optionen
