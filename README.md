@@ -86,7 +86,7 @@ The **Matomo AddOn** provides complete integrat### 4. **View Statistics**
 ### 1. **Setup**
 **Matomo → Setup** guides through the initial configuration in five steps, each showing whether it is done:
 
-1. **Provide Matomo** – download Matomo into a folder below the web root, then complete Matomo's own installation wizard (database, superuser, first website). If you already run Matomo (even externally), skip this step.
+1. **Provide Matomo** – download Matomo into a folder below the web root, then complete Matomo's own installation wizard (database, superuser, first website). If you already run Matomo (even externally), skip this step. For local installations the add-on then automatically deactivates the advertising plugin "ProfessionalServices" (via Matomo's console over PHP CLI; without a CLI a hint is shown).
 2. **Connection** – enter the Matomo URL and the API token. Easiest: enter username and password of a Matomo superuser, the add-on generates the token itself (the password is not stored). Alternatively paste an existing token.
 3. **Websites** – lists the websites in Matomo, with a link to domain management (YRewrite import).
 4. **Consent tool** – registers Matomo as a service in **consent_kit** or **consent_manager** if installed (see below).
@@ -138,7 +138,7 @@ If the database connection with the data from config.ini.php fails (the message 
 
 The former auto-login via `login_allow_logme` (MD5 password in the URL, patching Matomo's `config.ini.php`) has been removed. The add-on now uses Matomo's own token access:
 
-- In setup step 5 every REDAXO user gets an **own Matomo user** (view access to all websites) plus a **personal app token** with one click. Login and e-mail come from the REDAXO user, the password is random and not stored.
+- In setup step 5 every REDAXO user gets an **own Matomo user** (view access to all websites), a random **password** and a **personal app token** with one click. Login and e-mail come from the REDAXO user; without a valid e-mail address in the REDAXO user no access is created, because Matomo requires a unique address per user. Password and token are stored in the REDAXO configuration (`user_access`) so the user can view and change the password on the overview.
 - "Open Matomo" on the overview then calls `index.php?module=CoreHome&…&token_auth=…` – Matomo opens its full interface as that user, without login and without touching the Matomo configuration.
 - Matomo only allows token access to the UI for users **without** write/superuser permissions. For Matomo administration, log in normally.
 - **Visible websites per user**: in the access table you can define per REDAXO user which Matomo websites they may see (no selection = all). The selection is set as view access per website in Matomo and additionally filters the overview and widgets in REDAXO.
@@ -147,7 +147,7 @@ The former auto-login via `login_allow_logme` (MD5 password in the URL, patching
 
 ### My Matomo access (overview)
 
-Editors with personal access see their Matomo username, their visible websites and a link to the Matomo login at the bottom of the overview. For local installations they can **set a Matomo password** there themselves (or have one generated); it is shown once and not stored in REDAXO. This enables the regular Matomo login including "Remember me". For an external Matomo, "Forgot password" in Matomo remains (e-mail address from REDAXO).
+Editors with personal access see the Matomo URL, their username, their **password** (revealed on click), their visible websites and a link to the Matomo login at the bottom of the overview. "Change password" sets their own or generates a new one. The change goes through the Matomo API with their own token (Matomo only requires their own current password for that), so it works for local and external Matomo. This enables the regular Matomo login including "Remember me".
 - Requirement: `only_allow_secure_auth_tokens` must not be enabled in Matomo (default: off).
 
 ## 🍪 Consent registration
@@ -394,6 +394,11 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 
 ## 📝 Changelog
+
+### Version 2.9.0
+- **Password stored per access and changeable**: the Matomo password generated on creation is stored with the access; "My Matomo access" reveals it on click and changes it through the Matomo API with the user's own token. Works for local and external Matomo without database or CLI access. Accesses from older versions without a password are recreated with the same login on the first change
+- **ProfessionalServices off**: for local installations Matomo's advertising plugin "ProfessionalServices" is deactivated automatically
+- **E-mail required**: accesses are only created for REDAXO users with a valid e-mail address (Matomo requires a unique address per user); the setup marks users without one, no more generated placeholder addresses
 
 ### Version 2.8.2
 - **Set passwords through Matomo itself**: admin reset and "My Matomo access" now prefer `bin/matomo-user-password.php` via PHP CLI, which bootstraps Matomo and uses its UsersManager API with Matomo's own database connection. Direct database access remains as fallback; error messages name both routes

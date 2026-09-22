@@ -35,17 +35,9 @@ class AdminReset
         return class_exists(PDO::class) && '' !== (string) rex_config::get('matomo', 'db_override_user', '');
     }
 
-    /**
-     * Lokales Matomo-Verzeichnis (leer, wenn extern oder nicht gefunden).
-     */
     public static function matomoDir(): string
     {
-        $path = trim((string) rex_config::get('matomo', 'matomo_path', ''), " /\\");
-        if ('' === $path) {
-            return '';
-        }
-        $dir = rtrim(rex_path::frontend($path), '/');
-        return is_file($dir . '/core/bootstrap.php') && is_file($dir . '/config/config.ini.php') ? $dir : '';
+        return MatomoCli::matomoDir();
     }
 
     /**
@@ -145,67 +137,23 @@ class AdminReset
      */
     private static function setPasswordViaCli(string $login, string $newPassword, bool $requireSuperuser, bool $revokeTokens): ?string
     {
-        $matomoDir = self::matomoDir();
-        if ('' === $matomoDir) {
-            return 'kein lokales Matomo-Verzeichnis';
+        $reason = MatomoCli::unavailableReason();
+        if ('' !== $reason) {
+            return $reason;
         }
-        if (!function_exists('proc_open')) {
-            return 'proc_open ist deaktiviert';
-        }
-        $php = self::phpBinary();
-        if (null === $php) {
-            return 'kein PHP-CLI-Binary gefunden';
-        }
-
-        $cmd = [$php, '-d', 'display_errors=stderr', rex_addon::get('matomo')->getPath('bin/matomo-user-password.php'), $matomoDir, $login];
+        $args = [rex_addon::get('matomo')->getPath('bin/matomo-user-password.php'), MatomoCli::matomoDir(), $login];
         if ($requireSuperuser) {
-            $cmd[] = '--require-superuser';
+            $args[] = '--require-superuser';
         }
         if ($revokeTokens) {
-            $cmd[] = '--revoke-tokens';
+            $args[] = '--revoke-tokens';
         }
-        $env = ['MATOMO_NEW_PASSWORD' => $newPassword, 'PATH' => (string) getenv('PATH'), 'HOME' => sys_get_temp_dir()];
-
-        $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-        $process = @proc_open($cmd, $descriptors, $pipes, $matomoDir, $env);
-        if (!is_resource($process)) {
-            return 'Prozess konnte nicht gestartet werden (' . $php . ')';
-        }
-        fclose($pipes[0]);
-        stream_set_timeout($pipes[1], 90);
-        $stdout = (string) stream_get_contents($pipes[1]);
-        $stderr = (string) stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
-        $code = proc_close($process);
-
-        if (0 === $code && str_contains($stdout, 'OK')) {
+        $result = MatomoCli::run($args, ['MATOMO_NEW_PASSWORD' => $newPassword]);
+        if (0 === $result['code'] && str_contains($result['stdout'], 'OK')) {
             return null;
         }
-        $message = trim($stdout . "\n" . $stderr);
-        return '' !== $message ? substr($message, 0, 500) : 'Exit-Code ' . $code . ' (' . $php . ')';
-    }
-
-    /**
-     * PHP-CLI: gleiche Version wie der Webserver, u.a. Plesk-Pfade.
-     */
-    private static function phpBinary(): ?string
-    {
-        $candidates = [];
-        if (!str_contains(PHP_BINARY, 'fpm') && !str_contains(PHP_BINARY, 'cgi')) {
-            $candidates[] = PHP_BINARY;
-        }
-        $candidates[] = PHP_BINDIR . '/php';
-        $candidates[] = '/opt/plesk/php/' . PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION . '/bin/php';
-        $candidates[] = '/usr/bin/php' . PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
-        $candidates[] = '/usr/local/bin/php';
-        $candidates[] = '/usr/bin/php';
-        foreach ($candidates as $candidate) {
-            if (is_file($candidate) && is_executable($candidate)) {
-                return $candidate;
-            }
-        }
-        return null;
+        $message = trim($result['stdout'] . "\n" . $result['stderr']);
+        return '' !== $message ? substr($message, 0, 500) : 'Exit-Code ' . $result['code'];
     }
 
     /**

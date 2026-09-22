@@ -67,7 +67,7 @@ Das **Matomo AddOn** bietet eine vollständige Integration der Open-Source Web-A
 ### 1. **Einrichtung**
 Unter **Matomo → Einrichtung** führt eine Seite in fünf Schritten durch die Ersteinrichtung. Jeder Schritt zeigt, ob er erledigt ist:
 
-1. **Matomo bereitstellen** – Matomo in einen Ordner unterhalb des Web-Roots herunterladen und anschließend den Matomo-Installationsassistenten (Datenbank, Superuser, erste Website) durchlaufen. Wer bereits ein Matomo hat (auch extern), überspringt den Schritt.
+1. **Matomo bereitstellen** – Matomo in einen Ordner unterhalb des Web-Roots herunterladen und anschließend den Matomo-Installationsassistenten (Datenbank, Superuser, erste Website) durchlaufen. Wer bereits ein Matomo hat (auch extern), überspringt den Schritt. Bei lokaler Installation deaktiviert das AddOn anschließend automatisch das Werbe-Plugin „ProfessionalServices“ (über Matomos Konsole per PHP-CLI; ohne CLI erscheint ein Hinweis).
 2. **Verbindung** – Matomo-URL eintragen und das API-Token hinterlegen. Am einfachsten: Matomo-Benutzername und Passwort eines Superusers eingeben, das AddOn erzeugt das Token selbst (das Passwort wird nicht gespeichert). Alternativ ein vorhandenes Token eintragen.
 3. **Websites** – zeigt die in Matomo angelegten Websites, mit Sprung zur Domain-Verwaltung (YRewrite-Import).
 4. **Consent-Tool** – legt Matomo als Dienst in **consent_kit** oder **consent_manager** an, sofern installiert (siehe unten).
@@ -135,7 +135,7 @@ Schlägt die Datenbankverbindung mit den Daten aus der config.ini.php fehl (Meld
 
 Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, Patch der Matomo-`config.ini.php`) ist entfallen. Stattdessen nutzt das AddOn Matomos eigenen Token-Zugang:
 
-- In der Einrichtung, Schritt 5, bekommt jeder REDAXO-Benutzer per Klick einen **eigenen Matomo-Benutzer** (Leserecht auf alle Websites) und ein **persönliches App-Token**. Login und E-Mail werden aus dem REDAXO-Benutzer übernommen, das Passwort wird zufällig erzeugt und nicht gespeichert.
+- In der Einrichtung, Schritt 5, bekommt jeder REDAXO-Benutzer per Klick einen **eigenen Matomo-Benutzer** (Leserecht auf alle Websites), ein zufälliges **Passwort** und ein **persönliches App-Token**. Login und E-Mail werden aus dem REDAXO-Benutzer übernommen; ohne gültige E-Mail-Adresse im REDAXO-Benutzer wird kein Zugang angelegt, weil Matomo je Benutzer eine eindeutige Adresse verlangt. Passwort und Token liegen in der REDAXO-Konfiguration (`user_access`), damit der Benutzer sein Passwort auf der Übersicht sehen und ändern kann.
 - „Matomo öffnen“ in der Übersicht ruft dann `index.php?module=CoreHome&…&token_auth=…` auf – Matomo öffnet die komplette Oberfläche als dieser Benutzer, ohne Login und ohne Änderung an der Matomo-Konfiguration.
 - Matomo lässt Token-Zugänge in der Oberfläche nur für Benutzer **ohne** Schreib-/Superuser-Rechte zu. Für die Matomo-Administration meldet man sich weiterhin normal an.
 - **Sichtbare Websites je Benutzer**: In der Zugangstabelle lässt sich je REDAXO-Benutzer festlegen, welche Matomo-Websites er sehen darf (keine Auswahl = alle). Die Auswahl wird als Leserecht je Website in Matomo gesetzt und filtert zusätzlich Übersicht und Widgets in REDAXO.
@@ -144,7 +144,7 @@ Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, 
 
 ### Mein Matomo-Zugang (Übersicht)
 
-Redakteure mit persönlichem Zugang sehen unten auf der Übersicht ihren Matomo-Benutzernamen, ihre sichtbaren Websites und einen Link zur Matomo-Anmeldung. Bei lokaler Installation können sie sich dort selbst ein **Matomo-Passwort setzen** (oder erzeugen lassen); es wird einmalig angezeigt und nicht in REDAXO gespeichert. Damit ist die reguläre Anmeldung in Matomo inklusive „Angemeldet bleiben“ möglich. Bei externem Matomo bleibt „Passwort vergessen“ in Matomo (E-Mail-Adresse aus REDAXO).
+Redakteure mit persönlichem Zugang sehen unten auf der Übersicht Matomo-URL, Benutzernamen, ihr **Passwort** (auf Klick sichtbar), ihre sichtbaren Websites und einen Link zur Matomo-Anmeldung. Über „Passwort ändern“ setzen sie ein eigenes oder lassen ein neues erzeugen. Die Änderung läuft über die Matomo-API mit dem eigenen Token (Matomo verlangt dafür nur das eigene aktuelle Passwort), funktioniert also bei lokalem und externem Matomo. Damit ist die reguläre Anmeldung in Matomo inklusive „Angemeldet bleiben“ möglich.
 - Voraussetzung: In Matomo darf `only_allow_secure_auth_tokens` nicht aktiv sein (Standard: inaktiv).
 
 ## 🍪 Consent-Registrierung
@@ -393,6 +393,11 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.9.0
+- **Passwort je Zugang gespeichert und änderbar**: Das beim Anlegen erzeugte Matomo-Passwort wird zum Zugang gespeichert; „Mein Matomo-Zugang“ zeigt es auf Klick und ändert es über die Matomo-API mit dem eigenen Token. Funktioniert bei lokalem und externem Matomo, ohne Datenbank- oder CLI-Zugriff. Zugänge aus älteren Versionen ohne Passwort werden beim ersten Ändern mit gleichem Login neu angelegt
+- **ProfessionalServices aus**: Bei lokaler Installation wird Matomos Werbe-Plugin „ProfessionalServices“ automatisch deaktiviert
+- **E-Mail Pflicht**: Zugänge werden nur für REDAXO-Benutzer mit gültiger E-Mail-Adresse angelegt (Matomo verlangt je Benutzer eine eindeutige Adresse); die Einrichtung markiert Benutzer ohne Adresse, keine erzeugten Ersatzadressen mehr
 
 ### Version 2.8.2
 - **Passwort setzen über Matomo selbst**: Admin-Reset und „Mein Matomo-Zugang“ nutzen jetzt bevorzugt `bin/matomo-user-password.php` per PHP-CLI, das Matomo bootstrappt und dessen UsersManager-API mit Matomos eigener Datenbankverbindung verwendet. Der direkte Datenbankzugriff bleibt als Fallback; Fehlermeldungen nennen beide Wege

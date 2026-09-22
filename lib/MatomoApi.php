@@ -154,13 +154,17 @@ class MatomoApi
      *
      * @throws Exception bei falschen Zugangsdaten oder API-Fehlern
      */
-    public static function createTokenWithCredentials(string $matomo_url, string $login, string $password, string $description): string
+    public static function createTokenWithCredentials(string $matomo_url, string $login, string $password, string $description, int $expireHours = 0): string
     {
-        $result = self::request($matomo_url, 'UsersManager.createAppSpecificTokenAuth', [
+        $params = [
             'userLogin' => $login,
             'passwordConfirmation' => $password,
             'description' => $description,
-        ], null);
+        ];
+        if ($expireHours > 0) {
+            $params['expireHours'] = $expireHours;
+        }
+        $result = self::request($matomo_url, 'UsersManager.createAppSpecificTokenAuth', $params, null);
 
         $token = is_array($result) ? ($result['value'] ?? '') : '';
         if (!is_string($token) || '' === $token) {
@@ -231,6 +235,21 @@ class MatomoApi
             'userLogin' => $login,
             'access' => $access,
             'idSites' => $idSites,
+        ]);
+    }
+
+    /**
+     * Passwort eines Benutzers ändern. Matomo verlangt dafür das aktuelle Passwort des
+     * aufrufenden Benutzers; aufgerufen mit dem Token des Benutzers selbst ist das sein eigenes.
+     *
+     * @throws Exception
+     */
+    public function updateUserPassword(string $login, string $newPassword, string $currentPassword): void
+    {
+        $this->apiCall('UsersManager.updateUser', [
+            'userLogin' => $login,
+            'password' => $newPassword,
+            'passwordConfirmation' => $currentPassword,
         ]);
     }
 

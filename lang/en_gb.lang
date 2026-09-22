@@ -480,15 +480,15 @@ matomo_setup_access_sites_deselect_all = Clear selection (= all)
 
 # My Matomo access (2.8)
 matomo_self_title = My Matomo access
-matomo_self_intro = Use these credentials to sign in to Matomo directly. "Open Matomo" uses your personal token and only works as long as Matomo carries it along in its links; for continuous work in Matomo the regular login with a password is the reliable way.
+matomo_self_intro = Use these credentials for the regular Matomo login, including "Remember me". "Open Matomo" additionally uses your personal token and only holds as long as Matomo carries it along in its links.
 matomo_self_login = Username
 matomo_self_sites = Visible websites
 matomo_self_login_link = Go to Matomo login
 matomo_self_password = Set Matomo password
 matomo_self_password_placeholder = leave empty = password is generated
-matomo_self_password_help = At least 8 characters. The password is shown once and not stored in REDAXO.
-matomo_self_password_button = Set password
-matomo_self_password_set = Password for "{0}" set. Your password (shown only now): <code>{1}</code>
+matomo_self_password_help = At least 8 characters. Leave empty to have a new password generated.
+matomo_self_password_button = Change password
+matomo_self_password_set = Password for "{0}" changed. You find it below under "My Matomo access".
 matomo_self_password_failed = Password could not be set: {0}
 matomo_self_password_unavailable = With an external Matomo the password cannot be set here. Use "Forgot password" in Matomo with your e-mail address.
 
@@ -500,3 +500,12 @@ matomo_db_override_user = User
 matomo_db_override_password = Password
 matomo_db_override_name = Database
 matomo_db_override_prefix = Prefix
+matomo_self_url = Matomo
+matomo_self_password_label = Password
+matomo_self_password_show = show
+matomo_self_password_unknown = Unknown (access from an older version). "Change password" sets a new one.
+matomo_setup_access_email_missing = No e-mail address stored in REDAXO – Matomo requires one per user
+matomo_setup_access_no_email = Skipped because no e-mail address is stored in REDAXO: {0}
+matomo_setup_plugins_disabled = Matomo plugin "ProfessionalServices" (advertising for paid services) has been deactivated.
+matomo_setup_plugins_disabled_state = Plugin "ProfessionalServices" is deactivated.
+matomo_setup_plugins_disable_failed = Plugin "ProfessionalServices" could not be deactivated automatically ({0}). Deactivate it in Matomo under Administration → System → Plugins.

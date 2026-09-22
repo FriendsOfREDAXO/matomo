@@ -3,6 +3,7 @@
 use FriendsOfRedaxo\Matomo\AdminReset;
 use FriendsOfRedaxo\Matomo\ConsentRegistration;
 use FriendsOfRedaxo\Matomo\MatomoApi;
+use FriendsOfRedaxo\Matomo\MatomoCli;
 use FriendsOfRedaxo\Matomo\UserAccess;
 
 $addon = rex_addon::get('matomo');
@@ -125,10 +126,18 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
                     $messages[] = $addon->i18n('matomo_setup_access_sites_saved', rex_user::get($user_id)?->getLogin() ?? (string) $user_id);
                 } else {
                     $targets = [];
+                    $skipped = [];
                     foreach (UserAccess::redaxoUsers() as $ru) {
                         if ('access_create_all' === $action ? null === UserAccess::get($ru['id']) : $ru['id'] === $user_id) {
+                            if (!$ru['has_email']) {
+                                $skipped[] = $ru['login'];
+                                continue;
+                            }
                             $targets[] = $ru['id'];
                         }
+                    }
+                    if ([] !== $skipped) {
+                        $errors[] = $addon->i18n('matomo_setup_access_no_email', implode(', ', $skipped));
                     }
                     foreach ($targets as $id) {
                         $rex_user = rex_user::get($id);
@@ -154,6 +163,23 @@ $is_local = '' !== $matomo_path;
 $installed = $is_local ? file_exists(rex_path::frontend($matomo_path . '/index.php')) : '' !== $matomo_url;
 $config_written = $is_local && file_exists(rex_path::frontend($matomo_path . '/config/config.ini.php'));
 
+// Werbe-Plugin ProfessionalServices bei lokaler Installation immer deaktivieren (einmal je Installation)
+$unwanted_plugins_state = '';
+if ($config_written && '' !== MatomoCli::matomoDir()) {
+    if ((string) rex_config::get('matomo', 'unwanted_plugins_done', '') === MatomoCli::matomoDir()) {
+        $unwanted_plugins_state = 'done';
+    } else {
+        $plugin_error = MatomoCli::isAvailable() ? MatomoCli::deactivatePlugin('ProfessionalServices') : MatomoCli::unavailableReason();
+        if (null === $plugin_error) {
+            rex_config::set('matomo', 'unwanted_plugins_done', MatomoCli::matomoDir());
+            $unwanted_plugins_state = 'done';
+            $messages[] = $addon->i18n('matomo_setup_plugins_disabled');
+        } else {
+            $unwanted_plugins_state = $plugin_error;
+        }
+    }
+}
+
 $connected = false;
 $superuser = false;
 $sites = [];
@@ -176,7 +202,7 @@ $access_entries = UserAccess::all();
 $redaxo_users = UserAccess::redaxoUsers();
 $access_missing = 0;
 foreach ($redaxo_users as $ru) {
-    if (!isset($access_entries[$ru['id']])) {
+    if (!isset($access_entries[$ru['id']]) && $ru['has_email']) {
         ++$access_missing;
     }
 }
@@ -214,6 +240,10 @@ if ($installed) {
         echo '<p class="text-success"><i class="fa fa-check-circle"></i> ' . $addon->i18n('matomo_setup_installed_local', rex_escape($matomo_path)) . '</p>';
         if (!$config_written) {
             echo '<div class="alert alert-warning">' . $addon->i18n('matomo_setup_wizard_pending') . ' <a class="btn btn-primary btn-sm" target="_blank" href="' . rex_escape($matomo_url) . '/"><i class="fa fa-external-link-alt"></i> ' . $addon->i18n('matomo_setup_open_wizard') . '</a></div>';
+        } elseif ('done' === $unwanted_plugins_state) {
+            echo '<p class="text-success"><i class="fa fa-check-circle"></i> ' . $addon->i18n('matomo_setup_plugins_disabled_state') . '</p>';
+        } elseif ('' !== $unwanted_plugins_state) {
+            echo '<p class="text-warning"><i class="fa fa-exclamation-triangle"></i> ' . $addon->i18n('matomo_setup_plugins_disable_failed', $unwanted_plugins_state) . '</p>';
         }
     } else {
         echo '<p class="text-success"><i class="fa fa-globe"></i> ' . $addon->i18n('matomo_setup_installed_external', rex_escape($matomo_url)) . '</p>';
@@ -431,7 +461,7 @@ if (!$connected) {
         <tbody>
         <?php foreach ($redaxo_users as $ru): $entry = $access_entries[$ru['id']] ?? null; ?>
             <tr>
-                <td><strong><?= rex_escape($ru['login']) ?></strong> <small class="text-muted"><?= rex_escape($ru['name']) ?></small><?= $ru['admin'] ? ' <span class="label label-default">Admin</span>' : '' ?></td>
+                <td><strong><?= rex_escape($ru['login']) ?></strong> <small class="text-muted"><?= rex_escape($ru['name']) ?></small><?= $ru['admin'] ? ' <span class="label label-default">Admin</span>' : '' ?><?= $ru['has_email'] ? '<br><small class="text-muted">' . rex_escape($ru['email']) . '</small>' : '<br><small class="text-warning"><i class="fa fa-exclamation-triangle"></i> ' . rex_escape($addon->i18n('matomo_setup_access_email_missing')) . '</small>' ?></td>
                 <td><?= null !== $entry ? '<i class="fa fa-check text-success"></i> ' . rex_escape($entry['login']) . ' <small class="text-muted">' . rex_escape($entry['created']) . '</small>' : '<span class="text-muted">–</span>' ?></td>
                 <td class="text-right">
                     <form method="post" class="form-inline">
@@ -441,8 +471,10 @@ if (!$connected) {
                     <?php if (null !== $entry): ?>
                         <button type="submit" name="setup_action" value="access_sites" class="btn btn-default btn-xs"><i class="fa fa-save"></i> <?= $addon->i18n('matomo_setup_access_sites_save') ?></button>
                         <button type="submit" name="setup_action" value="access_remove" class="btn btn-default btn-xs" onclick="return confirm('<?= rex_escape($addon->i18n('matomo_setup_access_remove_confirm', $entry['login']), 'js') ?>')"><i class="fa fa-times"></i> <?= $addon->i18n('matomo_setup_access_remove') ?></button>
-                    <?php else: ?>
+                    <?php elseif ($ru['has_email']): ?>
                         <button type="submit" name="setup_action" value="access_create" class="btn btn-primary btn-xs"><i class="fa fa-user-plus"></i> <?= $addon->i18n('matomo_setup_access_create') ?></button>
+                    <?php else: ?>
+                        <button type="button" class="btn btn-default btn-xs" disabled title="<?= rex_escape($addon->i18n('matomo_setup_access_email_missing')) ?>"><i class="fa fa-user-plus"></i> <?= $addon->i18n('matomo_setup_access_create') ?></button>
                     <?php endif; ?>
                     </form>
                 </td>
