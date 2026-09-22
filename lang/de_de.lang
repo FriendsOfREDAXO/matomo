@@ -489,3 +489,12 @@ matomo_self_password_button = Passwort setzen
 matomo_self_password_set = Passwort für „{0}“ gesetzt. Ihr Passwort (wird nur jetzt angezeigt): <code>{1}</code>
 matomo_self_password_failed = Passwort konnte nicht gesetzt werden: {0}
 matomo_self_password_unavailable = Bei externem Matomo kann das Passwort hier nicht gesetzt werden. Nutzen Sie in Matomo „Passwort vergessen“ mit Ihrer E-Mail-Adresse.
+
+# Matomo-DB-Zugang (2.8.1)
+matomo_db_override_title = Matomo-Datenbank für Passwort-Reset (optional)
+matomo_db_override_help = Normalerweise liest das AddOn die Zugangsdaten aus Matomos config/config.ini.php. Schlägt die Verbindung dort fehl (z. B. weil Matomo über einen anderen Weg verbindet oder unter einem anderen PHP läuft), können hier eigene Zugangsdaten hinterlegt werden. Leer lassen, wenn nicht nötig.
+matomo_db_override_host = Host (optional mit :Port)
+matomo_db_override_user = Benutzer
+matomo_db_override_password = Passwort
+matomo_db_override_name = Datenbank
+matomo_db_override_prefix = Präfix

@@ -129,6 +129,8 @@ Der frühere getrennte „User Token“ entfällt; ein vorhandener Eintrag wird 
 
 Die Matomo-API erlaubt keine Passwortänderung ohne das aktuelle Passwort. Ist es verloren, bietet die Einrichtung (Schritt 2, aufklappbar) bei **lokaler Installation** einen Reset: Das AddOn liest die Datenbankzugangsdaten aus Matomos `config/config.ini.php`, setzt das Passwort des angegebenen Superusers direkt in der Benutzertabelle neu (wie in Matomos FAQ zum vergessenen Passwort), verwirft alle Tokens dieses Benutzers und erzeugt ein neues Token. Das neue Passwort wird einmalig angezeigt. Bei externem Matomo dort „Passwort vergessen“ nutzen und anschließend hier das Token neu erzeugen lassen.
 
+Schlägt die Datenbankverbindung mit den Daten aus der config.ini.php fehl (Meldung nennt Datei, Benutzer, Datenbank und die versuchten Wege Socket/TCP), lassen sich unter **Konfiguration → Matomo-Datenbank für Passwort-Reset** eigene Zugangsdaten hinterlegen.
+
 ## 👤 Persönliche Zugänge (statt Auto-Login)
 
 Der frühere Auto-Login über `login_allow_logme` (Passwort als MD5 in der URL, Patch der Matomo-`config.ini.php`) ist entfallen. Stattdessen nutzt das AddOn Matomos eigenen Token-Zugang:
@@ -391,6 +393,10 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.8.1
+- **Passwort-Reset**: Verbindung zur Matomo-Datenbank probiert bei „localhost“ zusätzlich TCP (127.0.0.1) und umgekehrt; die Fehlermeldung nennt Konfigurationsdatei, Benutzer, Datenbank, Passwortlänge und alle Versuche
+- **Konfiguration**: optionale manuelle Zugangsdaten zur Matomo-Datenbank für den Passwort-Reset
 
 ### Version 2.8.0
 - **Mein Matomo-Zugang** auf der Übersicht: Redakteure sehen Benutzername und sichtbare Websites, gelangen zur Matomo-Anmeldung und setzen sich bei lokaler Installation selbst ein Matomo-Passwort

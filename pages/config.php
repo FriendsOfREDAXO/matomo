@@ -42,6 +42,16 @@ if (rex_post('save_config', 'boolean')) {
         rex_config::set('matomo', 'respect_dnt', rex_post('respect_dnt', 'boolean', false));
         rex_config::set('matomo', 'cookie_lifetime', $cookieLifetime);
 
+        // Optionale Matomo-Datenbankzugangsdaten für Passwort-Reset (nur wenn config.ini.php nicht reicht)
+        rex_config::set('matomo', 'db_override_host', trim(rex_post('db_override_host', 'string', '')));
+        rex_config::set('matomo', 'db_override_user', trim(rex_post('db_override_user', 'string', '')));
+        $dbPassword = rex_post('db_override_password', 'string', '');
+        if ('' !== $dbPassword || '' === trim(rex_post('db_override_user', 'string', ''))) {
+            rex_config::set('matomo', 'db_override_password', $dbPassword);
+        }
+        rex_config::set('matomo', 'db_override_name', trim(rex_post('db_override_name', 'string', '')));
+        rex_config::set('matomo', 'db_override_prefix', trim(rex_post('db_override_prefix', 'string', 'matomo_')));
+
         $message = $addon->i18n('matomo_config_saved');
     }
 }
@@ -204,6 +214,20 @@ if ($matomo_url !== '' && $admin_token !== '') {
                         <p class="help-block"><?= $addon->i18n('matomo_cookie_lifetime_help') ?></p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading"><h3 class="panel-title"><i class="fa fa-database"></i> <?= $addon->i18n('matomo_db_override_title') ?></h3></div>
+        <div class="panel-body">
+            <p class="help-block"><?= $addon->i18n('matomo_db_override_help') ?></p>
+            <div class="row">
+                <div class="col-sm-3"><div class="form-group"><label for="db_override_host"><?= $addon->i18n('matomo_db_override_host') ?></label><input type="text" id="db_override_host" name="db_override_host" class="form-control" value="<?= rex_escape((string) rex_config::get('matomo', 'db_override_host', '')) ?>" placeholder="localhost"></div></div>
+                <div class="col-sm-3"><div class="form-group"><label for="db_override_user"><?= $addon->i18n('matomo_db_override_user') ?></label><input type="text" id="db_override_user" name="db_override_user" class="form-control" value="<?= rex_escape((string) rex_config::get('matomo', 'db_override_user', '')) ?>" autocomplete="off"></div></div>
+                <div class="col-sm-3"><div class="form-group"><label for="db_override_password"><?= $addon->i18n('matomo_db_override_password') ?></label><input type="password" id="db_override_password" name="db_override_password" class="form-control" value="" placeholder="<?= '' !== (string) rex_config::get('matomo', 'db_override_password', '') ? '••••••••' : '' ?>" autocomplete="new-password"></div></div>
+                <div class="col-sm-2"><div class="form-group"><label for="db_override_name"><?= $addon->i18n('matomo_db_override_name') ?></label><input type="text" id="db_override_name" name="db_override_name" class="form-control" value="<?= rex_escape((string) rex_config::get('matomo', 'db_override_name', '')) ?>"></div></div>
+                <div class="col-sm-1"><div class="form-group"><label for="db_override_prefix"><?= $addon->i18n('matomo_db_override_prefix') ?></label><input type="text" id="db_override_prefix" name="db_override_prefix" class="form-control" value="<?= rex_escape((string) rex_config::get('matomo', 'db_override_prefix', 'matomo_')) ?>"></div></div>
             </div>
         </div>
     </div>

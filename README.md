@@ -132,6 +132,8 @@ The former separate "user token" is gone; an existing value is removed on update
 
 The Matomo API does not allow a password change without the current password. If it is lost, the setup (step 2, collapsible) offers a reset for **local installations**: the add-on reads the database credentials from Matomo's `config/config.ini.php`, resets the password of the given superuser directly in the user table (as described in Matomo's FAQ for lost passwords), revokes all tokens of that user and creates a new token. The new password is shown once. For an external Matomo use "Forgot password" there, then let the token be regenerated here.
 
+If the database connection with the data from config.ini.php fails (the message names file, user, database and the attempted socket/TCP routes), you can enter your own credentials under **Configuration → Matomo database for password reset**.
+
 ## 👤 Personal access (replaces auto-login)
 
 The former auto-login via `login_allow_logme` (MD5 password in the URL, patching Matomo's `config.ini.php`) has been removed. The add-on now uses Matomo's own token access:
@@ -392,6 +394,10 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 
 ## 📝 Changelog
+
+### Version 2.8.1
+- **Password reset**: the Matomo database connection additionally tries TCP (127.0.0.1) for "localhost" and vice versa; the error message names config file, user, database, password length and all attempts
+- **Configuration**: optional manual credentials for the Matomo database used by the password reset
 
 ### Version 2.8.0
 - **My Matomo access** on the overview: editors see their username and visible websites, get to the Matomo login and set their own Matomo password for local installations

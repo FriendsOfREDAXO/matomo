@@ -27,8 +27,45 @@ class AdminReset
 
     public static function isAvailable(): bool
     {
+        if (!class_exists(PDO::class)) {
+            return false;
+        }
+        if ('' !== (string) rex_config::get('matomo', 'db_override_user', '')) {
+            return true;
+        }
         $file = self::configFile();
-        return '' !== $file && is_readable($file) && class_exists(PDO::class);
+        return '' !== $file && is_readable($file);
+    }
+
+    /**
+     * Manuell hinterlegte Zugangsdaten zur Matomo-Datenbank (Konfiguration), falls die
+     * automatische Verbindung über config.ini.php scheitert.
+     *
+     * @return array{host: string, port: int, unix_socket: string, username: string, password: string, dbname: string, tables_prefix: string, charset: string, password_hash_algorithm: string}|null
+     */
+    private static function overrideConfig(): ?array
+    {
+        $user = (string) rex_config::get('matomo', 'db_override_user', '');
+        if ('' === $user) {
+            return null;
+        }
+        $host = trim((string) rex_config::get('matomo', 'db_override_host', 'localhost'));
+        $port = 3306;
+        if (preg_match('/^(.*):(\d+)$/', $host, $m)) {
+            $host = $m[1];
+            $port = (int) $m[2];
+        }
+        return [
+            'host' => '' !== $host ? $host : 'localhost',
+            'port' => $port,
+            'unix_socket' => '',
+            'username' => $user,
+            'password' => (string) rex_config::get('matomo', 'db_override_password', ''),
+            'dbname' => (string) rex_config::get('matomo', 'db_override_name', ''),
+            'tables_prefix' => (string) rex_config::get('matomo', 'db_override_prefix', 'matomo_'),
+            'charset' => 'utf8mb4',
+            'password_hash_algorithm' => 'default',
+        ];
     }
 
     /**
@@ -75,7 +112,7 @@ class AdminReset
             throw new Exception('Das Passwort ist zu schwach');
         }
 
-        $config = self::readConfig();
+        $config = self::overrideConfig() ?? self::readConfig();
         $pdo = self::connect($config);
         $prefix = $config['tables_prefix'];
 
@@ -167,26 +204,42 @@ class AdminReset
     }
 
     /**
-     * Verbindet wie Matomos PDO-Adapter: unix_socket hat Vorrang, sonst host + port.
+     * Verbindet wie Matomos PDO-Adapter (unix_socket vor host + port). Scheitert das,
+     * wird der jeweils andere Weg probiert: "localhost" bedeutet für MySQL den Socket,
+     * 127.0.0.1 TCP – je nach Rechtevergabe klappt nur einer davon.
      *
      * @param array{host: string, port: int, unix_socket: string, username: string, password: string, dbname: string, tables_prefix: string, charset: string, password_hash_algorithm: string} $config
      * @throws Exception
      */
     private static function connect(array $config): PDO
     {
-        $dsn = 'mysql:dbname=' . $config['dbname'] . ';charset=' . $config['charset'];
+        $port = $config['port'] > 0 ? $config['port'] : 3306;
+        $base = 'mysql:dbname=' . $config['dbname'] . ';charset=' . $config['charset'];
+        $attempts = [];
         if ('' !== $config['unix_socket']) {
-            $dsn .= ';unix_socket=' . $config['unix_socket'];
+            $attempts['socket ' . $config['unix_socket']] = $base . ';unix_socket=' . $config['unix_socket'];
         } elseif (str_starts_with($config['host'], '/')) {
-            $dsn .= ';unix_socket=' . $config['host'];
+            $attempts['socket ' . $config['host']] = $base . ';unix_socket=' . $config['host'];
         } else {
-            $dsn .= ';host=' . $config['host'] . ';port=' . ($config['port'] > 0 ? $config['port'] : 3306);
+            $attempts[$config['host'] . ':' . $port] = $base . ';host=' . $config['host'] . ';port=' . $port;
         }
-        try {
-            return new PDO($dsn, $config['username'], $config['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        } catch (\PDOException $e) {
-            throw new Exception('Verbindung zur Matomo-Datenbank fehlgeschlagen (' . $config['username'] . '@' . ('' !== $config['unix_socket'] ? $config['unix_socket'] : $config['host']) . '): ' . $e->getMessage());
+        if (in_array($config['host'], ['localhost', ''], true) && '' === $config['unix_socket']) {
+            $attempts['127.0.0.1:' . $port] = $base . ';host=127.0.0.1;port=' . $port;
+        } elseif ('127.0.0.1' === $config['host']) {
+            $attempts['localhost (Socket)'] = $base . ';host=localhost';
         }
+
+        $errors = [];
+        foreach ($attempts as $label => $dsn) {
+            try {
+                return new PDO($dsn, $config['username'], $config['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 5]);
+            } catch (\PDOException $e) {
+                $errors[] = $label . ': ' . $e->getMessage();
+            }
+        }
+
+        $source = null !== self::overrideConfig() ? 'manuelle Zugangsdaten aus der Konfiguration' : 'Zugangsdaten aus ' . self::configFile();
+        throw new Exception('Verbindung zur Matomo-Datenbank fehlgeschlagen (' . $source . ', Benutzer ' . $config['username'] . ', Datenbank ' . $config['dbname'] . ', Passwortlänge ' . strlen($config['password']) . '). Versucht: ' . implode(' | ', $errors));
     }
 
     private static function algorithm(string $configured): string
