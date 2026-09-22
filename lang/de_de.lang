@@ -417,3 +417,4 @@ matomo_setup_help_3 = Verbindung speichern – Token aus Login und Passwort erze
 matomo_setup_help_4 = Websites prüfen bzw. YRewrite-Domains importieren, Matomo im Consent-Tool registrieren
 matomo_setup_help_5 = Persönliche Zugänge für die Redaktion anlegen
 matomo_setup_help_config = Tracking- und Datenschutz-Optionen: <a href="{0}">Konfiguration</a>
+matomo_site_name_repaired = Site {0}: Name „{1}“ war ein YRewrite-Titelschema und wurde zu „{2}“ korrigiert.

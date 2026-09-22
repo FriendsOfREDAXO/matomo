@@ -146,6 +146,9 @@ if ('' !== $matomo_url && '' !== $admin_token) {
     try {
         $sites = $api()->getSites();
         $connected = true;
+        foreach ($api()->repairPlaceholderSiteNames($sites) as $renamed) {
+            $messages[] = $addon->i18n('matomo_site_name_repaired', $renamed['id'], $renamed['old'], $renamed['new']);
+        }
         $superuser = $api()->hasSuperUserAccess();
     } catch (Exception $e) {
         $api_error = $e->getMessage();

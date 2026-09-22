@@ -498,9 +498,14 @@ try {
                                     $week = $stats_week[$site_id] ?? ['nb_visits' => 0, 'nb_actions' => 0, 'nb_users' => 0];
                                 ?>
                                 <tr>
+                                    <?php
+                                    $site_host = (string) parse_url((string) $site['main_url'], PHP_URL_HOST);
+                                    $site_label = '' !== $site_host ? $site_host : (string) $site['name'];
+                                    $site_sub = ('' !== $site_host && $site['name'] !== $site_host && !str_contains((string) $site['name'], '%')) ? $site['name'] . ' · ' : '';
+                                    ?>
                                     <td>
-                                        <strong><?= rex_escape($site['name']) ?></strong>
-                                        <br><small class="text-muted">ID: <?= $site_id ?></small>
+                                        <strong><?= rex_escape($site_label) ?></strong>
+                                        <br><small class="text-muted"><?= rex_escape($site_sub) ?>ID: <?= $site_id ?></small>
                                     </td>
                                     <td>
                                         <a href="<?= rex_escape($site['main_url']) ?>" target="_blank" class="btn btn-link btn-sm">

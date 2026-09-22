@@ -173,6 +173,9 @@ $consent_manager_available = rex_addon::exists('consent_manager') && rex_addon::
 try {
     $api = new MatomoApi($matomo_url, $admin_token);
     $sites = $api->getSites();
+    foreach ($api->repairPlaceholderSiteNames($sites) as $renamed) {
+        echo rex_view::info($addon->i18n('matomo_site_name_repaired', $renamed['id'], $renamed['old'], $renamed['new']));
+    }
     
     // Tracking Codes für alle Sites laden (mit Proxy-Option)
     foreach ($sites as $site) {

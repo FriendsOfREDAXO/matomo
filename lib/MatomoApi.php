@@ -293,6 +293,42 @@ class MatomoApi
     }
 
     /**
+     * Website umbenennen
+     *
+     * @throws Exception bei API-Fehlern
+     */
+    public function renameSite(int $site_id, string $name): void
+    {
+        $this->apiCall('SitesManager.updateSite', [
+            'idSite' => $site_id,
+            'siteName' => $name,
+        ]);
+    }
+
+    /**
+     * Sites, deren Name noch ein YRewrite-Titelschema ist (Platzhalter wie %T),
+     * bekommen ihren Host als Namen. Frühere Versionen haben so importiert.
+     *
+     * @param array<int, array<string, mixed>> $sites
+     * @return list<array{id: int, old: string, new: string}> umbenannte Sites
+     */
+    public function repairPlaceholderSiteNames(array &$sites): array
+    {
+        $renamed = [];
+        foreach ($sites as $i => $site) {
+            $name = (string) ($site['name'] ?? '');
+            $host = (string) parse_url((string) ($site['main_url'] ?? ''), PHP_URL_HOST);
+            if (!str_contains($name, '%') || '' === $host) {
+                continue;
+            }
+            $this->renameSite((int) $site['idsite'], $host);
+            $sites[$i]['name'] = $host;
+            $renamed[] = ['id' => (int) $site['idsite'], 'old' => $name, 'new' => $host];
+        }
+        return $renamed;
+    }
+
+    /**
      * Website löschen
      * 
      * @param int $site_id Site-ID der zu löschenden Website
@@ -765,15 +801,12 @@ class YRewriteHelper
     }
     
     /**
-     * YRewrite-Titel enthalten oft Platzhalter (%T, %SN); als Site-Name taugt dann nur der Host.
+     * YRewrites "Titel" ist das Schema für Seitentitel (z.B. "%T / %SN"), kein Anzeigename.
+     * Als Matomo-Site-Name dient deshalb der Host.
      */
     private static function domainTitle(\rex_yrewrite_domain $domain, string $name): string
     {
-        $title = trim($domain->getTitle());
-        if ('' === $title || str_contains($title, '%')) {
-            return '' !== $domain->getHost() ? $domain->getHost() : $name;
-        }
-        return $title;
+        return '' !== $domain->getHost() ? $domain->getHost() : $name;
     }
 
     /**

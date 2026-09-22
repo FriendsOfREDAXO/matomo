@@ -247,8 +247,9 @@ class ConsentRegistration
             }
         }
 
-        if (class_exists(\FriendsOfRedaxo\ConsentManager\Cache::class)) {
-            \FriendsOfRedaxo\ConsentManager\Cache::forceWrite();
+        $rebuild = [\FriendsOfRedaxo\ConsentManager\Cache::class, 'forceWrite'];
+        if (is_callable($rebuild)) {
+            $rebuild();
         }
     }
 

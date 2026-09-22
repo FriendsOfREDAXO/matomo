@@ -381,6 +381,10 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 ## 📝 Changelog
 
+### Version 2.5.2
+- **Fix site names**: the YRewrite import used the domain's page title scheme (e.g. `%T / %SN`) as Matomo site name. The host is the site name now; sites already named wrongly are renamed automatically when the setup or domains page is opened (with a notice)
+- The overview shows the host in the "Domain" column, the Matomo name below
+
 ### Version 2.5.1
 - **Fix multi-domain in consent_manager**: the `matomo` service carried a single site ID. The tracking code now picks the site ID at runtime by hostname, and a newly created `statistics` group is assigned to all domains
 - **Fix YRewrite import**: domain titles with placeholders (e.g. `%T / %SN`) are no longer used as Matomo site names, the host is used instead

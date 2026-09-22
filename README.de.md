@@ -89,7 +89,7 @@ Under **Matomo → Domains**:
 
 #### **YRewrite Integration:**
 - **Automatische Filterung**: Übersicht zeigt nur YRewrite-Domains (+ Standard-Domain)
-- **Intelligenter Import**: YRewrite-Domains auswählen und in Matomo importieren
+- **Intelligenter Import**: YRewrite-Domains auswählen und in Matomo importieren (Site-Name = Host)
 - **Duplikatsverhinderung**: Bereits vorhandene Domains werden markiert und übersprungen
 - **Domain-Synchronisation**: Matomo und YRewrite-Domains synchron halten
 
@@ -379,6 +379,10 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.5.2
+- **Fix Site-Namen**: Der YRewrite-Import nutzte das Seitentitel-Schema der Domain (z. B. `%T / %SN`) als Matomo-Site-Name. Jetzt ist der Host der Site-Name; bereits falsch benannte Sites werden beim Aufruf von Einrichtung oder Domains automatisch umbenannt (mit Hinweis)
+- Übersicht zeigt in der Spalte „Domain“ den Host, der Matomo-Name steht darunter
 
 ### Version 2.5.1
 - **Fix Multidomain in consent_manager**: Der Dienst „matomo“ trug nur eine Site-ID. Der Tracking-Code wählt die Site-ID jetzt zur Laufzeit anhand des Hostnamens, eine neu angelegte Gruppe „statistics“ wird allen Domains zugeordnet
