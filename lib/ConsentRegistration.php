@@ -10,9 +10,11 @@ use rex_config;
 use rex_sql;
 
 /**
- * Registriert Matomo als Dienst im Consent-Tool (consent_kit oder consent_manager),
- * sofern eines installiert ist. Der Tracking-Code wird aus den Addon-Einstellungen
- * erzeugt (inkl. Proxy-Option), Cookie-Angaben stammen aus Matomos Standard-Cookies.
+ * Registriert Matomo als Dienst im Consent-Tool (consent_kit, consent_manager 6 oder
+ * consent_manager 5), sofern eines installiert ist. Der Tracking-Code wird aus den
+ * Addon-Einstellungen erzeugt (inkl. Proxy-Option), Cookie-Angaben stammen aus Matomos
+ * Standard-Cookies. consent_manager 6 ist der consent_kit-Nachfolger mit gleicher API
+ * (Dienste, Presets, Varianten je Domain); consent_manager 5 hat nur domainübergreifende Cookies.
  */
 class ConsentRegistration
 {
@@ -40,12 +42,24 @@ class ConsentRegistration
     }
 
     /**
+     * Namespace der Dienst-Verwaltung (consent_kit-API), null = consent_manager 5 (Legacy-Tabellen).
+     *
+     * @return class-string|null Repository-Klasse
+     */
+    private static function kitRepository(string $tool): ?string
+    {
+        $class = 'consent_kit' === $tool ? 'KLXM\\ConsentKit\\Repository' : 'FriendsOfRedaxo\\ConsentManager\\Repository';
+        return class_exists($class) && method_exists($class, 'saveService') ? $class : null;
+    }
+
+    /**
      * Ist Matomo im Tool bereits registriert?
      */
     public static function isRegistered(string $tool): bool
     {
-        if ('consent_kit' === $tool) {
-            return \KLXM\ConsentKit\Repository::serviceKeyExists(self::SERVICE_KEY);
+        $repo = self::kitRepository($tool);
+        if (null !== $repo) {
+            return (bool) $repo::serviceKeyExists(self::SERVICE_KEY);
         }
         if ('consent_manager' === $tool) {
             $sql = rex_sql::factory();
@@ -66,8 +80,9 @@ class ConsentRegistration
         $useProxy = (bool) rex_config::get('matomo', 'proxy_enabled', false);
         $snippet = $api->trackingSnippet($siteId, $useProxy);
 
-        if ('consent_kit' === $tool) {
-            self::registerConsentKit($api, $siteId, $sites, $useProxy, $snippet);
+        $repo = self::kitRepository($tool);
+        if (null !== $repo) {
+            self::registerKitStyle($repo, $siteId, $sites, $useProxy, $snippet);
             return;
         }
         if ('consent_manager' === $tool) {
@@ -99,25 +114,28 @@ class ConsentRegistration
     }
 
     /**
-     * consent_kit: Dienst aus dem mitgelieferten Matomo-Preset, Parameter aus den
-     * Addon-Einstellungen. Je consent_kit-Domain, die einer Matomo-Site entspricht,
-     * entsteht eine Variante mit der passenden Site-ID.
+     * consent_kit / consent_manager 6: Dienst aus dem mitgelieferten Matomo-Preset,
+     * Parameter aus den Addon-Einstellungen. Je Domain des Consent-Tools, die einer
+     * Matomo-Site entspricht, entsteht eine Variante mit der passenden Site-ID.
      *
+     * @param class-string $repo Repository-Klasse des Tools
      * @param array<int, array<string, mixed>> $sites
      * @throws Exception
      */
-    private static function registerConsentKit(MatomoApi $api, int $siteId, array $sites, bool $useProxy, string $snippet): void
+    private static function registerKitStyle(string $repo, int $siteId, array $sites, bool $useProxy, string $snippet): void
     {
         $matomoUrl = rtrim((string) rex_config::get('matomo', 'matomo_url', ''), '/') . '/';
+        /** @var class-string $presets */
+        $presets = substr($repo, 0, (int) strrpos($repo, '\\')) . '\\PresetRepository';
 
-        $preset = \KLXM\ConsentKit\PresetRepository::toService(self::SERVICE_KEY);
-        if (null === $preset) {
-            throw new Exception('consent_kit: Matomo-Preset nicht gefunden');
+        $preset = $presets::toService(self::SERVICE_KEY);
+        if (!is_array($preset)) {
+            throw new Exception('Matomo-Preset im Consent-Tool nicht gefunden');
         }
         [$data, $items] = $preset;
 
         $existingId = 0;
-        foreach (\KLXM\ConsentKit\Repository::services() as $service) {
+        foreach ((array) $repo::services() as $service) {
             if ($service['key'] === self::SERVICE_KEY) {
                 $existingId = $service['id'];
                 // Vom Redakteur gepflegte Felder behalten
@@ -145,24 +163,24 @@ class ConsentRegistration
         if (!$useProxy) {
             $siteByHost = [];
             foreach ($sites as $site) {
-                $host = \KLXM\ConsentKit\Repository::normalizeHost((string) parse_url((string) ($site['main_url'] ?? ''), PHP_URL_HOST));
+                $host = (string) $repo::normalizeHost((string) parse_url((string) ($site['main_url'] ?? ''), PHP_URL_HOST));
                 if ('' !== $host) {
                     $siteByHost[$host] = (int) $site['idsite'];
                 }
             }
-            foreach (\KLXM\ConsentKit\Repository::domains() as $domain) {
-                $host = \KLXM\ConsentKit\Repository::normalizeHost($domain['host']);
+            foreach ((array) $repo::domains() as $domain) {
+                $host = (string) $repo::normalizeHost((string) $domain['host']);
                 if (isset($siteByHost[$host]) && $siteByHost[$host] !== $siteId) {
                     $variants[] = ['domain_id' => $domain['id'], 'clang' => '', 'params' => ['site_id' => (string) $siteByHost[$host]]];
                 }
             }
         }
 
-        \KLXM\ConsentKit\Repository::saveService($existingId, $data, $items, $variants);
+        $repo::saveService($existingId, $data, $items, $variants);
     }
 
     /**
-     * consent_manager: ein Cookie-Datensatz je Sprache (uid "matomo") in der Gruppe
+     * consent_manager 5: ein Cookie-Datensatz je Sprache (uid "matomo") in der Gruppe
      * "statistics"; fehlt die Gruppe, wird sie angelegt und allen Domains zugeordnet.
      * Dienste sind in consent_manager domainübergreifend, deshalb wählt der Tracking-Code
      * die Site-ID zur Laufzeit anhand des Hostnamens.
