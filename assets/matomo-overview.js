@@ -29,11 +29,13 @@
     });
     var refresh = root.querySelector('[data-matomo-refresh]');
     if (refresh) {
-      refresh.addEventListener('click', loadAll);
+      refresh.addEventListener('click', function () { loadAll(true); });
     }
     loadAll();
-    timer = window.setInterval(loadAll, 5 * 60 * 1000);
-    document.addEventListener('rex:ready', function () { if (!document.body.contains(root)) { window.clearInterval(timer); } });
+    // Auto-Refresh nur alle 15 Minuten und nur bei sichtbarem Tab; Daten kommen meist aus dem Server-Cache
+    timer = window.setInterval(function () {
+      if (document.visibilityState === 'visible' && document.body.contains(root)) { loadAll(); } else if (!document.body.contains(root)) { window.clearInterval(timer); }
+    }, 15 * 60 * 1000);
   }
 
   function restoreFilters() {
@@ -109,30 +111,43 @@
   }
 
   var PARTS = ['summary', 'chart', 'pages', 'referrers', 'devices', 'countries'];
+  var runId = 0;
 
-  function loadAll() {
+  // Abschnitte nacheinander laden: es ist immer nur ein Matomo-Request unterwegs,
+  // die Seite bleibt trotzdem sofort bedienbar. Ein Filterwechsel bricht die Kette ab.
+  function loadAll(force) {
+    var id = ++runId;
     var openLink = root.querySelector('[data-matomo-open]');
     if (openLink && cfg.openUrlAll) {
       openLink.setAttribute('href', cfg.openUrlAll);
     }
-    PARTS.forEach(function (part) {
-      if (!partNode(part)) { return; }
-      setLoading(part);
-      if (part === 'summary') { setLoading('sites'); }
-      var url = cfg.endpoint + '&part=' + part + '&site=' + (state.site || 0) + '&range=' + encodeURIComponent(state.range);
+    var queue = PARTS.filter(function (part) { return !!partNode(part); });
+    queue.forEach(function (part) { setLoading(part); if (part === 'summary') { setLoading('sites'); } });
+
+    function next() {
+      if (id !== runId || !queue.length) { return; }
+      var part = queue.shift();
+      var url = cfg.endpoint + '&part=' + part + '&site=' + (state.site || 0) + '&range=' + encodeURIComponent(state.range) + (force === true ? '&refresh=1' : '');
       fetch(url, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(function (r) { return r.json(); })
         .then(function (json) {
+          if (id !== runId) { return; }
           if (!json.success) { throw new Error(json.message || 'unknown'); }
           RENDER[part](json.data);
           var upd = root.querySelector('[data-matomo-updated]');
-          if (upd) { upd.textContent = t('updated') + ' ' + new Date().toLocaleTimeString(cfg.locale || undefined, { hour: '2-digit', minute: '2-digit' }); }
+          if (upd) {
+            var at = new Date(Date.now() - (json.age || 0) * 1000);
+            upd.textContent = t('updated') + ' ' + at.toLocaleTimeString(cfg.locale || undefined, { hour: '2-digit', minute: '2-digit' });
+          }
         })
         .catch(function (e) {
+          if (id !== runId) { return; }
           setError(part, e.message);
           if (part === 'summary') { setError('sites', e.message); }
-        });
-    });
+        })
+        .then(next);
+    }
+    next();
   }
 
   function delta(cur, prev, invert) {
@@ -155,7 +170,7 @@
       ['bounce_rate', fmtDec(c.bounce_rate) + ' %', delta(c.bounce_rate, p.bounce_rate, true)],
       ['avg_duration', fmtDuration(c.avg_time), delta(c.avg_time, p.avg_time)],
       ['actions_per_visit', fmtDec(c.actions_per_visit), delta(c.actions_per_visit, p.actions_per_visit)],
-      ['conversions', fmtInt(c.conversions), delta(c.conversions, p.conversions)],
+      ['conversions', fmtInt(c.converted), delta(c.converted, p.converted)],
       ['conversion_rate', fmtDec(c.conversion_rate) + ' %', delta(c.conversion_rate, p.conversion_rate)]
     ];
     var node = partNode('summary');
@@ -178,7 +193,7 @@
     if (!body) { return; }
     body.classList.remove('is-loading');
     if (!data.sites || !data.sites.length) { setEmpty('sites'); return; }
-    var cols = [['visits', 'visits', fmtInt], ['unique_visitors', 'unique', fmtInt], ['actions', 'actions', fmtInt], ['bounce_rate', 'bounce_rate', function (v) { return fmtDec(v) + ' %'; }], ['avg_duration', 'avg_time', fmtDuration], ['conversions', 'conversions', fmtInt]];
+    var cols = [['visits', 'visits', fmtInt], ['unique_visitors', 'unique', fmtInt], ['actions', 'actions', fmtInt], ['bounce_rate', 'bounce_rate', function (v) { return fmtDec(v) + ' %'; }], ['avg_duration', 'avg_time', fmtDuration], ['conversions', 'converted', fmtInt]];
     var html = '<div class="table-responsive"><table class="matomo-ov-sites"><thead><tr><th>' + esc(t('domain')) + '</th>'
       + cols.map(function (col) { return '<th class="num">' + esc(t(col[0])) + '</th>'; }).join('') + '<th></th></tr></thead><tbody>';
     data.sites.forEach(function (site) {

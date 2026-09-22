@@ -9,6 +9,9 @@ use rex;
 use rex_api_exception;
 use rex_api_function;
 use rex_config;
+use rex_dir;
+use rex_file;
+use rex_path;
 use rex_response;
 
 /**
@@ -16,13 +19,22 @@ use rex_response;
  * Seite sofort rendert und Matomo-Antworten nachgeladen werden können.
  *
  * Parameter: part (summary|chart|pages|referrers|devices|countries),
- *            site (0 = alle erlaubten Websites), range (today|yesterday|last7|last30|month|year)
+ *            site (0 = alle erlaubten Websites), range (today|yesterday|last7|last30|month|year),
+ *            refresh=1 erzwingt neue Daten (höchstens einmal pro Minute).
+ *
+ * Antworten werden serverseitig gecacht (var/cache/addons/matomo/stats), damit wiederholte
+ * Aufrufe und der Auto-Refresh Matomo nicht jedes Mal neu archivieren lassen.
  */
 class MatomoStatsApi extends rex_api_function
 {
     protected $published = false;
 
     private const RANGES = ['today', 'yesterday', 'last7', 'last30', 'month', 'year'];
+
+    /** Cache-Dauer in Sekunden: Zeiträume mit heutigem Tag ändern sich, abgeschlossene nicht. */
+    private const TTL_LIVE = 600;
+    private const TTL_CLOSED = 21600;
+    private const REFRESH_MIN_AGE = 60;
 
     public function execute()
     {
@@ -52,6 +64,22 @@ class MatomoStatsApi extends rex_api_function
                     throw new Exception('Website nicht erlaubt');
                 }
             }
+
+            $cacheFile = self::cacheFile($part, $range, array_map(static fn (array $s): int => (int) $s['idsite'], $sites));
+            $ttl = 'yesterday' === $range ? self::TTL_CLOSED : self::TTL_LIVE;
+            $age = is_file($cacheFile) ? time() - (int) filemtime($cacheFile) : PHP_INT_MAX;
+            $force = rex_request('refresh', 'boolean', false) && $age > self::REFRESH_MIN_AGE;
+            if (!$force && $age < $ttl) {
+                $cached = json_decode((string) rex_file::get($cacheFile), true);
+                if (is_array($cached)) {
+                    $cached['cached'] = true;
+                    $cached['age'] = $age;
+                    rex_response::cleanOutputBuffers();
+                    rex_response::sendJson($cached);
+                    exit;
+                }
+            }
+
             $data = match ($part) {
                 'summary' => self::summary($api, $sites, $range),
                 'chart' => self::chart($api, $sites, $range),
@@ -61,7 +89,9 @@ class MatomoStatsApi extends rex_api_function
                 'countries' => self::simpleList($api, $sites, $range, 'UserCountry.getCountry', 8, true),
                 default => throw new Exception('Unbekannter Abschnitt'),
             };
-            $payload = ['success' => true, 'part' => $part, 'data' => $data];
+            $payload = ['success' => true, 'part' => $part, 'data' => $data, 'cached' => false, 'age' => 0];
+            rex_dir::create(dirname($cacheFile));
+            rex_file::put($cacheFile, (string) json_encode($payload));
         } catch (Exception $e) {
             $payload = ['success' => false, 'part' => $part, 'message' => $e->getMessage()];
         }
@@ -74,6 +104,15 @@ class MatomoStatsApi extends rex_api_function
     public function requiresCsrfProtection()
     {
         return false;
+    }
+
+    /**
+     * @param list<int> $siteIds
+     */
+    private static function cacheFile(string $part, string $range, array $siteIds): string
+    {
+        sort($siteIds);
+        return rex_path::addonCache('matomo', 'stats/' . $part . '-' . $range . '-' . md5(implode(',', $siteIds)) . '.json');
     }
 
     /**
@@ -159,7 +198,6 @@ class MatomoStatsApi extends rex_api_function
             $id = (int) $site['idsite'];
             $requests[] = ['method' => 'VisitsSummary.get', 'idSite' => $id] + $r['current'];
             $requests[] = ['method' => 'VisitsSummary.get', 'idSite' => $id] + $r['previous'];
-            $requests[] = ['method' => 'Goals.get', 'idSite' => $id] + $r['current'];
         }
         $results = $api->bulk($requests);
 
@@ -167,11 +205,8 @@ class MatomoStatsApi extends rex_api_function
         $previous = self::emptyMetrics();
         $perSite = [];
         foreach ($sites as $i => $site) {
-            $cur = self::metrics($results[$i * 3] ?? []);
-            $prev = self::metrics($results[$i * 3 + 1] ?? []);
-            $goals = is_array($results[$i * 3 + 2] ?? null) ? $results[$i * 3 + 2] : [];
-            $cur['conversions'] = (int) ($goals['nb_conversions'] ?? 0);
-            $cur['revenue'] = (float) ($goals['revenue'] ?? 0);
+            $cur = self::metrics($results[$i * 2] ?? []);
+            $prev = self::metrics($results[$i * 2 + 1] ?? []);
             $current = self::addMetrics($current, $cur);
             $previous = self::addMetrics($previous, $prev);
             $perSite[] = [
@@ -257,7 +292,7 @@ class MatomoStatsApi extends rex_api_function
         $r = self::resolveRange($range)['current'];
         $requests = [];
         foreach ($sites as $site) {
-            $requests[] = ['method' => 'Actions.getPageUrls', 'idSite' => (int) $site['idsite'], 'flat' => 1, 'filter_limit' => 25, 'filter_sort_column' => 'nb_hits'] + $r;
+            $requests[] = ['method' => 'Actions.getPageUrls', 'idSite' => (int) $site['idsite'], 'flat' => 1, 'filter_limit' => 15, 'filter_sort_column' => 'nb_hits'] + $r;
         }
         $merged = [];
         foreach ($api->bulk($requests) as $i => $result) {
@@ -334,7 +369,7 @@ class MatomoStatsApi extends rex_api_function
         $r = self::resolveRange($range)['current'];
         $requests = [];
         foreach ($sites as $site) {
-            $requests[] = ['method' => $method, 'idSite' => (int) $site['idsite'], 'filter_limit' => 25] + $r;
+            $requests[] = ['method' => $method, 'idSite' => (int) $site['idsite'], 'filter_limit' => 12] + $r;
         }
         $values = [];
         $codes = [];
@@ -379,7 +414,7 @@ class MatomoStatsApi extends rex_api_function
     /** @return array<string, int|float> */
     private static function emptyMetrics(): array
     {
-        return ['visits' => 0, 'unique' => 0, 'actions' => 0, 'bounce_count' => 0, 'visit_length' => 0, 'converted' => 0, 'conversions' => 0, 'revenue' => 0.0, 'max_actions' => 0];
+        return ['visits' => 0, 'unique' => 0, 'actions' => 0, 'bounce_count' => 0, 'visit_length' => 0, 'converted' => 0, 'max_actions' => 0];
     }
 
     /**

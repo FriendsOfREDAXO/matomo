@@ -115,7 +115,7 @@ Under **Matomo → Domains**:
 ### 4. **View Statistics**
 - **Matomo → Overview**: KPIs (visits, unique visitors, page views, bounce rate, avg. visit duration, actions per visit, conversions, conversion rate) each compared to the previous period, a trend chart (hourly, daily or monthly, also as a table), top pages, referrers, devices, countries and a per-domain table
 - **Filters** by domain and period (today, yesterday, 7 days, 30 days, month, year); the selection is remembered in the browser
-- **Non-blocking**: the page appears immediately, all sections load in parallel via `rex-api-call=matomo_stats` and refresh every 5 minutes
+- **Non-blocking and server-friendly**: the page appears immediately, sections load one after another via `rex-api-call=matomo_stats` (only one Matomo request at a time). Responses are cached server-side for 10 minutes (closed periods 6 hours), auto-refresh runs every 15 minutes only while the tab is visible; "Refresh" forces new data at most once per minute
 - **Open Matomo**: With personal access the user lands directly in Matomo, no login
 - **Direct Domain Links**: Quick access to specific domain statistics
 
@@ -387,6 +387,10 @@ To ensure Server-Side Tracking works correctly, some settings in Matomo might be
 
 
 ## 📝 Changelog
+
+### Version 2.7.1
+- **Server load of the overview**: sections load sequentially instead of in parallel, responses are cached server-side (10 minutes, closed periods 6 hours), auto-refresh every 15 minutes only while the tab is visible, fewer Matomo requests per section (no separate Goals call, smaller lists)
+- KPI "Conversions" is now "Converted visits" (from VisitsSummary)
 
 ### Version 2.7.0
 - **New overview**: KPIs compared to the previous period, trend chart with hover tooltip and table view, top pages, referrers (types and websites), devices, countries, per-domain table; dark mode

@@ -96,7 +96,7 @@ Under **Matomo → Domains**:
 ### 4. **Statistiken ansehen**
 - **Matomo → Übersicht**: Kennzahlen (Besuche, eindeutige Besucher, Seitenaufrufe, Absprungrate, Ø Besuchsdauer, Aktionen je Besuch, Conversions, Konversionsrate) jeweils mit Vergleich zur Vorperiode, Verlaufsdiagramm (stündlich, täglich oder monatlich, auch als Tabelle), Top-Seiten, Herkunft, Geräte, Länder und eine Tabelle je Domain
 - **Filter** nach Domain und Zeitraum (heute, gestern, 7 Tage, 30 Tage, Monat, Jahr); die Auswahl bleibt im Browser gespeichert
-- **Nicht blockierend**: Die Seite erscheint sofort, alle Abschnitte laden parallel über `rex-api-call=matomo_stats` nach und aktualisieren sich alle 5 Minuten
+- **Nicht blockierend und serverschonend**: Die Seite erscheint sofort, die Abschnitte laden nacheinander über `rex-api-call=matomo_stats` nach (immer nur ein Matomo-Request gleichzeitig). Antworten werden serverseitig 10 Minuten gecacht (abgeschlossene Zeiträume 6 Stunden), der Auto-Refresh läuft alle 15 Minuten nur bei sichtbarem Tab; „Aktualisieren“ erzwingt neue Daten höchstens einmal pro Minute
 - **Matomo öffnen**: Mit persönlichem Zugang landet der Benutzer direkt in Matomo, ohne Login
 - **Direkte Domain-Links**: Schneller Zugriff auf spezifische Domain-Statistiken
 
@@ -386,6 +386,10 @@ Damit das Server-Side Tracking korrekt läuft, sind evtl. Einstellungen in Matom
 - CORS-Einstellungen in Matomo überprüfen
 
 ## 📝 Changelog
+
+### Version 2.7.1
+- **Serverlast der Übersicht**: Abschnitte laden nacheinander statt parallel, Antworten werden serverseitig gecacht (10 Minuten, abgeschlossene Zeiträume 6 Stunden), Auto-Refresh alle 15 Minuten nur bei sichtbarem Tab, weniger Matomo-Requests je Abschnitt (kein separater Goals-Aufruf, kleinere Listen)
+- Kennzahl „Conversions“ heißt jetzt „Besuche mit Conversion“ (aus VisitsSummary)
 
 ### Version 2.7.0
 - **Übersicht neu**: Kennzahlen mit Vergleich zur Vorperiode, Verlaufsdiagramm mit Hover-Tooltip und Tabellenansicht, Top-Seiten, Herkunft (Typen und Websites), Geräte, Länder, Domain-Tabelle; Dark Mode
