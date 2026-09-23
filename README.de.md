@@ -107,9 +107,9 @@ Under **Matomo → Domains**:
 #### **Info-Center Widget** (kompakt)
 - **Automatische Integration**: Falls Info-Center AddOn installiert ist
 - **Berechtigungsbasiert**: Nur sichtbar für Benutzer mit `matomo[overview]` Berechtigung
-- **Live-Statistiken**: Zeigt heutige Besucher der Top 3 Websites
-- **YRewrite-Synchron**: Filtert automatisch auf YRewrite-Domains
-- **Direktzugang**: Ein-Klick-Zugang zur vollständigen Matomo-Übersicht
+- **Domain-Statistiken**: je Website Besuche der letzten 7 Tage mit Sparkline und Vergleich zur Vorwoche, „Öffnen“ mit Auto-Login bzw. Token des Benutzers
+- **Nicht blockierend**: Zahlen werden nach dem Rendern über die Stats-API nachgeladen (Server-Cache)
+- **Gleiche Website-Auswahl wie die Übersicht** (YRewrite-Domains, freigeschaltete Websites, Rechte je Benutzer)
 
 #### **Dashboard Widget** (erweitert)
 - **Automatische Integration**: Falls Dashboard AddOn installiert ist

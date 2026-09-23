@@ -65,34 +65,7 @@ class MatomoStatsApi extends rex_api_function
                 }
             }
 
-            $cacheFile = self::cacheFile($part, $range, array_map(static fn (array $s): int => (int) $s['idsite'], $sites));
-            $ttl = 'yesterday' === $range ? self::TTL_CLOSED : self::TTL_LIVE;
-            $age = is_file($cacheFile) ? time() - (int) filemtime($cacheFile) : PHP_INT_MAX;
-            $force = rex_request('refresh', 'boolean', false) && $age > self::REFRESH_MIN_AGE;
-            if (!$force && $age < $ttl) {
-                $cached = json_decode((string) rex_file::get($cacheFile), true);
-                if (is_array($cached)) {
-                    $cached['cached'] = true;
-                    $cached['age'] = $age;
-                    rex_response::cleanOutputBuffers();
-                    rex_response::sendJson($cached);
-                    exit;
-                }
-            }
-
-            $data = match ($part) {
-                'summary' => self::summary($api, $sites, $range),
-                'chart' => self::chart($api, $sites, $range),
-                'pages' => self::pages($api, $sites, $range),
-                'referrers' => self::referrers($api, $sites, $range),
-                'devices' => self::simpleList($api, $sites, $range, 'DevicesDetection.getType', 8),
-                'countries' => self::simpleList($api, $sites, $range, 'UserCountry.getCountry', 8, true),
-                'times' => self::times($api, $sites, $range),
-                default => throw new Exception('Unbekannter Abschnitt'),
-            };
-            $payload = ['success' => true, 'part' => $part, 'data' => $data, 'cached' => false, 'age' => 0];
-            rex_dir::create(dirname($cacheFile));
-            rex_file::put($cacheFile, (string) json_encode($payload));
+            $payload = self::load($part, $range, $sites, rex_request('refresh', 'boolean', false));
         } catch (Exception $e) {
             $payload = ['success' => false, 'part' => $part, 'message' => $e->getMessage()];
         }
@@ -105,6 +78,79 @@ class MatomoStatsApi extends rex_api_function
     public function requiresCsrfProtection()
     {
         return false;
+    }
+
+    /**
+     * Abschnitt laden, mit Datei-Cache (auch für Widgets nutzbar).
+     *
+     * @param list<array<string, mixed>> $sites erlaubte Websites
+     * @return array{success: bool, part: string, data: array<string, mixed>, cached: bool, age: int}
+     * @throws Exception
+     */
+    public static function load(string $part, string $range, array $sites, bool $refresh = false): array
+    {
+        if (!in_array($range, self::RANGES, true)) {
+            $range = 'last7';
+        }
+        $cacheFile = self::cacheFile($part, $range, array_map(static fn (array $s): int => (int) $s['idsite'], $sites));
+        $ttl = 'yesterday' === $range ? self::TTL_CLOSED : self::TTL_LIVE;
+        $age = is_file($cacheFile) ? time() - (int) filemtime($cacheFile) : PHP_INT_MAX;
+        $force = $refresh && $age > self::REFRESH_MIN_AGE;
+        if (!$force && $age < $ttl) {
+            $cached = json_decode((string) rex_file::get($cacheFile), true);
+            if (is_array($cached) && isset($cached['data']) && is_array($cached['data'])) {
+                return ['success' => true, 'part' => $part, 'data' => $cached['data'], 'cached' => true, 'age' => $age];
+            }
+        }
+
+        $api = new MatomoApi((string) rex_config::get('matomo', 'matomo_url', ''), (string) rex_config::get('matomo', 'admin_token', ''));
+        $data = match ($part) {
+            'summary' => self::summary($api, $sites, $range),
+            'chart' => self::chart($api, $sites, $range),
+            'series' => self::series($api, $sites, $range),
+            'pages' => self::pages($api, $sites, $range),
+            'referrers' => self::referrers($api, $sites, $range),
+            'devices' => self::simpleList($api, $sites, $range, 'DevicesDetection.getType', 8),
+            'countries' => self::simpleList($api, $sites, $range, 'UserCountry.getCountry', 8, true),
+            'times' => self::times($api, $sites, $range),
+            default => throw new Exception('Unbekannter Abschnitt'),
+        };
+        $payload = ['success' => true, 'part' => $part, 'data' => $data, 'cached' => false, 'age' => 0];
+        rex_dir::create(dirname($cacheFile));
+        rex_file::put($cacheFile, (string) json_encode($payload));
+        return $payload;
+    }
+
+    /**
+     * Tagesverlauf je Website (für Sparklines im Widget).
+     *
+     * @param list<array<string, mixed>> $sites
+     * @return array<string, mixed>
+     * @throws Exception
+     */
+    private static function series(MatomoApi $api, array $sites, string $range): array
+    {
+        $r = self::resolveRange($range)['series'];
+        if ('hour' === $r['kind']) {
+            $r = ['period' => 'day', 'date' => 'last7', 'kind' => 'day'];
+        }
+        $requests = [];
+        foreach ($sites as $site) {
+            $requests[] = ['method' => 'VisitsSummary.get', 'idSite' => (int) $site['idsite'], 'period' => $r['period'], 'date' => $r['date']];
+        }
+        $results = $api->bulk($requests);
+        $out = [];
+        foreach ($sites as $i => $site) {
+            $result = $results[$i] ?? [];
+            $rows = is_array($result) && isset($result['nb_visits']) ? [$r['date'] => $result] : (is_array($result) ? $result : []);
+            ksort($rows);
+            $values = [];
+            foreach ($rows as $row) {
+                $values[] = (int) (is_array($row) ? ($row['nb_visits'] ?? 0) : 0);
+            }
+            $out[(int) $site['idsite']] = $values;
+        }
+        return ['series' => $out];
     }
 
     /**

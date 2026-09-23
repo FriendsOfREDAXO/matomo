@@ -10,9 +10,9 @@ The **Matomo AddOn** provides complete integrat### 4. **View Statistics**
 #### **Info-Center Widget** (compact)
 - **Automatic Integration**: If Info-Center AddOn is installed
 - **Permission-based**: Only visible for users with `matomo[overview]` permission
-- **Live Statistics**: Shows today's visitors for top 3 websites
-- **YRewrite-Synced**: Automatically filters to YRewrite domains
-- **Direct Access**: One-click access to full Matomo overview
+- **Domain statistics**: per website visits of the last 7 days with sparkline and comparison to the previous week, "Open" with auto-login or the user's token
+- **Non-blocking**: numbers are loaded after rendering via the stats API (server cache)
+- **Same website selection as the overview** (YRewrite domains, enabled websites, per-user permissions)
 
 #### **Dashboard Widget** (extended)
 - **Automatic Integration**: If Dashboard AddOn is installed

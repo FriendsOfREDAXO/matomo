@@ -2,6 +2,9 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.16.0 – 2026-09-23
+- **Info-Center-Widget neu**: zeigt die Domain-Statistiken der Übersicht kompakt – je Website Besuche der letzten 7 Tage mit Sparkline und Vergleich zur Vorwoche sowie „Öffnen“ mit Auto-Login bzw. Token des aktuellen Benutzers. Lädt die Zahlen nach dem Rendern über die Stats-API (Server-Cache), blockiert das Info-Center also nicht. Das alte Widget (Top 3 Websites, Besucher heute) entfällt
+
 ## 2.15.1 – 2026-09-23
 - **Top-Seiten mit Artikelnamen**: Pfade werden über YRewrite zu REDAXO-Artikeln aufgelöst, der Artikelname steht vor dem Pfad; „/“ heißt „Startseite“ bzw. zeigt den Startartikel
 

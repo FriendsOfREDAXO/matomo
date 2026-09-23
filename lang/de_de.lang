@@ -564,3 +564,5 @@ matomo_ov_by_hour = Nach Tageszeit
 matomo_ov_by_weekday = Nach Wochentag
 matomo_ov_unique_unavailable = für freie Zeiträume berechnet Matomo keine eindeutigen Besucher – Tag, Woche oder Monat wählen
 matomo_ov_page_home = Startseite
+matomo_widget_last7 = Letzte 7 Tage
+matomo_widget_vs_prev_week = zur Vorwoche
