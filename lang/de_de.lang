@@ -563,3 +563,4 @@ matomo_ov_times = Besuche nach Zeit
 matomo_ov_by_hour = Nach Tageszeit
 matomo_ov_by_weekday = Nach Wochentag
 matomo_ov_unique_unavailable = für freie Zeiträume berechnet Matomo keine eindeutigen Besucher – Tag, Woche oder Monat wählen
+matomo_ov_page_home = Startseite

@@ -85,7 +85,7 @@ $i18n = [];
 foreach ([
     'visits', 'unique_visitors', 'actions', 'bounce_rate', 'avg_duration', 'actions_per_visit', 'conversions', 'conversion_rate',
     'vs_previous', 'no_data', 'loading', 'error_prefix', 'hits', 'page', 'referrer_direct', 'domain', 'open', 'updated',
-    'chart_visits', 'chart_actions', 'hour_suffix', 'table_view', 'chart_view', 'referrer_websites', 'by_hour', 'by_weekday', 'unique_unavailable',
+    'chart_visits', 'chart_actions', 'hour_suffix', 'table_view', 'chart_view', 'referrer_websites', 'by_hour', 'by_weekday', 'unique_unavailable', 'page_home',
 ] as $key) {
     $i18n[$key] = $addon->i18n('matomo_ov_' . $key);
 }

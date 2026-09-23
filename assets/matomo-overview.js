@@ -269,7 +269,11 @@
   RENDER.pages = function (data) {
     fillCard('pages', bars(data.rows, {
       value: 'hits',
-      label: function (r) { return esc(r.label) + (state.site === 0 && r.host ? ' <small>' + esc(r.host) + '</small>' : ''); },
+      label: function (r) {
+        var path = r.label === '/' && !r.title ? t('page_home') + ' <small>/</small>' : esc(r.label);
+        var host = state.site === 0 && r.host ? ' <small>' + esc(r.host) + '</small>' : '';
+        return r.title ? '<strong>' + esc(r.title) + '</strong> <small>' + esc(r.label) + '</small>' + host : path + host;
+      },
       title: function (r) { return r.url || r.label; },
       extra: function (r) { return fmtDuration(r.avg_time); }
     }));

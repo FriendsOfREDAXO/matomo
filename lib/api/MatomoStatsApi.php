@@ -387,10 +387,53 @@ class MatomoStatsApi extends rex_api_function
         $rows = [];
         foreach (array_slice($merged, 0, 10) as $entry) {
             $entry['avg_time'] = $entry['hits'] > 0 ? (int) round($entry['time'] / $entry['hits']) : 0;
+            $entry['title'] = self::articleTitle($entry['url']);
             unset($entry['time']);
             $rows[] = $entry;
         }
         return ['rows' => $rows];
+    }
+
+    /**
+     * Name des REDAXO-Artikels zu einer getrackten URL (über YRewrite), damit Redakteure
+     * nicht nur "/" sehen. Leer, wenn nicht auflösbar.
+     */
+    public static function articleTitle(string $url): string
+    {
+        if ('' === $url || !YRewriteHelper::isAvailable() || !class_exists(\rex_yrewrite::class)) {
+            return '';
+        }
+        $host = YRewriteHelper::normalizeHost((string) parse_url($url, PHP_URL_HOST));
+        $path = ltrim(rawurldecode((string) parse_url($url, PHP_URL_PATH)), '/');
+        try {
+            foreach (\rex_yrewrite::getDomains() as $domain) {
+                if ('default' === $domain->getName() || YRewriteHelper::normalizeHost($domain->getHost()) !== $host) {
+                    continue;
+                }
+                $articleId = 0;
+                $clangId = $domain->getStartClang();
+                if ('' === $path) {
+                    $articleId = $domain->getStartId();
+                } else {
+                    foreach (array_unique([$path, rtrim($path, '/') . '/', rtrim($path, '/')]) as $candidate) {
+                        $found = \rex_yrewrite::getArticleIdByUrl($domain, $candidate);
+                        if (is_array($found) && [] !== $found) {
+                            $articleId = (int) array_key_first($found);
+                            $clangId = (int) $found[$articleId];
+                            break;
+                        }
+                    }
+                }
+                if ($articleId > 0) {
+                    $article = \rex_article::get($articleId, $clangId);
+                    return null !== $article ? $article->getName() : '';
+                }
+                return '';
+            }
+        } catch (\Throwable) {
+            // YRewrite-Pfade nicht verfügbar: nur der Pfad wird angezeigt
+        }
+        return '';
     }
 
     /**

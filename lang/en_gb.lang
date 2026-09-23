@@ -565,3 +565,4 @@ matomo_ov_times = Visits by time
 matomo_ov_by_hour = By time of day
 matomo_ov_by_weekday = By weekday
 matomo_ov_unique_unavailable = Matomo does not compute unique visitors for custom ranges – choose day, week or month
+matomo_ov_page_home = Home page

@@ -2,6 +2,9 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.15.1 – 2026-09-23
+- **Top-Seiten mit Artikelnamen**: Pfade werden über YRewrite zu REDAXO-Artikeln aufgelöst, der Artikelname steht vor dem Pfad; „/“ heißt „Startseite“ bzw. zeigt den Startartikel
+
 ## 2.15.0 – 2026-09-23
 - **Besuche nach Zeit**: neue Karte in der Übersicht mit Säulen nach Tageszeit und Wochentag
 - **Eindeutige Besucher**: „Dieser Monat“ und „Dieses Jahr“ nutzen Matomos Kalenderperioden und liefern damit eindeutige Besucher; neuer Zeitraum „Diese Woche“. Für „Letzte 7/30 Tage“ berechnet Matomo keine eindeutigen Besucher, die Kachel erklärt das
