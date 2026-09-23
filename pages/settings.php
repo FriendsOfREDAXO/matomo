@@ -127,10 +127,13 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
 
         case 'access_sync':
             try {
-                $count = UserAccess::syncAllSites($api(), array_map(static fn (array $s): int => (int) $s['idsite'], $api()->getSites()), true);
-                $messages[] = $addon->i18n('matomo_setup_access_synced', $count);
+                $sync = UserAccess::syncAllSites($api(), array_map(static fn (array $s): int => (int) $s['idsite'], $api()->getSites()), true);
+                $messages[] = $addon->i18n('matomo_setup_access_synced', $sync['synced']);
+                if ([] !== $sync['missing']) {
+                    $errors[] = $addon->i18n('matomo_setup_access_missing_users', implode(', ', $sync['missing']));
+                }
             } catch (Exception $e) {
-                $errors[] = $addon->i18n('matomo_setup_access_failed', $e->getMessage());
+                $errors[] = $addon->i18n('matomo_setup_access_sync_failed', $e->getMessage());
             }
             break;
 
@@ -222,15 +225,13 @@ if ('' !== $matomo_url && '' !== $admin_token) {
 }
 
 // Zugänge mit "alle Websites" auf neue Websites abgleichen, sobald sich die Liste geändert hat
+$missing_logins = [];
 if ($connected && $superuser) {
-    try {
-        $synced = UserAccess::syncAllSites($api(), array_map(static fn (array $s): int => (int) $s['idsite'], $sites));
-        if ($synced > 0) {
-            $messages[] = $addon->i18n('matomo_setup_access_synced', $synced);
-        }
-    } catch (Exception $e) {
-        $errors[] = $addon->i18n('matomo_setup_access_failed', $e->getMessage());
+    $sync = UserAccess::syncAllSites($api(), array_map(static fn (array $s): int => (int) $s['idsite'], $sites));
+    if ($sync['synced'] > 0) {
+        $messages[] = $addon->i18n('matomo_setup_access_synced', $sync['synced']);
     }
+    $missing_logins = UserAccess::missingInMatomo($api());
 }
 
 $consent_tools = ConsentRegistration::availableTools();
@@ -498,13 +499,20 @@ if (!$connected) {
         <?php foreach ($redaxo_users as $ru): $entry = $access_entries[$ru['id']] ?? null; ?>
             <tr>
                 <td><strong><?= rex_escape($ru['login']) ?></strong> <small class="text-muted"><?= rex_escape($ru['name']) ?></small><?= $ru['admin'] ? ' <span class="label label-default">Admin</span>' : '' ?><?= $ru['has_email'] ? '<br><small class="text-muted">' . rex_escape($ru['email']) . '</small>' : '<br><small class="text-warning"><i class="fa fa-exclamation-triangle"></i> ' . rex_escape($addon->i18n('matomo_setup_access_email_missing')) . '</small>' ?></td>
-                <td><?= null !== $entry ? '<i class="fa fa-check text-success"></i> ' . rex_escape($entry['login']) . ' <small class="text-muted">' . rex_escape($entry['created']) . '</small>' : '<span class="text-muted">–</span>' ?></td>
+                <td><?php if (null !== $entry && in_array($entry['login'], $missing_logins, true)): ?>
+                        <i class="fa fa-exclamation-triangle text-warning"></i> <?= rex_escape($entry['login']) ?><br><small class="text-warning"><?= $addon->i18n('matomo_setup_access_user_missing') ?></small>
+                    <?php else: ?>
+                        <?= null !== $entry ? '<i class="fa fa-check text-success"></i> ' . rex_escape($entry['login']) . ' <small class="text-muted">' . rex_escape($entry['created']) . '</small>' : '<span class="text-muted">–</span>' ?>
+                    <?php endif; ?></td>
                 <td class="text-right">
                     <form method="post" class="form-inline">
                     <?= $hidden ?>
                     <input type="hidden" name="user_id" value="<?= $ru['id'] ?>">
                     <?= $siteSelect(null !== $entry ? $entry['sites'] : []) ?>
-                    <?php if (null !== $entry): ?>
+                    <?php if (null !== $entry && in_array($entry['login'], $missing_logins, true)): ?>
+                        <button type="submit" name="setup_action" value="access_create" class="btn btn-primary btn-xs"><i class="fa fa-user-plus"></i> <?= $addon->i18n('matomo_setup_access_recreate') ?></button>
+                        <button type="submit" name="setup_action" value="access_remove" class="btn btn-default btn-xs"><i class="fa fa-times"></i> <?= $addon->i18n('matomo_setup_access_remove') ?></button>
+                    <?php elseif (null !== $entry): ?>
                         <button type="submit" name="setup_action" value="access_sites" class="btn btn-default btn-xs"><i class="fa fa-save"></i> <?= $addon->i18n('matomo_setup_access_sites_save') ?></button>
                         <button type="submit" name="setup_action" value="access_remove" class="btn btn-default btn-xs" onclick="return confirm('<?= rex_escape($addon->i18n('matomo_setup_access_remove_confirm', $entry['login']), 'js') ?>')"><i class="fa fa-times"></i> <?= $addon->i18n('matomo_setup_access_remove') ?></button>
                     <?php elseif ($ru['has_email']): ?>

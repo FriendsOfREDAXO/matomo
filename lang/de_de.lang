@@ -522,3 +522,7 @@ matomo_autologin_title = Meldet Sie mit Ihrem Matomo-Konto an
 matomo_setup_access_sync = Website-Rechte abgleichen
 matomo_setup_access_synced = Website-Rechte für {0} Zugang/Zugänge mit „alle Websites“ abgeglichen.
 matomo_setup_access_sync_help = Matomo kennt kein „alle künftigen Websites“: Neue Websites bekommen Benutzer mit „alle“ automatisch, sobald das AddOn sie anlegt oder die Einrichtung aufgerufen wird – oder per Knopf.
+matomo_setup_access_user_missing = Matomo-Benutzer existiert nicht mehr (in Matomo gelöscht?)
+matomo_setup_access_recreate = Neu anlegen
+matomo_setup_access_missing_users = Nicht abgeglichen, weil der Matomo-Benutzer fehlt: {0}
+matomo_setup_access_sync_failed = Abgleich fehlgeschlagen: {0}

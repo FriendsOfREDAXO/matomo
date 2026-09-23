@@ -524,3 +524,7 @@ matomo_autologin_title = Signs you in with your Matomo account
 matomo_setup_access_sync = Sync website permissions
 matomo_setup_access_synced = Website permissions synced for {0} access(es) with "all websites".
 matomo_setup_access_sync_help = Matomo has no "all future websites": users with "all" get new websites automatically as soon as the add-on creates them or the setup is opened – or via the button.
+matomo_setup_access_user_missing = Matomo user no longer exists (deleted in Matomo?)
+matomo_setup_access_recreate = Recreate
+matomo_setup_access_missing_users = Not synced because the Matomo user is missing: {0}
+matomo_setup_access_sync_failed = Sync failed: {0}

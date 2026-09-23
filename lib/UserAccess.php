@@ -197,26 +197,51 @@ class UserAccess
      * Einrichtung, sobald sich die Website-Liste geändert hat.
      *
      * @param array<int> $siteIds aktuelle Matomo-Site-IDs (für den Änderungsmarker)
-     * @return int Anzahl abgeglichener Zugänge
-     * @throws Exception
+     * @return array{synced: int, missing: list<string>} abgeglichene Zugänge und Logins, die es in Matomo nicht mehr gibt
      */
-    public static function syncAllSites(MatomoApi $api, array $siteIds, bool $force = false): int
+    public static function syncAllSites(MatomoApi $api, array $siteIds, bool $force = false): array
     {
         sort($siteIds);
         $marker = md5(implode(',', $siteIds));
+        $result = ['synced' => 0, 'missing' => []];
         if (!$force && (string) rex_config::get('matomo', 'access_sync_marker', '') === $marker) {
-            return 0;
+            return $result;
         }
-        $count = 0;
         foreach (self::all() as $entry) {
             if ([] !== $entry['sites']) {
                 continue;
             }
-            $api->setUserAccess($entry['login'], 'view', 'all');
-            ++$count;
+            try {
+                $api->setUserAccess($entry['login'], 'view', 'all');
+                ++$result['synced'];
+            } catch (Exception $e) {
+                // Matomo-Benutzer direkt in Matomo gelöscht: Eintrag bleibt, wird in der Einrichtung markiert
+                $result['missing'][] = $entry['login'];
+            }
         }
         rex_config::set('matomo', 'access_sync_marker', $marker);
-        return $count;
+        return $result;
+    }
+
+    /**
+     * Logins, die in Matomo fehlen, obwohl ein Zugang gespeichert ist (z.B. dort gelöscht).
+     *
+     * @return list<string>
+     */
+    public static function missingInMatomo(MatomoApi $api): array
+    {
+        try {
+            $logins = array_column($api->getUsers(), 'login');
+        } catch (Exception) {
+            return [];
+        }
+        $missing = [];
+        foreach (self::all() as $entry) {
+            if (!in_array($entry['login'], $logins, true)) {
+                $missing[] = $entry['login'];
+            }
+        }
+        return $missing;
     }
 
     /**
@@ -269,8 +294,12 @@ class UserAccess
         if (!isset($all[$userId])) {
             return;
         }
-        if ($api->userExists($all[$userId]['login'])) {
-            $api->deleteUser($all[$userId]['login']);
+        try {
+            if ($api->userExists($all[$userId]['login'])) {
+                $api->deleteUser($all[$userId]['login']);
+            }
+        } catch (Exception) {
+            // Benutzer in Matomo bereits weg: Eintrag trotzdem entfernen
         }
         unset($all[$userId]);
         rex_config::set('matomo', self::CONFIG_KEY, $all);

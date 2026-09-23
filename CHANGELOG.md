@@ -2,6 +2,9 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.11.2 – 2026-09-23
+- **Fix**: Fehlt ein Matomo-Benutzer zu einem gespeicherten Zugang (z. B. direkt in Matomo gelöscht), brach der Abgleich beim Laden der Einrichtung mit „Zugang konnte nicht angelegt werden: User … doesn't exist“ ab. Solche Zugänge werden jetzt in der Tabelle markiert und lassen sich neu anlegen oder entfernen
+
 ## 2.11.1 – 2026-09-23
 - **Fix**: Leserecht auf „alle Websites“ ist in Matomo ein Schnappschuss; später angelegte Websites fehlten dem Benutzer (Fehler „benötigt view-Zugriff für Webseite id = …“ beim Öffnen). Zugänge mit „alle“ werden jetzt abgeglichen: beim Anlegen/Importieren von Domains über das AddOn, beim Aufruf der Einrichtung bei geänderter Website-Liste und per Knopf „Website-Rechte abgleichen“
 
