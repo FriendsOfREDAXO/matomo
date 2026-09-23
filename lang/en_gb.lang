@@ -521,3 +521,6 @@ matomo_autologin_enable_failed = Auto-login could not be enabled: {0}. Please se
 matomo_autologin_external_confirm = login_allow_logme = 1 is set in Matomo (for an external Matomo add it there in config/config.ini.php)
 matomo_autologin_open = Open Matomo (sign in automatically)
 matomo_autologin_title = Signs you in with your Matomo account
+matomo_setup_access_sync = Sync website permissions
+matomo_setup_access_synced = Website permissions synced for {0} access(es) with "all websites".
+matomo_setup_access_sync_help = Matomo has no "all future websites": users with "all" get new websites automatically as soon as the add-on creates them or the setup is opened – or via the button.

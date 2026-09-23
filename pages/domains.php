@@ -1,6 +1,7 @@
 <?php
 
 use FriendsOfRedaxo\Matomo\MatomoApi;
+use FriendsOfRedaxo\Matomo\UserAccess;
 use FriendsOfRedaxo\Matomo\YRewriteHelper;
 
 $addon = rex_addon::get('matomo');
@@ -48,6 +49,7 @@ if (rex_post('add_domain', 'boolean') && $matomo_ready) {
             
             if ($site_id !== null) {
                 $message = $addon->i18n('matomo_domain_added', $domain_name, $site_id);
+                UserAccess::syncAllSites($api, array_map(static fn (array $s): int => (int) $s['idsite'], $api->getSites()), true);
             } else {
                 $error = $addon->i18n('matomo_domain_add_failed');
             }
@@ -94,6 +96,7 @@ if (rex_post('import_yrewrite', 'boolean') && $matomo_ready && count($import_dom
                         $site_id = $api->addSite($title, $domain['url']);
                         if ($site_id !== null) {
                             $imported_count++;
+                            UserAccess::syncAllSites($api, array_map(static fn (array $s): int => (int) $s['idsite'], $api->getSites()), true);
                         } else {
                             $import_errors[] = $addon->i18n('matomo_domain_import_error', $domain_name);
                         }

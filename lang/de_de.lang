@@ -519,3 +519,6 @@ matomo_autologin_enable_failed = Auto-Login konnte nicht aktiviert werden: {0}. 
 matomo_autologin_external_confirm = In Matomo ist login_allow_logme = 1 gesetzt (bei externem Matomo dort in config/config.ini.php eintragen)
 matomo_autologin_open = Matomo öffnen (automatisch anmelden)
 matomo_autologin_title = Meldet Sie mit Ihrem Matomo-Konto an
+matomo_setup_access_sync = Website-Rechte abgleichen
+matomo_setup_access_synced = Website-Rechte für {0} Zugang/Zugänge mit „alle Websites“ abgeglichen.
+matomo_setup_access_sync_help = Matomo kennt kein „alle künftigen Websites“: Neue Websites bekommen Benutzer mit „alle“ automatisch, sobald das AddOn sie anlegt oder die Einrichtung aufgerufen wird – oder per Knopf.

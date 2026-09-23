@@ -191,6 +191,35 @@ class UserAccess
     }
 
     /**
+     * Matomo kennt kein "alle künftigen Websites": Leserecht auf "alle" ist ein Schnappschuss
+     * beim Speichern. Deshalb bekommen Zugänge ohne Einschränkung hier erneut Leserecht auf
+     * alle aktuell vorhandenen Websites – nach dem Anlegen von Websites und beim Aufruf der
+     * Einrichtung, sobald sich die Website-Liste geändert hat.
+     *
+     * @param array<int> $siteIds aktuelle Matomo-Site-IDs (für den Änderungsmarker)
+     * @return int Anzahl abgeglichener Zugänge
+     * @throws Exception
+     */
+    public static function syncAllSites(MatomoApi $api, array $siteIds, bool $force = false): int
+    {
+        sort($siteIds);
+        $marker = md5(implode(',', $siteIds));
+        if (!$force && (string) rex_config::get('matomo', 'access_sync_marker', '') === $marker) {
+            return 0;
+        }
+        $count = 0;
+        foreach (self::all() as $entry) {
+            if ([] !== $entry['sites']) {
+                continue;
+            }
+            $api->setUserAccess($entry['login'], 'view', 'all');
+            ++$count;
+        }
+        rex_config::set('matomo', 'access_sync_marker', $marker);
+        return $count;
+    }
+
+    /**
      * Websites, die der aktuelle Benutzer im REDAXO-Backend sehen darf.
      * null = keine Einschränkung (kein persönlicher Zugang oder "alle").
      *

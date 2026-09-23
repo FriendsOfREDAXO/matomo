@@ -125,6 +125,15 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
             }
             break;
 
+        case 'access_sync':
+            try {
+                $count = UserAccess::syncAllSites($api(), array_map(static fn (array $s): int => (int) $s['idsite'], $api()->getSites()), true);
+                $messages[] = $addon->i18n('matomo_setup_access_synced', $count);
+            } catch (Exception $e) {
+                $errors[] = $addon->i18n('matomo_setup_access_failed', $e->getMessage());
+            }
+            break;
+
         case 'access_create':
         case 'access_create_all':
         case 'access_remove':
@@ -209,6 +218,18 @@ if ('' !== $matomo_url && '' !== $admin_token) {
         $superuser = $api()->hasSuperUserAccess();
     } catch (Exception $e) {
         $api_error = $e->getMessage();
+    }
+}
+
+// Zugänge mit "alle Websites" auf neue Websites abgleichen, sobald sich die Liste geändert hat
+if ($connected && $superuser) {
+    try {
+        $synced = UserAccess::syncAllSites($api(), array_map(static fn (array $s): int => (int) $s['idsite'], $sites));
+        if ($synced > 0) {
+            $messages[] = $addon->i18n('matomo_setup_access_synced', $synced);
+        }
+    } catch (Exception $e) {
+        $errors[] = $addon->i18n('matomo_setup_access_failed', $e->getMessage());
     }
 }
 
@@ -497,8 +518,9 @@ if (!$connected) {
         <?php endforeach; ?>
         </tbody>
     </table>
-    <p class="help-block"><?= $addon->i18n('matomo_setup_access_sites_help') ?></p>
-    <p class="help-block"><?= $addon->i18n('matomo_setup_access_help') ?></p>
+    <p class="help-block"><?= $addon->i18n('matomo_setup_access_sites_help') ?> <?= $addon->i18n('matomo_setup_access_sync_help') ?></p>
+    <form method="post" style="display:inline"><?= $hidden ?><input type="hidden" name="setup_action" value="access_sync"><button type="submit" class="btn btn-default btn-xs"><i class="fa fa-sync"></i> <?= $addon->i18n('matomo_setup_access_sync') ?></button></form>
+    <p class="help-block" style="margin-top:10px"><?= $addon->i18n('matomo_setup_access_help') ?></p>
 
     <?php if ($is_local && $config_written): ?>
         <?php if (!AutoLogin::isEnabled()): ?>

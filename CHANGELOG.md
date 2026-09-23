@@ -2,6 +2,9 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.11.1 – 2026-09-23
+- **Fix**: Leserecht auf „alle Websites“ ist in Matomo ein Schnappschuss; später angelegte Websites fehlten dem Benutzer (Fehler „benötigt view-Zugriff für Webseite id = …“ beim Öffnen). Zugänge mit „alle“ werden jetzt abgeglichen: beim Anlegen/Importieren von Domains über das AddOn, beim Aufruf der Einrichtung bei geänderter Website-Liste und per Knopf „Website-Rechte abgleichen“
+
 ## 2.11.0 – 2026-09-22
 
 Sammelrelease: fasst alle Neuerungen seit 2.5.0 zusammen (die Zwischenversionen 2.5.0 bis 2.10.2 werden aus dem Installer entfernt). Die Einzelheiten und Korrekturen stehen in den Einträgen darunter.
