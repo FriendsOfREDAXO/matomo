@@ -528,3 +528,7 @@ matomo_setup_access_user_missing = Matomo user no longer exists (deleted in Mato
 matomo_setup_access_recreate = Recreate
 matomo_setup_access_missing_users = Not synced because the Matomo user is missing: {0}
 matomo_setup_access_sync_failed = Sync failed: {0}
+matomo_setup_access_role = Role
+matomo_setup_access_role_create = Create access for all users of the role
+matomo_setup_access_role_help = Creates personal accesses for all active REDAXO users with this role and a valid e-mail address who do not have one yet; the selected websites apply to all (empty = all websites).
+matomo_setup_access_role_result = Role: {0} access(es) created, {1} already existed.

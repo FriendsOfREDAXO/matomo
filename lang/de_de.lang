@@ -526,3 +526,7 @@ matomo_setup_access_user_missing = Matomo-Benutzer existiert nicht mehr (in Mato
 matomo_setup_access_recreate = Neu anlegen
 matomo_setup_access_missing_users = Nicht abgeglichen, weil der Matomo-Benutzer fehlt: {0}
 matomo_setup_access_sync_failed = Abgleich fehlgeschlagen: {0}
+matomo_setup_access_role = Rolle
+matomo_setup_access_role_create = Zugang für alle Benutzer der Rolle anlegen
+matomo_setup_access_role_help = Legt persönliche Zugänge für alle aktiven REDAXO-Benutzer mit dieser Rolle und gültiger E-Mail-Adresse an, die noch keinen haben; die gewählten Websites gelten für alle (leer = alle Websites).
+matomo_setup_access_role_result = Rolle: {0} Zugang/Zugänge angelegt, {1} bereits vorhanden.

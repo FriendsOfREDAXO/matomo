@@ -338,14 +338,15 @@ class UserAccess
     /**
      * REDAXO-Backend-Benutzer für die Zugangsverwaltung.
      *
-     * @return list<array{id: int, login: string, name: string, email: string, has_email: bool, admin: bool}>
+     * @return list<array{id: int, login: string, name: string, email: string, has_email: bool, admin: bool, roles: list<int>}>
      */
     public static function redaxoUsers(): array
     {
-        $rows = rex_sql::factory()->getArray('SELECT id, login, name, email, admin FROM ' . rex::getTable('user') . ' WHERE status = 1 ORDER BY login');
+        $rows = rex_sql::factory()->getArray('SELECT id, login, name, email, admin, role FROM ' . rex::getTable('user') . ' WHERE status = 1 ORDER BY login');
         $out = [];
         foreach ($rows as $row) {
             $email = trim((string) $row['email']);
+            $roles = array_values(array_filter(array_map('intval', explode(',', (string) ($row['role'] ?? ''))), static fn (int $id): bool => $id > 0));
             $out[] = [
                 'id' => (int) $row['id'],
                 'login' => (string) $row['login'],
@@ -353,7 +354,22 @@ class UserAccess
                 'email' => $email,
                 'has_email' => '' !== $email && false !== filter_var($email, FILTER_VALIDATE_EMAIL),
                 'admin' => 1 === (int) $row['admin'],
+                'roles' => $roles,
             ];
+        }
+        return $out;
+    }
+
+    /**
+     * REDAXO-Benutzerrollen.
+     *
+     * @return array<int, string> id => Name
+     */
+    public static function redaxoRoles(): array
+    {
+        $out = [];
+        foreach (rex_sql::factory()->getArray('SELECT id, name FROM ' . rex::getTable('user_role') . ' ORDER BY name') as $row) {
+            $out[(int) $row['id']] = (string) $row['name'];
         }
         return $out;
     }

@@ -2,6 +2,9 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.12.0 – 2026-09-23
+- **Zugänge je REDAXO-Rolle**: In Schritt 5 lassen sich persönliche Zugänge für alle Benutzer einer Rolle auf einmal anlegen (nur mit gültiger E-Mail, bereits vorhandene werden übersprungen), wahlweise beschränkt auf ausgewählte Websites. Die Zugangstabelle zeigt die Rollen der Benutzer
+
 ## 2.11.2 – 2026-09-23
 - **Fix**: Fehlt ein Matomo-Benutzer zu einem gespeicherten Zugang (z. B. direkt in Matomo gelöscht), brach der Abgleich beim Laden der Einrichtung mit „Zugang konnte nicht angelegt werden: User … doesn't exist“ ab. Solche Zugänge werden jetzt in der Tabelle markiert und lassen sich neu anlegen oder entfernen
 

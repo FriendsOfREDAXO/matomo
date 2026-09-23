@@ -139,10 +139,12 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
 
         case 'access_create':
         case 'access_create_all':
+        case 'access_create_role':
         case 'access_remove':
         case 'access_sites':
             $action = rex_post('setup_action', 'string', '');
             $user_id = rex_post('user_id', 'int', 0);
+            $role_id = rex_post('role_id', 'int', 0);
             $site_ids = array_values(array_map('intval', rex_post('site_ids', 'array', [])));
             try {
                 if ('access_remove' === $action) {
@@ -154,17 +156,31 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
                 } else {
                     $targets = [];
                     $skipped = [];
+                    $existing = 0;
                     foreach (UserAccess::redaxoUsers() as $ru) {
-                        if ('access_create_all' === $action ? null === UserAccess::get($ru['id']) : $ru['id'] === $user_id) {
-                            if (!$ru['has_email']) {
-                                $skipped[] = $ru['login'];
-                                continue;
-                            }
-                            $targets[] = $ru['id'];
+                        $wanted = match ($action) {
+                            'access_create_all' => null === UserAccess::get($ru['id']),
+                            'access_create_role' => $role_id > 0 && in_array($role_id, $ru['roles'], true),
+                            default => $ru['id'] === $user_id,
+                        };
+                        if (!$wanted) {
+                            continue;
                         }
+                        if ('access_create_role' === $action && null !== UserAccess::get($ru['id'])) {
+                            ++$existing;
+                            continue;
+                        }
+                        if (!$ru['has_email']) {
+                            $skipped[] = $ru['login'];
+                            continue;
+                        }
+                        $targets[] = $ru['id'];
                     }
                     if ([] !== $skipped) {
                         $errors[] = $addon->i18n('matomo_setup_access_no_email', implode(', ', $skipped));
+                    }
+                    if ('access_create_role' === $action) {
+                        $messages[] = $addon->i18n('matomo_setup_access_role_result', count($targets), $existing);
                     }
                     foreach ($targets as $id) {
                         $rex_user = rex_user::get($id);
@@ -485,6 +501,21 @@ if (!$connected) {
         return $html . '</select>';
     };
     ?>
+    <?php $roles = UserAccess::redaxoRoles(); if ([] !== $roles): ?>
+    <form method="post" class="form-inline" style="margin-bottom:12px">
+        <?= $hidden ?>
+        <input type="hidden" name="setup_action" value="access_create_role">
+        <label for="matomo-access-role"><?= $addon->i18n('matomo_setup_access_role') ?></label>
+        <select id="matomo-access-role" name="role_id" class="selectpicker" data-width="220px">
+            <?php foreach ($roles as $id => $name): ?>
+                <option value="<?= $id ?>"><?= rex_escape($name) ?></option>
+            <?php endforeach; ?>
+        </select>
+        <?= $siteSelect([]) ?>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-users"></i> <?= $addon->i18n('matomo_setup_access_role_create') ?></button>
+        <p class="help-block"><?= $addon->i18n('matomo_setup_access_role_help') ?></p>
+    </form>
+    <?php endif; ?>
     <table class="table table-condensed table-hover">
         <thead><tr>
             <th><?= $addon->i18n('matomo_setup_access_redaxo_user') ?></th>
@@ -498,7 +529,7 @@ if (!$connected) {
         <tbody>
         <?php foreach ($redaxo_users as $ru): $entry = $access_entries[$ru['id']] ?? null; ?>
             <tr>
-                <td><strong><?= rex_escape($ru['login']) ?></strong> <small class="text-muted"><?= rex_escape($ru['name']) ?></small><?= $ru['admin'] ? ' <span class="label label-default">Admin</span>' : '' ?><?= $ru['has_email'] ? '<br><small class="text-muted">' . rex_escape($ru['email']) . '</small>' : '<br><small class="text-warning"><i class="fa fa-exclamation-triangle"></i> ' . rex_escape($addon->i18n('matomo_setup_access_email_missing')) . '</small>' ?></td>
+                <td><strong><?= rex_escape($ru['login']) ?></strong> <small class="text-muted"><?= rex_escape($ru['name']) ?></small><?= $ru['admin'] ? ' <span class="label label-default">Admin</span>' : '' ?><?php foreach ($ru['roles'] as $rid): if (isset($roles[$rid])): ?> <span class="label label-info"><?= rex_escape($roles[$rid]) ?></span><?php endif; endforeach; ?><?= $ru['has_email'] ? '<br><small class="text-muted">' . rex_escape($ru['email']) . '</small>' : '<br><small class="text-warning"><i class="fa fa-exclamation-triangle"></i> ' . rex_escape($addon->i18n('matomo_setup_access_email_missing')) . '</small>' ?></td>
                 <td><?php if (null !== $entry && in_array($entry['login'], $missing_logins, true)): ?>
                         <i class="fa fa-exclamation-triangle text-warning"></i> <?= rex_escape($entry['login']) ?><br><small class="text-warning"><?= $addon->i18n('matomo_setup_access_user_missing') ?></small>
                     <?php else: ?>
