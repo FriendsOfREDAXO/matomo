@@ -142,7 +142,7 @@ Every editor gets their own Matomo account. "Open Matomo" signs them in with it,
 - In setup step 5 every REDAXO user gets an **own Matomo user** (view access to all websites), a random **password** and a **personal app token** with one click. Login and e-mail come from the REDAXO user; without a valid e-mail address in the REDAXO user no access is created, because Matomo requires a unique address per user. Password and token are stored in the REDAXO configuration (`user_access`) so the user can view and change the password on the overview.
 - "Open Matomo" on the overview then calls `index.php?module=CoreHome&…&token_auth=…` – Matomo opens its full interface as that user, without login and without touching the Matomo configuration.
 - Matomo only allows token access to the UI for users **without** write/superuser permissions. For Matomo administration, log in normally.
-- **Access per role**: via the role selection in step 5 all users of a REDAXO role get a personal access at once (only with a valid e-mail address, existing accesses are left untouched), optionally limited to selected websites.
+- **One Matomo account per role**: the simplest option. In step 5 a shared Matomo account is created for a REDAXO role (role, username, e-mail address, websites). All members of the role use it for "Open Matomo", auto-login and the overview and see the credentials under "My Matomo access". Personal accesses take precedence if someone needs an own account.
 - **Visible websites per user**: in the access table you can define per REDAXO user which Matomo websites they may see (no selection = all). The selection is set as view access per website in Matomo and additionally filters the overview and widgets in REDAXO.
 - "Remove" deletes the Matomo user and token again. Tokens are stored in the REDAXO configuration (`user_access`).
 - **Auto-login (logme)**: if `login_allow_logme = 1` is set in Matomo's `config.ini.php`, "Open Matomo" signs the editor in via POST with login and md5 password of their own account; Matomo creates a regular session that persists while clicking around. For local installations the setup (step 5) enables the setting with one click through Matomo's console `config:set`, falling back to editing the file; for an external Matomo add it there and confirm it in the setup. Matomo only allows logme for accounts without superuser access, the add-on's accesses are view accounts.
@@ -152,6 +152,12 @@ Every editor gets their own Matomo account. "Open Matomo" signs them in with it,
 
 Editors with personal access see the Matomo URL, their username, their **password** (revealed on click), their visible websites and a link to the Matomo login at the bottom of the overview. "Change password" sets their own or generates a new one. The change goes through the Matomo API with their own token (Matomo only requires their own current password for that), so it works for local and external Matomo. This enables the regular Matomo login including "Remember me".
 - Requirement: `only_allow_secure_auth_tokens` must not be enabled in Matomo (default: off).
+
+### Several REDAXO installations on one Matomo
+
+- **Same person in both installations**: if the add-on finds a Matomo account with the same login and e-mail address, it creates no duplicate. The setup shows "Matomo account exists", the user links the account on the overview under "My Matomo access" with their Matomo password. Afterwards password display, auto-login and website filter work in this installation too.
+- **Admin reset** revokes all tokens of the superuser, including those of other installations; regenerate the token there afterwards.
+- **"All websites"** means all websites of the shared Matomo. The REDAXO overview filters to its own domains, in Matomo itself the user sees all. On a shared Matomo, select websites per user explicitly.
 
 ## 🍪 Consent registration
 

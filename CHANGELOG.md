@@ -2,6 +2,11 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.14.0 – 2026-09-23
+- **Ein Matomo-Konto je Rolle**: In Schritt 5 lässt sich für eine REDAXO-Rolle ein gemeinsames Matomo-Konto anlegen (Rolle, Benutzername, E-Mail, Websites). Alle Mitglieder nutzen es für „Matomo öffnen“, Auto-Login und die Übersicht; persönliche Zugänge haben Vorrang. Die Zugangstabelle zeigt, wer über ein Rollen-Konto abgedeckt ist
+- **Übersicht**: Balkenlisten zeigen Anteile an allen Besuchen mit Prozentwert statt relativ zum größten Wert; Herkunft und Geräte mit festen Farben je Kategorie und Anteilsleiste
+- **Mehrere REDAXO-Installationen an einem Matomo**: Existiert in Matomo bereits ein Konto mit gleichem Login und gleicher E-Mail (andere Installation), wird kein Duplikat angelegt; die Einrichtung zeigt das an und der Benutzer verknüpft das Konto auf der Übersicht mit seinem Matomo-Passwort („Konto verknüpfen“). README: Hinweise zu Admin-Reset (verwirft Tokens aller Installationen) und „alle Websites“ im geteilten Matomo
+
 ## 2.13.0 – 2026-09-23
 - **Weitere Websites in der Übersicht**: Unter Konfiguration lassen sich Matomo-Websites freischalten, die nicht zu den YRewrite-Domains dieser Installation gehören (z. B. extern betreute Seiten im selben Matomo). Sie erscheinen in Übersicht, Widgets und Domain-Filter; Website-Rechte je Benutzer gelten weiterhin
 

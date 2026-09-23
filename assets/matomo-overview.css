@@ -35,7 +35,11 @@
 
 /* Balkenlisten: Label, Balken, Wert (direkt beschriftet) */
 .matomo-ov-bars { list-style: none; margin: 0; padding: 0; }
-.matomo-ov-bar { display: grid; grid-template-columns: minmax(90px, 40%) 1fr auto; gap: 10px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--mov-grid); font-size: 13px; }
+.matomo-ov-bar { display: grid; grid-template-columns: minmax(90px, 38%) 1fr auto; gap: 10px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--mov-grid); font-size: 13px; }
+.matomo-ov-share { display: flex; height: 14px; border-radius: 4px; overflow: hidden; margin: 2px 0 10px; background: var(--mov-grid); gap: 2px; }
+.matomo-ov-share span { display: block; height: 100%; min-width: 2px; }
+.matomo-ov-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.matomo-ov-subhead { margin: 12px 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--mov-muted); }
 .matomo-ov-bar:last-child { border-bottom: 0; }
 .matomo-ov-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .matomo-ov-bar-label small { color: var(--mov-muted); }

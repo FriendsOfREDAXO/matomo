@@ -5,6 +5,7 @@ namespace FriendsOfRedaxo\Matomo;
 use Exception;
 use rex;
 use rex_config;
+use rex_i18n;
 use rex_sql;
 use rex_user;
 
@@ -22,6 +23,7 @@ use rex_user;
 class UserAccess
 {
     private const CONFIG_KEY = 'user_access';
+    private const ROLE_CONFIG_KEY = 'role_access';
 
     /**
      * @return array<int, array{login: string, token: string, created: string, sites: list<int>, password: string}> sites leer = alle Websites, password leer = unbekannt (Zugang aus älterer Version)
@@ -57,12 +59,139 @@ class UserAccess
     }
 
     /**
-     * @return array{login: string, token: string, created: string, sites: list<int>, password: string}|null
+     * @return array{login: string, token: string, created: string, sites: list<int>, password: string, role_id?: int}|null
      */
     public static function forCurrentUser(): ?array
     {
         $user = rex::getUser();
-        return $user ? self::get($user->getId()) : null;
+        return $user ? self::forUser($user) : null;
+    }
+
+    /**
+     * Zugang eines Benutzers: persönlicher Zugang, sonst das Konto einer seiner Rollen
+     * (Eintrag enthält dann 'role_id').
+     *
+     * @return array{login: string, token: string, created: string, sites: list<int>, password: string, role_id?: int}|null
+     */
+    public static function forUser(rex_user $user): ?array
+    {
+        $personal = self::get($user->getId());
+        if (null !== $personal) {
+            return $personal;
+        }
+        $roles = self::roleAccesses();
+        foreach (self::userRoleIds($user) as $roleId) {
+            if (isset($roles[$roleId])) {
+                return $roles[$roleId] + ['role_id' => $roleId];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function userRoleIds(rex_user $user): array
+    {
+        return array_values(array_filter(array_map('intval', explode(',', (string) $user->getValue('role'))), static fn (int $id): bool => $id > 0));
+    }
+
+    /**
+     * Rollen-Konten: ein Matomo-Benutzer je REDAXO-Rolle, genutzt von allen Mitgliedern
+     * ohne persönlichen Zugang.
+     *
+     * @return array<int, array{login: string, token: string, created: string, sites: list<int>, password: string, email: string}>
+     */
+    public static function roleAccesses(): array
+    {
+        $stored = rex_config::get('matomo', self::ROLE_CONFIG_KEY, []);
+        $out = [];
+        foreach (is_array($stored) ? $stored : [] as $roleId => $entry) {
+            if (!is_array($entry) || !isset($entry['login'], $entry['token'])) {
+                continue;
+            }
+            $out[(int) $roleId] = [
+                'login' => (string) $entry['login'],
+                'token' => (string) $entry['token'],
+                'created' => (string) ($entry['created'] ?? ''),
+                'sites' => self::normalizeSites((array) ($entry['sites'] ?? [])),
+                'password' => (string) ($entry['password'] ?? ''),
+                'email' => (string) ($entry['email'] ?? ''),
+            ];
+        }
+        return $out;
+    }
+
+    /**
+     * Legt das Matomo-Konto einer Rolle an.
+     *
+     * @param list<int> $siteIds leer = alle Websites
+     * @return array{login: string, token: string, created: string, sites: list<int>, password: string, email: string}
+     * @throws Exception
+     */
+    public static function createForRole(MatomoApi $api, string $matomoUrl, int $roleId, string $login, string $email, array $siteIds = []): array
+    {
+        $login = (string) preg_replace('/[^A-Za-zÄäÖöÜüß0-9_.@+-]/u', '_', trim($login));
+        if (strlen($login) < 2) {
+            throw new Exception('Matomo-Benutzername muss mindestens 2 Zeichen haben');
+        }
+        $email = trim($email);
+        if ('' === $email || false === filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('Gültige E-Mail-Adresse angeben; Matomo benötigt je Benutzer eine');
+        }
+        $roles = self::roleAccesses();
+        if (isset($roles[$roleId]) && $api->userExists($roles[$roleId]['login'])) {
+            $api->deleteUser($roles[$roleId]['login']);
+        }
+        if ($api->userExists($login)) {
+            throw new Exception('Matomo-Benutzer "' . $login . '" existiert bereits');
+        }
+        $siteIds = self::normalizeSites($siteIds);
+        $password = self::randomPassword();
+        $api->addUser($login, $password, $email, 'view', [] === $siteIds ? 'all' : implode(',', $siteIds));
+        $token = MatomoApi::createTokenWithCredentials($matomoUrl, $login, $password, 'REDAXO ' . rex::getServerName() . ' / Rolle ' . $roleId);
+
+        $entry = ['login' => $login, 'token' => $token, 'created' => date('Y-m-d H:i:s'), 'sites' => $siteIds, 'password' => $password, 'email' => $email];
+        $roles[$roleId] = $entry;
+        rex_config::set('matomo', self::ROLE_CONFIG_KEY, $roles);
+        return $entry;
+    }
+
+    /**
+     * @param list<int> $siteIds
+     * @throws Exception
+     */
+    public static function updateRoleSites(MatomoApi $api, int $roleId, array $siteIds): void
+    {
+        $roles = self::roleAccesses();
+        if (!isset($roles[$roleId])) {
+            throw new Exception('Kein Rollen-Konto für Rolle ' . $roleId);
+        }
+        $siteIds = self::normalizeSites($siteIds);
+        $api->setUserAccess($roles[$roleId]['login'], 'noaccess', 'all');
+        $api->setUserAccess($roles[$roleId]['login'], 'view', [] === $siteIds ? 'all' : implode(',', $siteIds));
+        $roles[$roleId]['sites'] = $siteIds;
+        rex_config::set('matomo', self::ROLE_CONFIG_KEY, $roles);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public static function removeRole(MatomoApi $api, int $roleId): void
+    {
+        $roles = self::roleAccesses();
+        if (!isset($roles[$roleId])) {
+            return;
+        }
+        try {
+            if ($api->userExists($roles[$roleId]['login'])) {
+                $api->deleteUser($roles[$roleId]['login']);
+            }
+        } catch (Exception) {
+            // Benutzer in Matomo bereits weg
+        }
+        unset($roles[$roleId]);
+        rex_config::set('matomo', self::ROLE_CONFIG_KEY, $roles);
     }
 
     /**
@@ -84,6 +213,15 @@ class UserAccess
         }
 
         $base = self::matomoLogin($user);
+        $email = self::email($user);
+
+        // Gleicher Login mit gleicher E-Mail = dieselbe Person, z.B. aus einer anderen
+        // REDAXO-Installation am selben Matomo: nicht duplizieren, sondern verknüpfen lassen
+        $existingMatomo = self::matomoUserByLogin($api, $base);
+        if (null !== $existingMatomo && strcasecmp($existingMatomo['email'], $email) === 0) {
+            throw new Exception(rex_i18n::msg('matomo_access_exists_link', $base));
+        }
+
         $login = '';
         foreach ([$base, $base . '.redaxo', $base . '.redaxo' . $user->getId()] as $candidate) {
             if (!$api->userExists($candidate)) {
@@ -97,7 +235,7 @@ class UserAccess
 
         $password = self::randomPassword();
         $access = [] === $siteIds ? 'all' : implode(',', $siteIds);
-        $api->addUser($login, $password, self::email($user), 'view', $access);
+        $api->addUser($login, $password, $email, 'view', $access);
 
         $token = MatomoApi::createTokenWithCredentials($matomoUrl, $login, $password, 'REDAXO ' . rex::getServerName() . ' / ' . $user->getLogin());
 
@@ -207,7 +345,7 @@ class UserAccess
         if (!$force && (string) rex_config::get('matomo', 'access_sync_marker', '') === $marker) {
             return $result;
         }
-        foreach (self::all() as $entry) {
+        foreach (array_merge(array_values(self::all()), array_values(self::roleAccesses())) as $entry) {
             if ([] !== $entry['sites']) {
                 continue;
             }
@@ -236,7 +374,7 @@ class UserAccess
             return [];
         }
         $missing = [];
-        foreach (self::all() as $entry) {
+        foreach (array_merge(array_values(self::all()), array_values(self::roleAccesses())) as $entry) {
             if (!in_array($entry['login'], $logins, true)) {
                 $missing[] = $entry['login'];
             }
@@ -281,6 +419,45 @@ class UserAccess
         $out = array_values(array_unique(array_filter(array_map('intval', $siteIds), static fn (int $id): bool => $id > 0)));
         sort($out);
         return $out;
+    }
+
+    /**
+     * Verknüpft ein vorhandenes Matomo-Konto (z.B. aus einer anderen REDAXO-Installation
+     * am selben Matomo) mit dem aktuellen REDAXO-Benutzer. Das Passwort wird gegen Matomo
+     * geprüft (Token-Erzeugung), es entsteht kein neuer Matomo-Benutzer.
+     *
+     * @return array{login: string, token: string, created: string, sites: list<int>, password: string}
+     * @throws Exception
+     */
+    public static function link(string $matomoUrl, rex_user $user, string $login, string $password): array
+    {
+        $login = trim($login);
+        if ('' === $login || '' === $password) {
+            throw new Exception('Login und Passwort angeben');
+        }
+        $token = MatomoApi::createTokenWithCredentials($matomoUrl, $login, $password, 'REDAXO ' . rex::getServerName() . ' / ' . $user->getLogin());
+        $entry = ['login' => $login, 'token' => $token, 'created' => date('Y-m-d H:i:s'), 'sites' => [], 'password' => $password];
+        $all = self::all();
+        $all[$user->getId()] = $entry;
+        rex_config::set('matomo', self::CONFIG_KEY, $all);
+        return $entry;
+    }
+
+    /**
+     * @return array{login: string, email: string, superuser_access: bool}|null
+     */
+    private static function matomoUserByLogin(MatomoApi $api, string $login): ?array
+    {
+        try {
+            foreach ($api->getUsers() as $u) {
+                if (strcasecmp($u['login'], $login) === 0) {
+                    return $u;
+                }
+            }
+        } catch (Exception) {
+            // ohne Superuser-Token keine Liste; dann greift die userExists-Prüfung unten
+        }
+        return null;
     }
 
     /**

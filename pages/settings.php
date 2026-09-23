@@ -137,6 +137,34 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
             }
             break;
 
+        case 'role_create':
+            try {
+                $role_id = rex_post('role_id', 'int', 0);
+                $entry = UserAccess::createForRole($api(), $matomo_url, $role_id, rex_post('role_login', 'string', ''), rex_post('role_email', 'string', ''), array_values(array_map('intval', rex_post('site_ids', 'array', []))));
+                $messages[] = $addon->i18n('matomo_setup_role_created', UserAccess::redaxoRoles()[$role_id] ?? (string) $role_id, $entry['login']);
+            } catch (Exception $e) {
+                $errors[] = $addon->i18n('matomo_setup_role_failed', $e->getMessage());
+            }
+            break;
+
+        case 'role_sites':
+            try {
+                UserAccess::updateRoleSites($api(), rex_post('role_id', 'int', 0), array_values(array_map('intval', rex_post('site_ids', 'array', []))));
+                $messages[] = $addon->i18n('matomo_setup_access_sites_saved', UserAccess::redaxoRoles()[rex_post('role_id', 'int', 0)] ?? '');
+            } catch (Exception $e) {
+                $errors[] = $addon->i18n('matomo_setup_role_failed', $e->getMessage());
+            }
+            break;
+
+        case 'role_remove':
+            try {
+                UserAccess::removeRole($api(), rex_post('role_id', 'int', 0));
+                $messages[] = $addon->i18n('matomo_setup_access_removed');
+            } catch (Exception $e) {
+                $errors[] = $addon->i18n('matomo_setup_role_failed', $e->getMessage());
+            }
+            break;
+
         case 'access_create':
         case 'access_create_all':
         case 'access_create_role':
@@ -156,7 +184,16 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
                 } else {
                     $targets = [];
                     $skipped = [];
+                    $linkable = [];
                     $existing = 0;
+                    try {
+                        $matomo_accounts = [];
+                        foreach ($api()->getUsers() as $mu) {
+                            $matomo_accounts[strtolower($mu['login'])] = strtolower($mu['email']);
+                        }
+                    } catch (Exception) {
+                        $matomo_accounts = [];
+                    }
                     foreach (UserAccess::redaxoUsers() as $ru) {
                         $wanted = match ($action) {
                             'access_create_all' => null === UserAccess::get($ru['id']),
@@ -174,10 +211,18 @@ if ('' !== rex_post('setup_action', 'string', '') && !$csrf->isValid()) {
                             $skipped[] = $ru['login'];
                             continue;
                         }
+                        $key = strtolower(UserAccess::matomoLogin(rex_user::get($ru['id']) ?? rex::requireUser()));
+                        if ('access_create' !== $action && null === UserAccess::get($ru['id']) && isset($matomo_accounts[$key]) && $matomo_accounts[$key] === strtolower($ru['email'])) {
+                            $linkable[] = $ru['login'];
+                            continue;
+                        }
                         $targets[] = $ru['id'];
                     }
                     if ([] !== $skipped) {
                         $errors[] = $addon->i18n('matomo_setup_access_no_email', implode(', ', $skipped));
+                    }
+                    if ([] !== $linkable) {
+                        $messages[] = $addon->i18n('matomo_setup_access_linkable', implode(', ', $linkable));
                     }
                     if ('access_create_role' === $action) {
                         $messages[] = $addon->i18n('matomo_setup_access_role_result', count($targets), $existing);
@@ -248,14 +293,30 @@ if ($connected && $superuser) {
         $messages[] = $addon->i18n('matomo_setup_access_synced', $sync['synced']);
     }
     $missing_logins = UserAccess::missingInMatomo($api());
+    try {
+        $matomo_users = [];
+        foreach ($api()->getUsers() as $mu) {
+            $matomo_users[strtolower($mu['login'])] = strtolower($mu['email']);
+        }
+    } catch (Exception) {
+        $matomo_users = [];
+    }
 }
 
+$matomo_users = $matomo_users ?? [];
 $consent_tools = ConsentRegistration::availableTools();
 $access_entries = UserAccess::all();
 $redaxo_users = UserAccess::redaxoUsers();
+$role_accesses_for_count = UserAccess::roleAccesses();
 $access_missing = 0;
 foreach ($redaxo_users as $ru) {
-    if (!isset($access_entries[$ru['id']]) && $ru['has_email']) {
+    $covered = false;
+    foreach ($ru['roles'] as $rid) {
+        if (isset($role_accesses_for_count[$rid])) {
+            $covered = true;
+        }
+    }
+    if (!isset($access_entries[$ru['id']]) && $ru['has_email'] && !$covered) {
         ++$access_missing;
     }
 }
@@ -501,21 +562,55 @@ if (!$connected) {
         return $html . '</select>';
     };
     ?>
-    <?php $roles = UserAccess::redaxoRoles(); if ([] !== $roles): ?>
-    <form method="post" class="form-inline" style="margin-bottom:12px">
+    <?php $roles = UserAccess::redaxoRoles(); $role_accesses = UserAccess::roleAccesses(); if ([] !== $roles): ?>
+    <h5><i class="fa fa-users"></i> <?= $addon->i18n('matomo_setup_role_headline') ?></h5>
+    <p class="help-block"><?= $addon->i18n('matomo_setup_role_intro') ?></p>
+    <?php if ([] !== $role_accesses): ?>
+    <table class="table table-condensed table-hover">
+        <thead><tr><th><?= $addon->i18n('matomo_setup_access_role') ?></th><th><?= $addon->i18n('matomo_setup_access_matomo_user') ?></th><th class="text-right"><?= $addon->i18n('matomo_setup_access_sites') ?></th></tr></thead>
+        <tbody>
+        <?php foreach ($role_accesses as $rid => $ra): ?>
+            <tr>
+                <td><strong><?= rex_escape($roles[$rid] ?? ('#' . $rid)) ?></strong></td>
+                <td><?php if (in_array($ra['login'], $missing_logins, true)): ?><i class="fa fa-exclamation-triangle text-warning"></i> <?= rex_escape($ra['login']) ?> <small class="text-warning"><?= $addon->i18n('matomo_setup_access_user_missing') ?></small><?php else: ?><i class="fa fa-check text-success"></i> <?= rex_escape($ra['login']) ?> <small class="text-muted"><?= rex_escape($ra['email']) ?></small><?php endif; ?></td>
+                <td class="text-right">
+                    <form method="post" class="form-inline">
+                        <?= $hidden ?>
+                        <input type="hidden" name="role_id" value="<?= $rid ?>">
+                        <?= $siteSelect($ra['sites']) ?>
+                        <button type="submit" name="setup_action" value="role_sites" class="btn btn-default btn-xs"><i class="fa fa-save"></i> <?= $addon->i18n('matomo_setup_access_sites_save') ?></button>
+                        <button type="submit" name="setup_action" value="role_remove" class="btn btn-default btn-xs" onclick="return confirm('<?= rex_escape($addon->i18n('matomo_setup_access_remove_confirm', $ra['login']), 'js') ?>')"><i class="fa fa-times"></i> <?= $addon->i18n('matomo_setup_access_remove') ?></button>
+                    </form>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php endif; ?>
+    <form method="post" class="form-inline" style="margin-bottom:18px" autocomplete="off">
         <?= $hidden ?>
-        <input type="hidden" name="setup_action" value="access_create_role">
-        <label for="matomo-access-role"><?= $addon->i18n('matomo_setup_access_role') ?></label>
-        <select id="matomo-access-role" name="role_id" class="selectpicker" data-width="220px">
-            <?php foreach ($roles as $id => $name): ?>
-                <option value="<?= $id ?>"><?= rex_escape($name) ?></option>
+        <input type="hidden" name="setup_action" value="role_create">
+        <select name="role_id" class="selectpicker" data-width="180px" title="<?= rex_escape($addon->i18n('matomo_setup_access_role')) ?>">
+            <?php foreach ($roles as $id => $name): if (isset($role_accesses[$id])) { continue; } ?>
+                <option value="<?= $id ?>" data-login="<?= rex_escape(strtolower((string) preg_replace('/[^A-Za-z0-9_.-]+/', '-', $name))) ?>"><?= rex_escape($name) ?></option>
             <?php endforeach; ?>
         </select>
+        <input type="text" name="role_login" class="form-control input-sm" placeholder="<?= rex_escape($addon->i18n('matomo_setup_role_login')) ?>" data-matomo-role-login>
+        <input type="email" name="role_email" class="form-control input-sm" placeholder="<?= rex_escape($addon->i18n('matomo_setup_role_email')) ?>" required>
         <?= $siteSelect([]) ?>
-        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-users"></i> <?= $addon->i18n('matomo_setup_access_role_create') ?></button>
-        <p class="help-block"><?= $addon->i18n('matomo_setup_access_role_help') ?></p>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-user-plus"></i> <?= $addon->i18n('matomo_setup_role_create') ?></button>
+        <p class="help-block"><?= $addon->i18n('matomo_setup_role_help') ?></p>
     </form>
+    <script>
+    (function () {
+        var sel = document.querySelector('form:has(input[value=role_create]) select[name=role_id]'), inp = document.querySelector('[data-matomo-role-login]');
+        if (!sel || !inp) { return; }
+        var fill = function () { var o = sel.options[sel.selectedIndex]; if (o && !inp.dataset.touched) { inp.value = o.getAttribute('data-login') || ''; } };
+        sel.addEventListener('change', fill); inp.addEventListener('input', function () { inp.dataset.touched = '1'; }); fill();
+    })();
+    </script>
     <?php endif; ?>
+    <h5><i class="fa fa-user"></i> <?= $addon->i18n('matomo_setup_personal_headline') ?></h5>
     <table class="table table-condensed table-hover">
         <thead><tr>
             <th><?= $addon->i18n('matomo_setup_access_redaxo_user') ?></th>
@@ -530,7 +625,10 @@ if (!$connected) {
         <?php foreach ($redaxo_users as $ru): $entry = $access_entries[$ru['id']] ?? null; ?>
             <tr>
                 <td><strong><?= rex_escape($ru['login']) ?></strong> <small class="text-muted"><?= rex_escape($ru['name']) ?></small><?= $ru['admin'] ? ' <span class="label label-default">Admin</span>' : '' ?><?php foreach ($ru['roles'] as $rid): if (isset($roles[$rid])): ?> <span class="label label-info"><?= rex_escape($roles[$rid]) ?></span><?php endif; endforeach; ?><?= $ru['has_email'] ? '<br><small class="text-muted">' . rex_escape($ru['email']) . '</small>' : '<br><small class="text-warning"><i class="fa fa-exclamation-triangle"></i> ' . rex_escape($addon->i18n('matomo_setup_access_email_missing')) . '</small>' ?></td>
-                <td><?php if (null !== $entry && in_array($entry['login'], $missing_logins, true)): ?>
+                <?php $via_role = null; if (null === $entry) { foreach ($ru['roles'] as $rid) { if (isset($role_accesses[$rid])) { $via_role = $rid; break; } } } ?>
+                <td><?php if (null === $entry && null !== $via_role): ?>
+                        <i class="fa fa-users text-info"></i> <?= rex_escape($role_accesses[$via_role]['login']) ?> <small class="text-muted"><?= $addon->i18n('matomo_setup_access_via_role', $roles[$via_role] ?? '') ?></small>
+                    <?php elseif (null !== $entry && in_array($entry['login'], $missing_logins, true)): ?>
                         <i class="fa fa-exclamation-triangle text-warning"></i> <?= rex_escape($entry['login']) ?><br><small class="text-warning"><?= $addon->i18n('matomo_setup_access_user_missing') ?></small>
                     <?php else: ?>
                         <?= null !== $entry ? '<i class="fa fa-check text-success"></i> ' . rex_escape($entry['login']) . ' <small class="text-muted">' . rex_escape($entry['created']) . '</small>' : '<span class="text-muted">–</span>' ?>
@@ -546,6 +644,8 @@ if (!$connected) {
                     <?php elseif (null !== $entry): ?>
                         <button type="submit" name="setup_action" value="access_sites" class="btn btn-default btn-xs"><i class="fa fa-save"></i> <?= $addon->i18n('matomo_setup_access_sites_save') ?></button>
                         <button type="submit" name="setup_action" value="access_remove" class="btn btn-default btn-xs" onclick="return confirm('<?= rex_escape($addon->i18n('matomo_setup_access_remove_confirm', $entry['login']), 'js') ?>')"><i class="fa fa-times"></i> <?= $addon->i18n('matomo_setup_access_remove') ?></button>
+                    <?php elseif ($ru['has_email'] && isset($matomo_users[strtolower($ru['login'])]) && $matomo_users[strtolower($ru['login'])] === strtolower($ru['email'])): ?>
+                        <span class="text-info" title="<?= rex_escape($addon->i18n('matomo_setup_access_exists_hint')) ?>"><i class="fa fa-info-circle"></i> <?= $addon->i18n('matomo_setup_access_exists') ?></span>
                     <?php elseif ($ru['has_email']): ?>
                         <button type="submit" name="setup_action" value="access_create" class="btn btn-primary btn-xs"><i class="fa fa-user-plus"></i> <?= $addon->i18n('matomo_setup_access_create') ?></button>
                     <?php else: ?>
@@ -561,6 +661,16 @@ if (!$connected) {
     <form method="post" style="display:inline"><?= $hidden ?><input type="hidden" name="setup_action" value="access_sync"><button type="submit" class="btn btn-default btn-xs"><i class="fa fa-sync"></i> <?= $addon->i18n('matomo_setup_access_sync') ?></button></form>
     <p class="help-block" style="margin-top:10px"><?= $addon->i18n('matomo_setup_access_help') ?></p>
 
+    <?php
+}
+?>
+    <h4><i class="fa fa-sign-in-alt"></i> <?= $addon->i18n('matomo_autologin_headline') ?></h4>
+    <p class="help-block"><?= $addon->i18n('matomo_autologin_intro') ?></p>
+    <?php if (AutoLogin::isEnabled()): ?>
+        <p class="text-success"><i class="fa fa-check-circle"></i> <?= $addon->i18n('matomo_autologin_state_on') ?></p>
+    <?php else: ?>
+        <p class="text-warning"><i class="fa fa-exclamation-triangle"></i> <?= $addon->i18n('matomo_autologin_state_off') ?></p>
+    <?php endif; ?>
     <?php if ($is_local && $config_written): ?>
         <?php if (!AutoLogin::isEnabled()): ?>
         <form method="post" style="display:inline"><?= $hidden ?><input type="hidden" name="setup_action" value="autologin_enable"><button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-magic"></i> <?= $addon->i18n('matomo_autologin_enable') ?></button></form>
@@ -572,16 +682,6 @@ if (!$connected) {
         </form>
         <pre style="margin-top:8px">[General]
 login_allow_logme = 1</pre>
-    <?php endif; ?>
-    <?php
-}
-?>
-    <h4><i class="fa fa-sign-in-alt"></i> <?= $addon->i18n('matomo_autologin_headline') ?></h4>
-    <p class="help-block"><?= $addon->i18n('matomo_autologin_intro') ?></p>
-    <?php if (AutoLogin::isEnabled()): ?>
-        <p class="text-success"><i class="fa fa-check-circle"></i> <?= $addon->i18n('matomo_autologin_state_on') ?></p>
-    <?php else: ?>
-        <p class="text-warning"><i class="fa fa-exclamation-triangle"></i> <?= $addon->i18n('matomo_autologin_state_off') ?></p>
     <?php endif; ?>
 <?php
 echo $step(5, $addon->i18n('matomo_setup_step_access'), [] !== $access_entries, (string) ob_get_clean());

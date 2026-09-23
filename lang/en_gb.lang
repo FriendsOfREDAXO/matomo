@@ -535,3 +535,26 @@ matomo_setup_access_role_result = Role: {0} access(es) created, {1} already exis
 matomo_extra_sites = Additional websites in the overview
 matomo_extra_sites_none = None
 matomo_extra_sites_help = The overview shows the Matomo websites matching the YRewrite domains of this installation. Here you can enable additional websites from the same Matomo, e.g. externally managed ones. Per-user website permissions still apply.
+matomo_access_exists_link = Matomo already has the account "{0}" with the same e-mail address (probably from another REDAXO installation). The user can link it on the overview under "My Matomo access" with their Matomo password.
+matomo_setup_access_exists = Matomo account exists – user links it themselves
+matomo_setup_access_exists_hint = Matomo already has an account with this login and e-mail address (another REDAXO installation?). The user links it on the overview under "My Matomo access" with their Matomo password.
+matomo_self_link_intro = You have no Matomo access in this installation yet. If you already have a Matomo account, e.g. from another REDAXO installation on the same Matomo, link it here with your Matomo password. Otherwise an administrator creates an access for you in the setup.
+matomo_self_link_button = Link account
+matomo_self_linked = Matomo account "{0}" linked.
+matomo_self_link_failed = Linking failed: {0}
+matomo_setup_access_linkable = Skipped because a Matomo account already exists (user links it under "My Matomo access"): {0}
+matomo_ov_referrer_websites = Referring websites
+
+# Role accounts (2.14)
+matomo_setup_role_headline = One Matomo account per role
+matomo_setup_role_intro = Simplest option: a shared Matomo account is created for a REDAXO role. All members of the role use it for "Open Matomo", auto-login and the overview; personal accesses (below) take precedence.
+matomo_setup_role_login = Matomo username
+matomo_setup_role_email = E-mail address (required by Matomo)
+matomo_setup_role_create = Create role account
+matomo_setup_role_help = Leave websites empty = all websites. Members see the generated password under "My Matomo access".
+matomo_setup_role_created = Role account for "{0}" created (Matomo user "{1}").
+matomo_setup_role_failed = Role account: {0}
+matomo_setup_access_via_role = via role "{0}"
+matomo_setup_personal_headline = Personal accesses
+matomo_self_role_intro = You use the shared Matomo account of your role. Use these credentials for the regular Matomo login; "Open Matomo" does this with auto-login.
+matomo_self_role_note = Shared account of role "{0}" – the password is managed centrally in the setup.

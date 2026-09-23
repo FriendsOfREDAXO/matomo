@@ -28,7 +28,19 @@ $is_admin = $user instanceof rex_user && $user->isAdmin();
 $my_access = UserAccess::forCurrentUser();
 $self_csrf = rex_csrf_token::factory('matomo_self');
 $self_password_shown = null;
-if ($user instanceof rex_user && null !== $my_access && 'password' === rex_post('matomo_self_action', 'string', '')) {
+if ($user instanceof rex_user && null === $my_access && 'link' === rex_post('matomo_self_action', 'string', '')) {
+    if (!$self_csrf->isValid()) {
+        echo rex_view::error(rex_i18n::msg('csrf_token_invalid'));
+    } else {
+        try {
+            $my_access = UserAccess::link($matomo_url, $user, rex_post('link_login', 'string', ''), rex_post('link_password', 'string', ''));
+            echo rex_view::success($addon->i18n('matomo_self_linked', $my_access['login']));
+        } catch (Exception $e) {
+            echo rex_view::error($addon->i18n('matomo_self_link_failed', $e->getMessage()));
+        }
+    }
+}
+if ($user instanceof rex_user && null !== $my_access && !isset($my_access['role_id']) && 'password' === rex_post('matomo_self_action', 'string', '')) {
     if (!$self_csrf->isValid()) {
         echo rex_view::error(rex_i18n::msg('csrf_token_invalid'));
     } else {
@@ -72,7 +84,7 @@ $i18n = [];
 foreach ([
     'visits', 'unique_visitors', 'actions', 'bounce_rate', 'avg_duration', 'actions_per_visit', 'conversions', 'conversion_rate',
     'vs_previous', 'no_data', 'loading', 'error_prefix', 'hits', 'page', 'referrer_direct', 'domain', 'open', 'updated',
-    'chart_visits', 'chart_actions', 'hour_suffix', 'table_view', 'chart_view',
+    'chart_visits', 'chart_actions', 'hour_suffix', 'table_view', 'chart_view', 'referrer_websites',
 ] as $key) {
     $i18n[$key] = $addon->i18n('matomo_ov_' . $key);
 }
@@ -148,13 +160,28 @@ $card = static function (string $id, string $title, string $icon, string $extra 
 
     <?= $card('sites', $addon->i18n('matomo_domain_statistics'), 'fa-sitemap') ?>
 
+    <?php if (null === $my_access && $user instanceof rex_user): ?>
+    <details class="panel panel-default matomo-ov-self">
+        <summary class="panel-heading" style="cursor:pointer"><h3 class="panel-title" style="display:inline"><i class="fa fa-user"></i> <?= $addon->i18n('matomo_self_title') ?></h3></summary>
+        <div class="panel-body">
+            <p><?= $addon->i18n('matomo_self_link_intro') ?></p>
+            <form method="post" class="form-inline" autocomplete="off">
+                <input type="hidden" name="matomo_self_action" value="link">
+                <?= $self_csrf->getHiddenField() ?>
+                <input type="text" name="link_login" class="form-control input-sm" value="<?= rex_escape(UserAccess::matomoLogin($user)) ?>" placeholder="<?= rex_escape($addon->i18n('matomo_self_login')) ?>" autocomplete="off">
+                <input type="password" name="link_password" class="form-control input-sm" placeholder="<?= rex_escape($addon->i18n('matomo_self_password_label')) ?>" autocomplete="new-password">
+                <button type="submit" class="btn btn-default btn-sm"><i class="fa fa-link"></i> <?= $addon->i18n('matomo_self_link_button') ?></button>
+            </form>
+        </div>
+    </details>
+    <?php endif; ?>
     <?php if (null !== $my_access): ?>
     <details class="panel panel-default matomo-ov-self"<?= null !== $self_password_shown ? ' open' : '' ?>>
         <summary class="panel-heading" style="cursor:pointer"><h3 class="panel-title" style="display:inline"><i class="fa fa-user"></i> <?= $addon->i18n('matomo_self_title') ?></h3></summary>
         <div class="panel-body">
             <div class="row">
                 <div class="col-sm-6">
-                    <p><?= $addon->i18n('matomo_self_intro') ?></p>
+                    <p><?= $addon->i18n(isset($my_access['role_id']) ? 'matomo_self_role_intro' : 'matomo_self_intro') ?></p>
                     <table class="table table-condensed" style="margin-bottom:10px">
                         <tr><td><?= $addon->i18n('matomo_self_url') ?></td><td><a href="<?= rex_escape(rtrim($matomo_url, '/') . '/') ?>" target="_blank"><?= rex_escape(rtrim($matomo_url, '/') . '/') ?></a></td></tr>
                         <tr><td><?= $addon->i18n('matomo_self_login') ?></td><td><code><?= rex_escape($my_access['login']) ?></code></td></tr>
@@ -172,6 +199,9 @@ $card = static function (string $id, string $title, string $icon, string $extra 
                     <a href="<?= rex_escape(rtrim($matomo_url, '/') . '/') ?>" target="_blank" class="btn btn-default btn-sm"><i class="fa fa-external-link-alt"></i> <?= $addon->i18n('matomo_self_login_link') ?></a>
                 </div>
                 <div class="col-sm-6">
+                    <?php if (isset($my_access['role_id'])): ?>
+                        <p class="text-muted"><i class="fa fa-users"></i> <?= $addon->i18n('matomo_self_role_note', UserAccess::redaxoRoles()[$my_access['role_id']] ?? '') ?></p>
+                    <?php else: ?>
                     <form method="post" class="rex-form" autocomplete="off">
                         <input type="hidden" name="matomo_self_action" value="password">
                         <?= $self_csrf->getHiddenField() ?>
@@ -182,6 +212,7 @@ $card = static function (string $id, string $title, string $icon, string $extra 
                         </div>
                         <button type="submit" class="btn btn-default btn-sm"><i class="fa fa-key"></i> <?= $addon->i18n('matomo_self_password_button') ?></button>
                     </form>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

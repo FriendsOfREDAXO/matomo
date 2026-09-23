@@ -139,7 +139,7 @@ Jeder Redakteur bekommt ein eigenes Matomo-Konto. „Matomo öffnen“ meldet ih
 - In der Einrichtung, Schritt 5, bekommt jeder REDAXO-Benutzer per Klick einen **eigenen Matomo-Benutzer** (Leserecht auf alle Websites), ein zufälliges **Passwort** und ein **persönliches App-Token**. Login und E-Mail werden aus dem REDAXO-Benutzer übernommen; ohne gültige E-Mail-Adresse im REDAXO-Benutzer wird kein Zugang angelegt, weil Matomo je Benutzer eine eindeutige Adresse verlangt. Passwort und Token liegen in der REDAXO-Konfiguration (`user_access`), damit der Benutzer sein Passwort auf der Übersicht sehen und ändern kann.
 - „Matomo öffnen“ in der Übersicht ruft dann `index.php?module=CoreHome&…&token_auth=…` auf – Matomo öffnet die komplette Oberfläche als dieser Benutzer, ohne Login und ohne Änderung an der Matomo-Konfiguration.
 - Matomo lässt Token-Zugänge in der Oberfläche nur für Benutzer **ohne** Schreib-/Superuser-Rechte zu. Für die Matomo-Administration meldet man sich weiterhin normal an.
-- **Zugänge je Rolle**: Über die Rollenauswahl in Schritt 5 bekommen alle Benutzer einer REDAXO-Rolle auf einmal einen persönlichen Zugang (nur mit gültiger E-Mail-Adresse, vorhandene Zugänge bleiben unberührt), wahlweise beschränkt auf ausgewählte Websites.
+- **Ein Matomo-Konto je Rolle**: Die einfachste Variante. In Schritt 5 wird für eine REDAXO-Rolle ein gemeinsames Matomo-Konto angelegt (Rolle, Benutzername, E-Mail-Adresse, Websites). Alle Mitglieder der Rolle nutzen es für „Matomo öffnen“, Auto-Login und die Übersicht und sehen die Zugangsdaten unter „Mein Matomo-Zugang“. Persönliche Zugänge haben Vorrang, falls jemand ein eigenes Konto braucht.
 - **Sichtbare Websites je Benutzer**: In der Zugangstabelle lässt sich je REDAXO-Benutzer festlegen, welche Matomo-Websites er sehen darf (keine Auswahl = alle). Die Auswahl wird als Leserecht je Website in Matomo gesetzt und filtert zusätzlich Übersicht und Widgets in REDAXO.
 - „Entfernen“ löscht Matomo-Benutzer und Token wieder. Die Tokens liegen in der REDAXO-Konfiguration (`user_access`).
 - **Auto-Login (logme)**: Ist in Matomos `config.ini.php` `login_allow_logme = 1` gesetzt, meldet „Matomo öffnen“ den Redakteur per POST mit Login und md5-Passwort seines eigenen Kontos an; Matomo legt eine reguläre Session an, die beim Klicken erhalten bleibt. Bei lokaler Installation aktiviert die Einrichtung (Schritt 5) die Einstellung per Klick über Matomos Konsole `config:set`, ersatzweise direkt in der Datei; bei externem Matomo trägt man sie dort ein und bestätigt sie in der Einrichtung. Matomo erlaubt logme nur für Konten ohne Superuser-Rechte, die Zugänge des Addons sind Lesekonten.
@@ -149,6 +149,12 @@ Jeder Redakteur bekommt ein eigenes Matomo-Konto. „Matomo öffnen“ meldet ih
 
 Redakteure mit persönlichem Zugang sehen unten auf der Übersicht Matomo-URL, Benutzernamen, ihr **Passwort** (auf Klick sichtbar), ihre sichtbaren Websites und einen Link zur Matomo-Anmeldung. Über „Passwort ändern“ setzen sie ein eigenes oder lassen ein neues erzeugen. Die Änderung läuft über die Matomo-API mit dem eigenen Token (Matomo verlangt dafür nur das eigene aktuelle Passwort), funktioniert also bei lokalem und externem Matomo. Damit ist die reguläre Anmeldung in Matomo inklusive „Angemeldet bleiben“ möglich.
 - Voraussetzung: In Matomo darf `only_allow_secure_auth_tokens` nicht aktiv sein (Standard: inaktiv).
+
+### Mehrere REDAXO-Installationen an einem Matomo
+
+- **Gleiche Person in beiden Installationen**: Findet das AddOn in Matomo bereits ein Konto mit gleichem Login und gleicher E-Mail-Adresse, legt es kein Duplikat an. Die Einrichtung zeigt „Matomo-Konto vorhanden“, der Benutzer verknüpft das Konto auf der Übersicht unter „Mein Matomo-Zugang“ mit seinem Matomo-Passwort. Danach funktionieren Passwortanzeige, Auto-Login und Website-Filter auch in dieser Installation.
+- **Admin-Reset** verwirft alle Tokens des Superusers, also auch die der anderen Installationen; dort danach das Token neu erzeugen lassen.
+- **„Alle Websites“** meint in Matomo alle Websites des geteilten Matomo. Die Übersicht in REDAXO filtert auf die eigenen Domains, in Matomo selbst sieht der Benutzer alle. Bei geteiltem Matomo Websites je Benutzer gezielt auswählen.
 
 ## 🍪 Consent-Registrierung
 

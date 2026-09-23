@@ -533,3 +533,26 @@ matomo_setup_access_role_result = Rolle: {0} Zugang/Zugänge angelegt, {1} berei
 matomo_extra_sites = Weitere Websites in der Übersicht
 matomo_extra_sites_none = Keine
 matomo_extra_sites_help = Die Übersicht zeigt die Matomo-Websites, die zu den YRewrite-Domains dieser Installation passen. Hier lassen sich weitere Websites aus demselben Matomo freischalten, etwa extern betreute. Die Website-Rechte je Benutzer gelten weiterhin.
+matomo_access_exists_link = In Matomo gibt es bereits das Konto „{0}“ mit derselben E-Mail-Adresse (vermutlich aus einer anderen REDAXO-Installation). Der Benutzer kann es auf der Übersicht unter „Mein Matomo-Zugang“ mit seinem Matomo-Passwort verknüpfen.
+matomo_setup_access_exists = Matomo-Konto vorhanden – Benutzer verknüpft es selbst
+matomo_setup_access_exists_hint = In Matomo existiert bereits ein Konto mit diesem Login und dieser E-Mail-Adresse (andere REDAXO-Installation?). Der Benutzer verknüpft es auf der Übersicht unter „Mein Matomo-Zugang“ mit seinem Matomo-Passwort.
+matomo_self_link_intro = Sie haben noch keinen Matomo-Zugang in dieser Installation. Haben Sie bereits ein Matomo-Konto, etwa aus einer anderen REDAXO-Installation am selben Matomo, verknüpfen Sie es hier mit Ihrem Matomo-Passwort. Andernfalls legt Ihnen ein Administrator in der Einrichtung einen Zugang an.
+matomo_self_link_button = Konto verknüpfen
+matomo_self_linked = Matomo-Konto „{0}“ verknüpft.
+matomo_self_link_failed = Verknüpfen fehlgeschlagen: {0}
+matomo_setup_access_linkable = Übersprungen, weil in Matomo bereits ein Konto vorhanden ist (Benutzer verknüpft es selbst unter „Mein Matomo-Zugang“): {0}
+matomo_ov_referrer_websites = Verweisende Websites
+
+# Rollen-Konten (2.14)
+matomo_setup_role_headline = Ein Matomo-Konto je Rolle
+matomo_setup_role_intro = Einfachste Variante: Für eine REDAXO-Rolle wird ein gemeinsames Matomo-Konto angelegt. Alle Mitglieder der Rolle nutzen es für „Matomo öffnen“, Auto-Login und die Übersicht; persönliche Zugänge (unten) haben Vorrang.
+matomo_setup_role_login = Matomo-Benutzername
+matomo_setup_role_email = E-Mail-Adresse (Pflicht in Matomo)
+matomo_setup_role_create = Rollen-Konto anlegen
+matomo_setup_role_help = Websites leer lassen = alle Websites. Das erzeugte Passwort sehen die Mitglieder unter „Mein Matomo-Zugang“.
+matomo_setup_role_created = Rollen-Konto für „{0}“ angelegt (Matomo-Benutzer „{1}“).
+matomo_setup_role_failed = Rollen-Konto: {0}
+matomo_setup_access_via_role = über Rolle „{0}“
+matomo_setup_personal_headline = Persönliche Zugänge
+matomo_self_role_intro = Sie nutzen das gemeinsame Matomo-Konto Ihrer Rolle. Mit diesen Zugangsdaten melden Sie sich regulär in Matomo an; „Matomo öffnen“ übernimmt das mit Auto-Login.
+matomo_self_role_note = Gemeinsames Konto der Rolle „{0}“ – das Passwort wird zentral in der Einrichtung verwaltet.

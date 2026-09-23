@@ -222,15 +222,41 @@
     return '<a class="btn btn-default btn-xs" target="_blank" href="' + esc(site.open_url) + '"><i class="fa fa-external-link-alt"></i> ' + esc(t('open')) + '</a>';
   }
 
+  // Feste Farben je Kategorie (Identität), Reihenfolge nie rotieren
+  var CATEGORY_COLORS = ['#2f7fcf', '#e08a1e', '#2e8b57', '#7b5cd6', '#1c9aa8', '#c8463e', '#8a6d3b', '#5c6b7a'];
+  var KNOWN_KEYS = {
+    referrers: ['Direct Entry', 'Search Engines', 'Websites', 'Social Networks', 'Campaigns'],
+    devices: ['Desktop', 'Smartphone', 'Tablet', 'Phablet', 'Tv', 'Console', 'Wearable', 'Unknown']
+  };
+
+  function colorFor(kind, label, index) {
+    var known = KNOWN_KEYS[kind] || [];
+    var i = known.indexOf(label);
+    if (i < 0) { i = known.length + index; }
+    return CATEGORY_COLORS[i % CATEGORY_COLORS.length];
+  }
+
+  // Balkenliste: Breite = Anteil an der Summe (nicht am Maximum), Prozent direkt beschriftet.
+  // opts.kind setzt feste Farben je Kategorie (Herkunft, Geräte); sonst eine Farbe (Rangliste).
   function bars(rows, opts) {
     if (!rows || !rows.length) { return null; }
-    var max = Math.max.apply(null, rows.map(function (r) { return r[opts.value]; })) || 1;
-    return '<ul class="matomo-ov-bars">' + rows.map(function (r) {
-      var pct = Math.max(2, Math.round((r[opts.value] / max) * 100));
-      return '<li class="matomo-ov-bar"><span class="matomo-ov-bar-label" title="' + esc(opts.title ? opts.title(r) : r.label) + '">' + (opts.label ? opts.label(r) : esc(r.label)) + '</span>'
-        + '<span class="matomo-ov-bar-track"><span class="matomo-ov-bar-fill" style="width:' + pct + '%"></span></span>'
-        + '<span class="matomo-ov-bar-value">' + fmtInt(r[opts.value]) + (opts.extra ? ' <small>' + opts.extra(r) + '</small>' : '') + '</span></li>';
+    var total = rows.reduce(function (sum, r) { return sum + (r[opts.value] || 0); }, 0) || 1;
+    var html = '';
+    if (opts.kind) {
+      html += '<div class="matomo-ov-share" role="img">' + rows.map(function (r, i) {
+        var pct = (r[opts.value] / total) * 100;
+        return '<span style="width:' + pct.toFixed(2) + '%;background:' + colorFor(opts.kind, r.label, i) + '" title="' + esc(r.label) + ' ' + fmtDec(pct) + ' %"></span>';
+      }).join('') + '</div>';
+    }
+    html += '<ul class="matomo-ov-bars">' + rows.map(function (r, i) {
+      var pct = (r[opts.value] / total) * 100;
+      var color = opts.kind ? colorFor(opts.kind, r.label, i) : '';
+      return '<li class="matomo-ov-bar"><span class="matomo-ov-bar-label" title="' + esc(opts.title ? opts.title(r) : r.label) + '">'
+        + (color ? '<i class="matomo-ov-swatch" style="background:' + color + '"></i>' : '') + (opts.label ? opts.label(r) : esc(r.label)) + '</span>'
+        + '<span class="matomo-ov-bar-track"><span class="matomo-ov-bar-fill" style="width:' + Math.max(1, pct).toFixed(2) + '%' + (color ? ';background:' + color : '') + '"></span></span>'
+        + '<span class="matomo-ov-bar-value">' + fmtInt(r[opts.value]) + ' <small>' + fmtDec(pct) + ' %' + (opts.extra ? ' · ' + opts.extra(r) : '') + '</small></span></li>';
     }).join('') + '</ul>';
+    return html;
   }
 
   function fillCard(part, html) {
@@ -250,15 +276,15 @@
   };
 
   RENDER.referrers = function (data) {
-    var html = bars(data.types, { value: 'visits' });
+    var html = bars(data.types, { value: 'visits', kind: 'referrers' });
     if (html !== null && data.websites && data.websites.length) {
-      html += '<hr style="margin:10px 0">' + bars(data.websites, { value: 'visits' });
+      html += '<p class="matomo-ov-subhead">' + esc(t('referrer_websites')) + '</p>' + bars(data.websites, { value: 'visits' });
     }
     fillCard('referrers', html);
   };
 
   RENDER.devices = function (data) {
-    fillCard('devices', bars(data.rows, { value: 'visits' }));
+    fillCard('devices', bars(data.rows, { value: 'visits', kind: 'devices' }));
   };
 
   RENDER.countries = function (data) {
