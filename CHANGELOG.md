@@ -2,6 +2,9 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.13.0 – 2026-09-23
+- **Weitere Websites in der Übersicht**: Unter Konfiguration lassen sich Matomo-Websites freischalten, die nicht zu den YRewrite-Domains dieser Installation gehören (z. B. extern betreute Seiten im selben Matomo). Sie erscheinen in Übersicht, Widgets und Domain-Filter; Website-Rechte je Benutzer gelten weiterhin
+
 ## 2.12.0 – 2026-09-23
 - **Zugänge je REDAXO-Rolle**: In Schritt 5 lassen sich persönliche Zugänge für alle Benutzer einer Rolle auf einmal anlegen (nur mit gültiger E-Mail, bereits vorhandene werden übersprungen), wahlweise beschränkt auf ausgewählte Websites. Die Zugangstabelle zeigt die Rollen der Benutzer
 

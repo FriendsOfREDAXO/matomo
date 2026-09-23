@@ -1,6 +1,8 @@
 <?php
 
 use FriendsOfRedaxo\Matomo\MatomoApi;
+use FriendsOfRedaxo\Matomo\MatomoStatsApi;
+use FriendsOfRedaxo\Matomo\YRewriteHelper;
 
 $addon = rex_addon::get('matomo');
 
@@ -41,6 +43,7 @@ if (rex_post('save_config', 'boolean')) {
         rex_config::set('matomo', 'event_tracking_js', rex_post('event_tracking_js', 'boolean', false));
         rex_config::set('matomo', 'respect_dnt', rex_post('respect_dnt', 'boolean', false));
         rex_config::set('matomo', 'cookie_lifetime', $cookieLifetime);
+        rex_config::set('matomo', 'extra_site_ids', array_values(array_filter(array_map('intval', rex_post('extra_site_ids', 'array', [])))));
 
         // Optionale Matomo-Datenbankzugangsdaten für Passwort-Reset (nur wenn config.ini.php nicht reicht)
         rex_config::set('matomo', 'db_override_host', trim(rex_post('db_override_host', 'string', '')));
@@ -73,10 +76,17 @@ $respect_dnt = (bool) rex_config::get('matomo', 'respect_dnt', false);
 $cookie_lifetime = (int) rex_config::get('matomo', 'cookie_lifetime', 2592000);
 
 $api_status = '';
+$hidden_sites = [];
+$extra_site_ids = array_map('intval', (array) rex_config::get('matomo', 'extra_site_ids', []));
 if ($matomo_url !== '' && $admin_token !== '') {
     try {
         $api = new MatomoApi($matomo_url, $admin_token);
-        $api_status = '<span class="text-success"><i class="fa fa-check-circle"></i> ' . $addon->i18n('matomo_connected') . ' (' . count($api->getSites()) . ' ' . $addon->i18n('matomo_setup_websites') . ')</span>';
+        $all_sites = $api->getSites();
+        $api_status = '<span class="text-success"><i class="fa fa-check-circle"></i> ' . $addon->i18n('matomo_connected') . ' (' . count($all_sites) . ' ' . $addon->i18n('matomo_setup_websites') . ')</span>';
+        if (YRewriteHelper::isAvailable()) {
+            $yrewrite_ids = array_map(static fn (array $s): int => (int) $s['idsite'], YRewriteHelper::filterMatomoSitesByYRewrite($all_sites));
+            $hidden_sites = array_values(array_filter($all_sites, static fn (array $s): bool => !in_array((int) $s['idsite'], $yrewrite_ids, true)));
+        }
     } catch (Exception $e) {
         $api_status = '<span class="text-danger"><i class="fa fa-times-circle"></i> ' . rex_escape($e->getMessage()) . '</span>';
     }
@@ -137,6 +147,17 @@ if ($matomo_url !== '' && $admin_token !== '') {
             <div class="panel panel-default">
                 <div class="panel-heading"><h3 class="panel-title"><i class="fas fa-chart-line"></i> Tracking-Features</h3></div>
                 <div class="panel-body">
+                    <?php if ([] !== $hidden_sites || [] !== $extra_site_ids): ?>
+                    <div class="form-group">
+                        <label for="extra_site_ids"><?= $addon->i18n('matomo_extra_sites') ?></label>
+                        <select id="extra_site_ids" name="extra_site_ids[]" class="selectpicker form-control" multiple data-actions-box="true" data-select-all-text="<?= rex_escape($addon->i18n('matomo_setup_access_sites_select_all')) ?>" data-deselect-all-text="<?= rex_escape($addon->i18n('matomo_setup_access_sites_deselect_all')) ?>" data-none-selected-text="<?= rex_escape($addon->i18n('matomo_extra_sites_none')) ?>" title="<?= rex_escape($addon->i18n('matomo_extra_sites_none')) ?>">
+                            <?php foreach ($hidden_sites as $site): $host = (string) parse_url((string) ($site['main_url'] ?? ''), PHP_URL_HOST); ?>
+                                <option value="<?= (int) $site['idsite'] ?>"<?= in_array((int) $site['idsite'], $extra_site_ids, true) ? ' selected' : '' ?>><?= rex_escape('' !== $host ? $host : (string) $site['name']) ?> (ID <?= (int) $site['idsite'] ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="help-block"><?= $addon->i18n('matomo_extra_sites_help') ?></p>
+                    </div>
+                    <?php endif; ?>
                     <div class="checkbox">
                         <label>
                             <input type="checkbox" name="show_top_pages" value="1" <?= $show_top_pages ? 'checked' : '' ?>>

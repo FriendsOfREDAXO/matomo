@@ -115,6 +115,7 @@ Under **Matomo → Domains**:
 ### 4. **View Statistics**
 - **Matomo → Overview**: KPIs (visits, unique visitors, page views, bounce rate, avg. visit duration, actions per visit, conversions, conversion rate) each compared to the previous period, a trend chart (hourly, daily or monthly, also as a table), top pages, referrers, devices, countries and a per-domain table
 - **Filters** by domain and period (today, yesterday, 7 days, 30 days, month, year); the selection is remembered in the browser
+- **Additional websites**: by default the overview only shows Matomo websites matching the YRewrite domains of this installation. Under Configuration you can enable additional websites from the same Matomo, e.g. externally managed sites
 - **Non-blocking and server-friendly**: the page appears immediately, sections load one after another via `rex-api-call=matomo_stats` (only one Matomo request at a time). Responses are cached server-side for 10 minutes (closed periods 6 hours), auto-refresh runs every 15 minutes only while the tab is visible; "Refresh" forces new data at most once per minute
 - **Open Matomo**: With personal access the user lands directly in Matomo, no login
 - **Direct Domain Links**: Quick access to specific domain statistics

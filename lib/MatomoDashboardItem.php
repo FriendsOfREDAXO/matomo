@@ -35,13 +35,8 @@ class MatomoDashboardItem extends Item
         
         try {
             $api = new MatomoApi($matomo_url, $admin_token);
-            $sites = $api->getSites();
-            
-            // YRewrite Integration - nur YRewrite Domains anzeigen (falls verfügbar)
-            if (class_exists('FriendsOfRedaxo\Matomo\YRewriteHelper') && YRewriteHelper::isAvailable()) {
-                $sites = YRewriteHelper::filterMatomoSitesByYRewrite($sites);
-            }
-            $sites = UserAccess::filterSites($sites);
+            // Websites dieser Installation (YRewrite + freigeschaltete) und persönliche Rechte
+            $sites = MatomoStatsApi::allowedSites($api);
             
             return $this->renderStats($sites, $api);
             

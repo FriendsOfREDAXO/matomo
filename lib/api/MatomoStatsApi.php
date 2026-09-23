@@ -123,11 +123,31 @@ class MatomoStatsApi extends rex_api_function
      */
     public static function allowedSites(MatomoApi $api): array
     {
-        $sites = $api->getSites();
-        if (YRewriteHelper::isAvailable()) {
-            $sites = YRewriteHelper::filterMatomoSitesByYRewrite($sites);
+        return array_values(UserAccess::filterSites(self::visibleSites($api->getSites())));
+    }
+
+    /**
+     * Websites dieser Installation: YRewrite-Domains plus die in der Konfiguration
+     * zusätzlich freigeschalteten (z.B. extern betreute Websites im selben Matomo).
+     *
+     * @param array<int, array<string, mixed>> $sites alle Matomo-Sites
+     * @return list<array<string, mixed>>
+     */
+    public static function visibleSites(array $sites): array
+    {
+        if (!YRewriteHelper::isAvailable()) {
+            return array_values($sites);
         }
-        return array_values(UserAccess::filterSites($sites));
+        $extra = array_map('intval', (array) rex_config::get('matomo', 'extra_site_ids', []));
+        $visible = YRewriteHelper::filterMatomoSitesByYRewrite($sites);
+        $ids = array_map(static fn (array $s): int => (int) $s['idsite'], $visible);
+        foreach ($sites as $site) {
+            if (in_array((int) $site['idsite'], $extra, true) && !in_array((int) $site['idsite'], $ids, true)) {
+                $visible[] = $site;
+            }
+        }
+        usort($visible, static fn (array $a, array $b): int => (int) $a['idsite'] <=> (int) $b['idsite']);
+        return $visible;
     }
 
     /**

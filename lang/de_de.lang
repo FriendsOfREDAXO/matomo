@@ -530,3 +530,6 @@ matomo_setup_access_role = Rolle
 matomo_setup_access_role_create = Zugang für alle Benutzer der Rolle anlegen
 matomo_setup_access_role_help = Legt persönliche Zugänge für alle aktiven REDAXO-Benutzer mit dieser Rolle und gültiger E-Mail-Adresse an, die noch keinen haben; die gewählten Websites gelten für alle (leer = alle Websites).
 matomo_setup_access_role_result = Rolle: {0} Zugang/Zugänge angelegt, {1} bereits vorhanden.
+matomo_extra_sites = Weitere Websites in der Übersicht
+matomo_extra_sites_none = Keine
+matomo_extra_sites_help = Die Übersicht zeigt die Matomo-Websites, die zu den YRewrite-Domains dieser Installation passen. Hier lassen sich weitere Websites aus demselben Matomo freischalten, etwa extern betreute. Die Website-Rechte je Benutzer gelten weiterhin.
