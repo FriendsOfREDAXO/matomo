@@ -29,7 +29,7 @@ class MatomoStatsApi extends rex_api_function
 {
     protected $published = false;
 
-    private const RANGES = ['today', 'yesterday', 'last7', 'last30', 'month', 'year'];
+    private const RANGES = ['today', 'yesterday', 'week', 'last7', 'last30', 'month', 'year'];
 
     /** Cache-Dauer in Sekunden: Zeiträume mit heutigem Tag ändern sich, abgeschlossene nicht. */
     private const TTL_LIVE = 600;
@@ -87,6 +87,7 @@ class MatomoStatsApi extends rex_api_function
                 'referrers' => self::referrers($api, $sites, $range),
                 'devices' => self::simpleList($api, $sites, $range, 'DevicesDetection.getType', 8),
                 'countries' => self::simpleList($api, $sites, $range, 'UserCountry.getCountry', 8, true),
+                'times' => self::times($api, $sites, $range),
                 default => throw new Exception('Unbekannter Abschnitt'),
             };
             $payload = ['success' => true, 'part' => $part, 'data' => $data, 'cached' => false, 'age' => 0];
@@ -174,20 +175,27 @@ class MatomoStatsApi extends rex_api_function
                     'previous' => ['period' => 'day', 'date' => $fmt($y->sub(new DateInterval('P1D')))],
                     'series' => ['period' => 'day', 'date' => 'yesterday', 'kind' => 'hour'],
                 ];
+            case 'week':
+                // Kalenderperioden liefern eindeutige Besucher, freie Zeiträume nicht
+                $start = $today->modify('monday this week');
+                return [
+                    'current' => ['period' => 'week', 'date' => 'today'],
+                    'previous' => ['period' => 'week', 'date' => $fmt($start->sub(new DateInterval('P1D')))],
+                    'series' => ['period' => 'day', 'date' => $fmt($start) . ',' . $fmt($today), 'kind' => 'day'],
+                ];
             case 'month':
                 $start = $today->modify('first day of this month');
                 $prevStart = $start->modify('first day of previous month');
                 return [
-                    'current' => ['period' => 'range', 'date' => $fmt($start) . ',' . $fmt($today)],
-                    'previous' => ['period' => 'range', 'date' => $fmt($prevStart) . ',' . $fmt($prevStart->modify('last day of this month'))],
+                    'current' => ['period' => 'month', 'date' => 'today'],
+                    'previous' => ['period' => 'month', 'date' => $fmt($prevStart)],
                     'series' => ['period' => 'day', 'date' => $fmt($start) . ',' . $fmt($today), 'kind' => 'day'],
                 ];
             case 'year':
                 $start = $today->modify('first day of january this year');
-                $prevStart = $start->modify('-1 year');
                 return [
-                    'current' => ['period' => 'range', 'date' => $fmt($start) . ',' . $fmt($today)],
-                    'previous' => ['period' => 'range', 'date' => $fmt($prevStart) . ',' . $fmt($prevStart->modify('last day of december this year'))],
+                    'current' => ['period' => 'year', 'date' => 'today'],
+                    'previous' => ['period' => 'year', 'date' => $fmt($start->modify('-1 year'))],
                     'series' => ['period' => 'month', 'date' => $fmt($start) . ',' . $fmt($today), 'kind' => 'month'],
                 ];
             case 'last30':
@@ -239,8 +247,13 @@ class MatomoStatsApi extends rex_api_function
             ];
         }
 
-        // Matomo berechnet eindeutige Besucher nicht für freie Zeiträume (period=range)
-        $hasUnique = 'range' !== $r['current']['period'];
+        // Matomo liefert eindeutige Besucher nur für Kalenderperioden (Tag, Woche, Monat; Jahr/Zeitraum je nach Konfiguration)
+        $hasUnique = false;
+        foreach ($results as $i => $result) {
+            if (0 === $i % 2 && is_array($result) && isset($result['nb_uniq_visitors'])) {
+                $hasUnique = true;
+            }
+        }
 
         return [
             'current' => self::finish($current),
@@ -300,6 +313,45 @@ class MatomoStatsApi extends rex_api_function
             'visits' => array_values($visits),
             'actions' => array_values($actions),
         ];
+    }
+
+    /**
+     * Besuche nach Tageszeit (24 Stunden, Serverzeit) und Wochentag.
+     *
+     * @param list<array<string, mixed>> $sites
+     * @return array<string, mixed>
+     * @throws Exception
+     */
+    private static function times(MatomoApi $api, array $sites, string $range): array
+    {
+        $r = self::resolveRange($range)['current'];
+        $requests = [];
+        foreach ($sites as $site) {
+            $requests[] = ['method' => 'VisitTime.getVisitInformationPerServerTime', 'idSite' => (int) $site['idsite']] + $r;
+            $requests[] = ['method' => 'VisitTime.getByDayOfWeek', 'idSite' => (int) $site['idsite']] + $r;
+        }
+        $results = $api->bulk($requests);
+        $hours = array_fill(0, 24, 0);
+        $weekdays = array_fill(1, 7, 0);
+        foreach ($sites as $i => $site) {
+            foreach (is_array($results[$i * 2] ?? null) ? $results[$i * 2] : [] as $row) {
+                if (is_array($row) && isset($row['label'])) {
+                    $h = (int) $row['label'];
+                    if ($h >= 0 && $h < 24) {
+                        $hours[$h] += (int) ($row['nb_visits'] ?? 0);
+                    }
+                }
+            }
+            foreach (is_array($results[$i * 2 + 1] ?? null) ? $results[$i * 2 + 1] : [] as $row) {
+                if (is_array($row) && isset($row['day_of_week'])) {
+                    $d = (int) $row['day_of_week'];
+                    if ($d >= 1 && $d <= 7) {
+                        $weekdays[$d] += (int) ($row['nb_visits'] ?? 0);
+                    }
+                }
+            }
+        }
+        return ['hours' => $hours, 'weekdays' => array_values($weekdays)];
     }
 
     /**

@@ -556,3 +556,10 @@ matomo_setup_access_via_role = über Rolle „{0}“
 matomo_setup_personal_headline = Persönliche Zugänge
 matomo_self_role_intro = Sie nutzen das gemeinsame Matomo-Konto Ihrer Rolle. Mit diesen Zugangsdaten melden Sie sich regulär in Matomo an; „Matomo öffnen“ übernimmt das mit Auto-Login.
 matomo_self_role_note = Gemeinsames Konto der Rolle „{0}“ – das Passwort wird zentral in der Einrichtung verwaltet.
+
+# Zeiten (2.15)
+matomo_range_week = Diese Woche
+matomo_ov_times = Besuche nach Zeit
+matomo_ov_by_hour = Nach Tageszeit
+matomo_ov_by_weekday = Nach Wochentag
+matomo_ov_unique_unavailable = für freie Zeiträume berechnet Matomo keine eindeutigen Besucher – Tag, Woche oder Monat wählen

@@ -2,6 +2,11 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.15.0 – 2026-09-23
+- **Besuche nach Zeit**: neue Karte in der Übersicht mit Säulen nach Tageszeit und Wochentag
+- **Eindeutige Besucher**: „Dieser Monat“ und „Dieses Jahr“ nutzen Matomos Kalenderperioden und liefern damit eindeutige Besucher; neuer Zeitraum „Diese Woche“. Für „Letzte 7/30 Tage“ berechnet Matomo keine eindeutigen Besucher, die Kachel erklärt das
+- **Fix**: Balken in den Listen waren unsichtbar (Inline-Element ohne Breite)
+
 ## 2.14.0 – 2026-09-23
 - **Ein Matomo-Konto je Rolle**: In Schritt 5 lässt sich für eine REDAXO-Rolle ein gemeinsames Matomo-Konto anlegen (Rolle, Benutzername, E-Mail, Websites). Alle Mitglieder nutzen es für „Matomo öffnen“, Auto-Login und die Übersicht; persönliche Zugänge haben Vorrang. Die Zugangstabelle zeigt, wer über ein Rollen-Konto abgedeckt ist
 - **Übersicht**: Balkenlisten zeigen Anteile an allen Besuchen mit Prozentwert statt relativ zum größten Wert; Herkunft und Geräte mit festen Farben je Kategorie und Anteilsleiste

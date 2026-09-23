@@ -43,8 +43,8 @@
 .matomo-ov-bar:last-child { border-bottom: 0; }
 .matomo-ov-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .matomo-ov-bar-label small { color: var(--mov-muted); }
-.matomo-ov-bar-track { height: 10px; background: var(--mov-accent-soft); border-radius: 0 4px 4px 0; overflow: hidden; }
-.matomo-ov-bar-fill { height: 100%; background: var(--mov-accent); border-radius: 0 4px 4px 0; transition: width .5s ease; }
+.matomo-ov-bar-track { display: block; height: 10px; background: var(--mov-accent-soft); border-radius: 0 4px 4px 0; overflow: hidden; }
+.matomo-ov-bar-fill { display: block; height: 100%; background: var(--mov-accent); border-radius: 0 4px 4px 0; transition: width .5s ease; }
 .matomo-ov-bar-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .matomo-ov-bar-value small { color: var(--mov-muted); }
 .matomo-ov-flag { display: inline-block; width: 18px; text-align: center; margin-right: 4px; }
@@ -79,3 +79,15 @@
 .matomo-ov-sites .matomo-ov-delta.is-up { color: var(--mov-good); }
 .matomo-ov-sites .matomo-ov-delta.is-down { color: var(--mov-bad); }
 .matomo-ov-sites tr.is-active td { background: var(--mov-accent-soft); }
+
+/* Besuche nach Tageszeit / Wochentag: kompakte Säulen */
+.matomo-ov-times { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .matomo-ov-times { grid-template-columns: 1fr; } }
+.matomo-ov-times h5 { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--mov-muted); margin: 0 0 6px; }
+.matomo-ov-cols { position: relative; }
+.matomo-ov-cols svg { width: 100%; height: 140px; display: block; overflow: visible; }
+.matomo-ov-cols .mov-col { fill: var(--mov-accent); }
+.matomo-ov-cols .mov-col.is-peak { fill: var(--mov-accent); }
+.matomo-ov-cols .mov-axis text { fill: var(--mov-muted); font-size: 11px; }
+.matomo-ov-cols .mov-grid line { stroke: var(--mov-grid); }
+.matomo-ov-cols .mov-hit { fill: transparent; }

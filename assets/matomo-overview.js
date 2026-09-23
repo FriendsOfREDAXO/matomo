@@ -110,7 +110,7 @@
     }
   }
 
-  var PARTS = ['summary', 'chart', 'pages', 'referrers', 'devices', 'countries'];
+  var PARTS = ['summary', 'chart', 'pages', 'times', 'referrers', 'devices', 'countries'];
   var runId = 0;
 
   // Abschnitte nacheinander laden: es ist immer nur ein Matomo-Request unterwegs,
@@ -165,7 +165,7 @@
     var c = data.current, p = data.previous;
     var tiles = [
       ['visits', fmtInt(c.visits), delta(c.visits, p.visits)],
-      ['unique_visitors', data.has_unique === false ? '–' : fmtInt(c.unique), data.has_unique === false ? '' : delta(c.unique, p.unique)],
+      ['unique_visitors', data.has_unique === false ? '–' : fmtInt(c.unique), data.has_unique === false ? '<span class="text-muted">' + esc(t('unique_unavailable')) + '</span>' : delta(c.unique, p.unique), data.has_unique === false],
       ['actions', fmtInt(c.actions), delta(c.actions, p.actions)],
       ['bounce_rate', fmtDec(c.bounce_rate) + ' %', delta(c.bounce_rate, p.bounce_rate, true)],
       ['avg_duration', fmtDuration(c.avg_time), delta(c.avg_time, p.avg_time)],
@@ -177,7 +177,7 @@
     node.innerHTML = tiles.map(function (tile) {
       return '<div class="matomo-ov-kpi"><div class="matomo-ov-kpi-value">' + tile[1] + '</div>'
         + '<div class="matomo-ov-kpi-label">' + esc(t(tile[0])) + '</div>'
-        + '<div class="matomo-ov-kpi-delta">' + (tile[2] ? tile[2] + ' <span class="text-muted">' + esc(t('vs_previous')) + '</span>' : '&nbsp;') + '</div></div>';
+        + '<div class="matomo-ov-kpi-delta">' + (tile[2] ? tile[2] + (tile[3] ? '' : ' <span class="text-muted">' + esc(t('vs_previous')) + '</span>') : '&nbsp;') + '</div></div>';
     }).join('');
     RENDER.sites(data);
     // "Matomo öffnen" folgt dem Domain-Filter
@@ -323,6 +323,41 @@
       });
     }
   };
+
+  RENDER.times = function (data) {
+    var hours = data.hours || [], days = data.weekdays || [];
+    if (!hours.some(function (v) { return v > 0; })) { setEmpty('times'); return; }
+    var body = bodyOf('times');
+    body.classList.remove('is-loading');
+    var dayNames = (function () { var base = new Date(Date.UTC(2024, 0, 1)); return [0, 1, 2, 3, 4, 5, 6].map(function (i) { var d = new Date(base); d.setUTCDate(base.getUTCDate() + i); return d.toLocaleDateString(cfg.locale || undefined, { weekday: 'short', timeZone: 'UTC' }); }); })();
+    body.innerHTML = '<div class="matomo-ov-times"><div><h5>' + esc(t('by_hour')) + '</h5><div class="matomo-ov-cols" data-cols="hours"></div></div><div><h5>' + esc(t('by_weekday')) + '</h5><div class="matomo-ov-cols" data-cols="days"></div></div></div>';
+    drawColumns(body.querySelector('[data-cols=hours]'), hours.map(function (v, i) { return { label: (i < 10 ? '0' : '') + i + ' ' + t('hour_suffix'), short: i % 3 === 0 ? String(i) : '', value: v }; }));
+    drawColumns(body.querySelector('[data-cols=days]'), days.map(function (v, i) { return { label: dayNames[i], short: dayNames[i], value: v }; }));
+  };
+
+  // Säulen mit Hover-Tooltip, eine Farbe, Spitzenwert direkt beschriftet
+  function drawColumns(container, items) {
+    var W = 600, H = 140, padL = 6, padR = 6, padT = 16, padB = 22;
+    var n = items.length, max = Math.max.apply(null, items.map(function (i) { return i.value; })) || 1;
+    var slot = (W - padL - padR) / n, bw = Math.max(3, slot - 3);
+    var svgNS = 'http://www.w3.org/2000/svg';
+    var svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('preserveAspectRatio', 'none');
+    var el = function (name, attrs) { var node = document.createElementNS(svgNS, name); Object.keys(attrs).forEach(function (k) { node.setAttribute(k, attrs[k]); }); return node; };
+    var grid = el('g', { 'class': 'mov-grid' }); grid.appendChild(el('line', { x1: padL, x2: W - padR, y1: H - padB, y2: H - padB })); svg.appendChild(grid);
+    var axis = el('g', { 'class': 'mov-axis' });
+    var peak = items.reduce(function (best, it, i) { return it.value > items[best].value ? i : best; }, 0);
+    items.forEach(function (it, i) {
+      var h = (it.value / max) * (H - padT - padB), x = padL + i * slot + (slot - bw) / 2, y = H - padB - h;
+      var rect = el('rect', { 'class': 'mov-col' + (i === peak ? ' is-peak' : ''), x: x, y: y, width: bw, height: Math.max(h, it.value > 0 ? 1 : 0), rx: 2 });
+      var title = document.createElementNS(svgNS, 'title'); title.textContent = it.label + ': ' + fmtInt(it.value); rect.appendChild(title);
+      svg.appendChild(rect);
+      if (it.short) { var tx = el('text', { x: x + bw / 2, y: H - 6, 'text-anchor': 'middle' }); tx.textContent = it.short; axis.appendChild(tx); }
+      if (i === peak && it.value > 0) { var tv = el('text', { x: x + bw / 2, y: y - 4, 'text-anchor': 'middle' }); tv.textContent = fmtInt(it.value); axis.appendChild(tv); }
+    });
+    svg.appendChild(axis);
+    container.appendChild(svg);
+  }
 
   function prettyLabel(label, kind) {
     if (kind === 'hour') { return label + ' ' + t('hour_suffix'); }

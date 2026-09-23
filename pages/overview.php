@@ -74,6 +74,7 @@ if ([] === $sites) {
 $ranges = [
     'today' => $addon->i18n('matomo_range_today'),
     'yesterday' => $addon->i18n('matomo_range_yesterday'),
+    'week' => $addon->i18n('matomo_range_week'),
     'last7' => $addon->i18n('matomo_range_last7'),
     'last30' => $addon->i18n('matomo_range_last30'),
     'month' => $addon->i18n('matomo_range_month'),
@@ -84,7 +85,7 @@ $i18n = [];
 foreach ([
     'visits', 'unique_visitors', 'actions', 'bounce_rate', 'avg_duration', 'actions_per_visit', 'conversions', 'conversion_rate',
     'vs_previous', 'no_data', 'loading', 'error_prefix', 'hits', 'page', 'referrer_direct', 'domain', 'open', 'updated',
-    'chart_visits', 'chart_actions', 'hour_suffix', 'table_view', 'chart_view', 'referrer_websites',
+    'chart_visits', 'chart_actions', 'hour_suffix', 'table_view', 'chart_view', 'referrer_websites', 'by_hour', 'by_weekday', 'unique_unavailable',
 ] as $key) {
     $i18n[$key] = $addon->i18n('matomo_ov_' . $key);
 }
@@ -153,6 +154,7 @@ $card = static function (string $id, string $title, string $icon, string $extra 
         <?php if ($config['showTopPages']): ?>
             <div class="matomo-ov-grid-wide"><?= $card('pages', $addon->i18n('matomo_ov_top_pages'), 'fa-file-alt') ?></div>
         <?php endif; ?>
+        <div class="matomo-ov-grid-wide"><?= $card('times', $addon->i18n('matomo_ov_times'), 'fa-clock') ?></div>
         <?= $card('referrers', $addon->i18n('matomo_ov_referrers'), 'fa-share-alt') ?>
         <?= $card('devices', $addon->i18n('matomo_ov_devices'), 'fa-mobile-alt') ?>
         <?= $card('countries', $addon->i18n('matomo_ov_countries'), 'fa-globe') ?>

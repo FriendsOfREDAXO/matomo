@@ -95,7 +95,8 @@ Under **Matomo → Domains**:
 
 ### 4. **Statistiken ansehen**
 - **Matomo → Übersicht**: Kennzahlen (Besuche, eindeutige Besucher, Seitenaufrufe, Absprungrate, Ø Besuchsdauer, Aktionen je Besuch, Conversions, Konversionsrate) jeweils mit Vergleich zur Vorperiode, Verlaufsdiagramm (stündlich, täglich oder monatlich, auch als Tabelle), Top-Seiten, Herkunft, Geräte, Länder und eine Tabelle je Domain
-- **Filter** nach Domain und Zeitraum (heute, gestern, 7 Tage, 30 Tage, Monat, Jahr); die Auswahl bleibt im Browser gespeichert
+- **Besuche nach Zeit**: Säulen nach Tageszeit und Wochentag
+- **Filter** nach Domain und Zeitraum (heute, gestern, diese Woche, 7 Tage, 30 Tage, Monat, Jahr); die Auswahl bleibt im Browser gespeichert. Eindeutige Besucher liefert Matomo nur für Kalenderperioden (Tag, Woche, Monat), nicht für „letzte 7/30 Tage“
 - **Weitere Websites**: Standardmäßig zeigt die Übersicht nur Matomo-Websites, die zu den YRewrite-Domains dieser Installation passen. Unter Konfiguration lassen sich weitere Websites aus demselben Matomo freischalten, etwa extern betreute Seiten
 - **Nicht blockierend und serverschonend**: Die Seite erscheint sofort, die Abschnitte laden nacheinander über `rex-api-call=matomo_stats` nach (immer nur ein Matomo-Request gleichzeitig). Antworten werden serverseitig 10 Minuten gecacht (abgeschlossene Zeiträume 6 Stunden), der Auto-Refresh läuft alle 15 Minuten nur bei sichtbarem Tab; „Aktualisieren“ erzwingt neue Daten höchstens einmal pro Minute
 - **Matomo öffnen**: Mit persönlichem Zugang landet der Benutzer direkt in Matomo, ohne Login

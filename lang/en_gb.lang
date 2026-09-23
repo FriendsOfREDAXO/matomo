@@ -558,3 +558,10 @@ matomo_setup_access_via_role = via role "{0}"
 matomo_setup_personal_headline = Personal accesses
 matomo_self_role_intro = You use the shared Matomo account of your role. Use these credentials for the regular Matomo login; "Open Matomo" does this with auto-login.
 matomo_self_role_note = Shared account of role "{0}" – the password is managed centrally in the setup.
+
+# Times (2.15)
+matomo_range_week = This week
+matomo_ov_times = Visits by time
+matomo_ov_by_hour = By time of day
+matomo_ov_by_weekday = By weekday
+matomo_ov_unique_unavailable = Matomo does not compute unique visitors for custom ranges – choose day, week or month
