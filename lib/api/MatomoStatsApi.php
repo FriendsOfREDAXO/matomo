@@ -163,14 +163,19 @@ class MatomoStatsApi extends rex_api_function
     }
 
     /**
-     * Websites, die der aktuelle Benutzer sehen darf (YRewrite-Filter + persönlicher Zugang).
+     * Websites, die der aktuelle Benutzer sehen darf: die ihm einzeln zugeordneten, sonst die dieser Installation (YRewrite + zusätzliche).
      *
      * @return list<array<string, mixed>>
      * @throws Exception
      */
     public static function allowedSites(MatomoApi $api): array
     {
-        return array_values(UserAccess::filterSites(self::visibleSites($api->getSites())));
+        $sites = $api->getSites();
+        // Einzeln zugeordnete Websites gelten auch ohne passende YRewrite-Domain, der Admin hat sie bewusst gewählt
+        if (null !== UserAccess::allowedSiteIds()) {
+            return array_values(UserAccess::filterSites($sites));
+        }
+        return self::visibleSites($sites);
     }
 
     /**

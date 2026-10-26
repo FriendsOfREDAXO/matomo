@@ -2,6 +2,11 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.16.1 – 2026-10-26
+- **Zugeordnete Websites ohne YRewrite-Domain**: Wer einen Zugang mit fest zugeordneten Websites hat, sah „Keine Domains verfügbar“, wenn die Website keine YRewrite-Domain dieser Installation war (z. B. eine extern betreute Website im selben Matomo). Einzeln zugeordnete Websites erscheinen jetzt in Übersicht, Statistik und Widgets, unabhängig von YRewrite
+- **Neue Domain ohne YRewrite**: Eine unter „Domains“ angelegte Website ohne passende YRewrite-Domain fehlte in der Übersicht. Sie wird jetzt automatisch unter „Weitere Websites in der Übersicht“ freigeschaltet
+- Website-Filter stürzte ohne Host der YRewrite-Default-Domain ab (z. B. in Konsole und Cronjob)
+
 ## 2.16.0 – 2026-09-23
 - **Info-Center-Widget neu**: zeigt die Domain-Statistiken der Übersicht kompakt – je Website Besuche der letzten 7 Tage mit Sparkline und Vergleich zur Vorwoche sowie „Öffnen“ mit Auto-Login bzw. Token des aktuellen Benutzers. Lädt die Zahlen nach dem Rendern über die Stats-API (Server-Cache), blockiert das Info-Center also nicht. Das alte Widget (Top 3 Websites, Besucher heute) entfällt
 

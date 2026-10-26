@@ -871,7 +871,7 @@ class YRewriteHelper
         // Default Domain auch erlauben
         $default_domain = \rex_yrewrite::getDomainByName('default');
         if (null !== $default_domain) {
-            $yrewrite_hosts[] = self::normalizeHost($default_domain->getHost());
+            $yrewrite_hosts[] = self::normalizeHost((string) $default_domain->getHost());
         }
 
         $filtered_sites = [];

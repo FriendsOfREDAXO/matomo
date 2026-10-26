@@ -49,6 +49,12 @@ if (rex_post('add_domain', 'boolean') && $matomo_ready) {
             
             if ($site_id !== null) {
                 $message = $addon->i18n('matomo_domain_added', $domain_name, $site_id);
+                // Ohne passende YRewrite-Domain fiele die neue Website aus der Übersicht – hier bewusst angelegt, also freischalten
+                $added = ['idsite' => $site_id, 'main_url' => $domain_url];
+                if ([] === YRewriteHelper::filterMatomoSitesByYRewrite([$added])) {
+                    $extra = array_map('intval', (array) rex_config::get('matomo', 'extra_site_ids', []));
+                    rex_config::set('matomo', 'extra_site_ids', array_values(array_unique([...$extra, (int) $site_id])));
+                }
                 UserAccess::syncAllSites($api, array_map(static fn (array $s): int => (int) $s['idsite'], $api->getSites()), true);
             } else {
                 $error = $addon->i18n('matomo_domain_add_failed');
