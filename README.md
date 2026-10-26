@@ -181,6 +181,74 @@ If **consent_kit** or **consent_manager** is installed, setup step 4 creates Mat
 - Respect Do Not Track
 - Use consent manager for cookie consent
 
+## 🔀 Other systems (TYPO3, WordPress …) tracked through their own domain
+
+If further websites use the same Matomo, their visitors should not call Matomo directly. A proxy on the **website's own domain** receives the requests and forwards them to Matomo on the server side:
+
+- The browser loads `matomo.js` and sends tracking requests to the site's own domain (`www.example.com/matomo/…`); the Matomo address does not appear in the page source.
+- Tracker blockers interfere less often, and Safari treats the Matomo cookies as the website's own cookies (otherwise they last 7 days at most).
+
+For websites of this REDAXO installation, the **Enable JavaScript Proxy** option under **Configuration** does this. It is no use for other systems: requests would then go to the REDAXO domain, which again is a foreign domain. Set up the official [Matomo Tracker Proxy](https://github.com/matomo-org/tracker-proxy) there instead. It needs PHP 7.2 or later and cURL or `allow_url_fopen`.
+
+**1. Create the website in Matomo**
+
+In the add-on under **Domains** or directly in Matomo. The site ID is needed for the tracking code. Websites without a YRewrite domain that are created under **Domains** are enabled for the overview automatically; otherwise use **Configuration → Additional websites in the overview**.
+
+**2. Matomo user for the proxy**
+
+Create a dedicated user in Matomo (e.g. `tracking-proxy`), give it **write** access to the websites concerned and create an auth token as this user (*Personal → Security → Auth tokens*). The permission is required so Matomo accepts the real visitor IP (`cip` parameter); without it Matomo discards the requests. Do not use the superuser token of this add-on: the token is stored in a file on the other server.
+
+**3. Install the proxy on the website's server**
+
+Directly under the main domain, not on a subdomain (otherwise Safari's cookie limit applies again). In the website's web root, i.e. `public/` for TYPO3 v12 and later:
+
+```bash
+cd /path/to/website/public
+mkdir matomo && cd matomo
+curl -L https://github.com/matomo-org/tracker-proxy/archive/refs/heads/master.tar.gz | tar xz --strip-components=1
+cp config.php.example config.php
+```
+
+Set in `config.php`:
+
+```php
+$MATOMO_URL = 'https://matomo.example.org/';      // Matomo address, ending with a slash
+$PROXY_URL  = 'https://www.example.com/matomo/';  // address of the proxy on the website
+$TOKEN_AUTH = '…';                                // token from step 2
+```
+
+To update, run the same `curl` command in the folder again; `config.php` is kept. Use the archive, not `git clone`, otherwise test and development files end up in the web root.
+
+**4. Point the tracking code to the own domain**
+
+The proxy also serves the script at `matomo.php`, so `matomo.js` becomes `matomo.php`:
+
+```html
+<script>
+  var _paq = window._paq = window._paq || [];
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u = '/matomo/';
+    _paq.push(['setTrackerUrl', u + 'matomo.php']);
+    _paq.push(['setSiteId', '5']); // site ID from step 1
+    var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+    g.async = true; g.src = u + 'matomo.php'; s.parentNode.insertBefore(g, s);
+  })();
+</script>
+```
+
+- Drop any `<noscript>` part containing the Matomo address.
+- In TYPO3, add the code e.g. via TypoScript (`page.jsFooterInline`) or in the page template. A Matomo extension only works if it can point both the tracker URL and the script URL to the proxy.
+- As before, the code must only run after consent in the website's consent tool.
+
+**5. Check**
+
+- In the browser's network tab, all requests go to the own domain (`/matomo/matomo.php`), none to the Matomo address.
+- Matomo's visitor log shows real locations. If every visit shows the location of the website's server, the visitor IP does not arrive: check the token and write access from step 2.
+
+Instead of `cip`, the IP can be passed in a header (`$http_ip_forward_header` in `config.php`, then no token with write access is needed). This only works if the web server in front of Matomo and Matomo itself trust that header (`proxy_client_headers[]`, `proxy_ips[]` in `config.ini.php`); otherwise Matomo counts every visit with the proxy server's IP. Details in the [Tracker Proxy guide](https://github.com/matomo-org/tracker-proxy#readme).
+
 ## 🔧 Configuration Options
 
 ### API Settings

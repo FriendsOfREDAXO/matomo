@@ -178,6 +178,74 @@ Ist **consent_kit** oder **consent_manager** installiert, legt die Einrichtung (
 - Do Not Track respektieren
 - Consent-Manager für Cookie-Zustimmung
 
+## 🔀 Andere Systeme (TYPO3, WordPress …) über die eigene Domain tracken
+
+Nutzen weitere Websites dasselbe Matomo, sollen deren Besucher Matomo nicht direkt aufrufen. Ein Proxy auf der **eigenen Domain der Website** nimmt die Aufrufe entgegen und reicht sie serverseitig an Matomo weiter:
+
+- Der Browser lädt `matomo.js` und sendet die Tracking-Anfragen an die eigene Domain (`www.beispiel.de/matomo/…`), die Matomo-Adresse taucht im Quelltext nicht auf.
+- Tracker-Blocker greifen seltener, und Safari behandelt die Matomo-Cookies als eigene Cookies der Website (sonst höchstens 7 Tage Laufzeit).
+
+Für Websites dieser REDAXO-Installation erledigt das die Option **JavaScript-Proxy aktivieren** unter **Konfiguration**. Für andere Systeme taugt dieser Proxy nicht: Die Aufrufe kämen dann von der REDAXO-Domain, also wieder von einer fremden Domain. Dort wird stattdessen der offizielle [Matomo Tracker Proxy](https://github.com/matomo-org/tracker-proxy) eingerichtet. Er braucht PHP ab 7.2 und cURL oder `allow_url_fopen`.
+
+**1. Website in Matomo anlegen**
+
+Im AddOn unter **Domains** oder direkt in Matomo. Die Site-ID wird für den Tracking-Code gebraucht. Websites ohne YRewrite-Domain schaltet das AddOn beim Anlegen unter **Domains** automatisch für die Übersicht frei, sonst unter **Konfiguration → Weitere Websites in der Übersicht**.
+
+**2. Matomo-Benutzer für den Proxy**
+
+In Matomo einen eigenen Benutzer anlegen (z. B. `tracking-proxy`), ihm **Schreiben** auf die betreffenden Websites geben und mit diesem Benutzer ein Auth-Token erzeugen (*Persönlich → Sicherheit → Auth-Token*). Das Recht ist nötig, damit Matomo die echte Besucher-IP übernimmt (Parameter `cip`). Ohne das Recht verwirft Matomo die Anfragen. Nicht das Superuser-Token aus diesem AddOn verwenden: Das Token steht auf dem fremden Server in einer Datei.
+
+**3. Proxy auf dem Server der Website installieren**
+
+Direkt unter der Hauptdomain, nicht auf einer Subdomain (sonst gilt Safaris Cookie-Grenze wieder). Im Web-Root der Website, bei TYPO3 ab Version 12 also `public/`:
+
+```bash
+cd /pfad/zur/website/public
+mkdir matomo && cd matomo
+curl -L https://github.com/matomo-org/tracker-proxy/archive/refs/heads/master.tar.gz | tar xz --strip-components=1
+cp config.php.example config.php
+```
+
+In `config.php` eintragen:
+
+```php
+$MATOMO_URL = 'https://matomo.example.org/';      // Adresse des Matomo, mit Schrägstrich am Ende
+$PROXY_URL  = 'https://www.beispiel.de/matomo/';  // Adresse des Proxys auf der Website
+$TOKEN_AUTH = '…';                                // Token aus Schritt 2
+```
+
+Zum Aktualisieren denselben `curl`-Befehl im Ordner erneut ausführen, `config.php` bleibt erhalten. Das Archiv nehmen, kein `git clone`, sonst landen Test- und Entwicklungsdateien im Web-Root.
+
+**4. Tracking-Code auf die eigene Domain umstellen**
+
+Der Proxy liefert unter `matomo.php` auch das Script aus, `matomo.js` wird also zu `matomo.php`:
+
+```html
+<script>
+  var _paq = window._paq = window._paq || [];
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u = '/matomo/';
+    _paq.push(['setTrackerUrl', u + 'matomo.php']);
+    _paq.push(['setSiteId', '5']); // Site-ID aus Schritt 1
+    var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
+    g.async = true; g.src = u + 'matomo.php'; s.parentNode.insertBefore(g, s);
+  })();
+</script>
+```
+
+- Einen `<noscript>`-Teil mit der Matomo-Adresse weglassen.
+- Bei TYPO3 den Code zum Beispiel per TypoScript (`page.jsFooterInline`) oder im Seiten-Template einbinden. Eine Matomo-Extension geht nur, wenn sie Tracker-URL und Script-URL auf den Proxy setzen kann.
+- Ausgelöst wird der Code wie bisher erst nach der Einwilligung im Consent-Tool der Website.
+
+**5. Prüfen**
+
+- Im Netzwerk-Tab des Browsers gehen alle Anfragen an die eigene Domain (`/matomo/matomo.php`), keine an die Matomo-Adresse.
+- Im Besucher-Log von Matomo stehen echte Standorte. Steht überall der Standort des Website-Servers, kommt die Besucher-IP nicht an: Token und Schreibrecht aus Schritt 2 prüfen.
+
+Die IP lässt sich statt per `cip` auch per Header weitergeben (`$http_ip_forward_header` in `config.php`, dann ohne Token mit Schreibrecht). Das funktioniert nur, wenn der Webserver vor Matomo und Matomo selbst diesem Header vertrauen (`proxy_client_headers[]`, `proxy_ips[]` in der `config.ini.php`). Sonst zählt Matomo jeden Besuch mit der IP des Proxy-Servers. Details stehen in der [Anleitung des Tracker Proxy](https://github.com/matomo-org/tracker-proxy#readme).
+
 ## 🔧 Konfigurationsoptionen
 
 ### API-Einstellungen
