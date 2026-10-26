@@ -33,6 +33,12 @@ class MatomoProxyApi extends rex_api_function
     /** @var int Cache-Dauer in Sekunden (24 Stunden) */
     private const CACHE_DURATION = 86400;
 
+    /**
+     * Parameter, die Matomo nur mit Token annimmt. Der Proxy setzt selbst ein Token, deshalb werden
+     * sie aus Besucher-Anfragen entfernt – sonst liessen sich IP, Zeitpunkt und Ort faelschen.
+     */
+    private const PROTECTED_PARAMS = ['cip', 'token_auth', 'cdt', 'cdo', 'country', 'region', 'city', 'lat', 'long'];
+
     /** @var bool API ist öffentlich zugänglich (keine Authentifizierung nötig) */
     protected $published = true;
 
@@ -51,8 +57,8 @@ class MatomoProxyApi extends rex_api_function
         // Dateinamen abrufen
         $file = rex_request::request('file', 'string', 'matomo.js');
         
-        // Validieren
-        if (!isset(self::ALLOWED_FILES[$file])) {
+        // Validieren; der Test aus dem Backend laedt nur das Script, Tracking nur bei aktivem Proxy
+        if (!isset(self::ALLOWED_FILES[$file]) || ($is_test && !$this->isProxyEnabled() && !str_ends_with($file, '.js'))) {
             $this->sendError('Ungültige Datei', 400);
         }
         
@@ -85,9 +91,14 @@ class MatomoProxyApi extends rex_api_function
         
         $url = rtrim($matomo_url, '/') . '/' . $file;
 
-        $query = $this->getForwardedQueryString();
-        if ('' !== $query) {
-            $url .= '?' . $query;
+        $params = $this->getForwardedParams();
+        $requestMethod = strtoupper(rex_request::server('REQUEST_METHOD', 'string', 'GET'));
+        $body = 'POST' === $requestMethod ? $this->getRawRequestBody() : '';
+        if (str_ends_with($file, '.php')) {
+            [$params, $body] = $this->withVisitorIp($params, $body);
+        }
+        if ([] !== $params) {
+            $url .= '?' . rex_string::buildQuery($params);
         }
         
         try {
@@ -108,9 +119,13 @@ class MatomoProxyApi extends rex_api_function
             
             $socket->setTimeout(10);
 
-            $requestMethod = strtoupper(rex_request::server('REQUEST_METHOD', 'string', 'GET'));
             if ('POST' === $requestMethod) {
-                $response = $socket->doPost($this->getRawRequestBody());
+                // Ohne Content-Type liest Matomo lange Einzelanfragen (form-urlencoded) nicht aus
+                $contentType = rex_request::server('CONTENT_TYPE', 'string', '');
+                if ('' !== $contentType) {
+                    $socket->addHeader('Content-Type', $contentType);
+                }
+                $response = $socket->doPost($body);
             } else {
                 $response = $socket->doGet();
             }
@@ -129,28 +144,84 @@ class MatomoProxyApi extends rex_api_function
     }
 
     /**
-     * Leitet alle Tracking-Query-Parameter an Matomo weiter.
+     * Query-Parameter der Anfrage ohne die eigenen (rex-api-call, file, test).
+     *
+     * @return array<mixed>
      */
-    private function getForwardedQueryString(): string
+    private function getForwardedParams(): array
     {
         $queryString = rex_request::server('QUERY_STRING', 'string', '');
         if ('' === $queryString) {
-            return '';
+            return [];
         }
 
         parse_str($queryString, $params);
         unset($params['rex-api-call'], $params['file'], $params['test']);
 
-        if ([] === $params) {
-            return '';
-        }
-
-        return rex_string::buildQuery($params);
+        return $params;
     }
 
     /**
-     * Reicht relevante Client-Header an Matomo durch.
+     * Echte Besucher-IP an Matomo: als `cip` mit dem Token aus der Einrichtung, wie der offizielle
+     * Matomo Tracker Proxy. Ohne Token nimmt Matomo `cip` nicht an und zaehlt die IP dieses Servers.
+     * Bei Sammelanfragen (JSON mit "requests") bekommt jeder Eintrag die IP, das Token steht oben im JSON.
+     *
+     * @param array<mixed> $params
+     * @return array{0: array<mixed>, 1: string}
      */
+    private function withVisitorIp(array $params, string $body): array
+    {
+        $params = $this->withoutProtectedParams($params);
+        $ip = rex_request::server('REMOTE_ADDR', 'string', '');
+        $token = (string) rex_config::get('matomo', 'admin_token', '');
+        $ip = false !== filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '';
+
+        $bulk = '' !== $body ? json_decode(str_replace(["\n", "\r"], '', trim($body)), true) : null;
+        if (is_array($bulk) && isset($bulk['requests']) && is_array($bulk['requests'])) {
+            foreach ($bulk['requests'] as $index => $request) {
+                if (is_string($request)) {
+                    parse_str((string) parse_url($request, PHP_URL_QUERY), $entry);
+                    $entry = $this->withoutProtectedParams($entry);
+                    if ('' !== $ip && '' !== $token) {
+                        $entry['cip'] = $ip;
+                    }
+                    $bulk['requests'][$index] = '?' . rex_string::buildQuery($entry);
+                } elseif (is_array($request)) {
+                    $request = $this->withoutProtectedParams($request);
+                    if ('' !== $ip && '' !== $token) {
+                        $request['cip'] = $ip;
+                    }
+                    $bulk['requests'][$index] = $request;
+                }
+            }
+            unset($bulk['token_auth']);
+            if ('' !== $ip && '' !== $token) {
+                $bulk['token_auth'] = $token;
+            }
+            $encoded = json_encode($bulk, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            return [$params, false !== $encoded ? $encoded : ''];
+        }
+
+        if ('' !== $body) {
+            parse_str($body, $post);
+            $body = rex_string::buildQuery($this->withoutProtectedParams($post));
+        }
+        if ('' !== $ip && '' !== $token) {
+            $params['cip'] = $ip;
+            $params['token_auth'] = $token;
+        }
+        return [$params, $body];
+    }
+
+    /**
+     * @param array<mixed> $params
+     * @return array<mixed>
+     */
+    private function withoutProtectedParams(array $params): array
+    {
+        return array_diff_key($params, array_flip(self::PROTECTED_PARAMS));
+    }
+
     private function forwardClientHeaders(rex_socket $socket): void
     {
         $userAgent = rex_request::server('HTTP_USER_AGENT', 'string', '');

@@ -2,6 +2,12 @@
 
 Alle Änderungen am Matomo-AddOn für REDAXO. Die Versionen sind absteigend sortiert.
 
+## 2.16.2 – 2026-10-26
+- **JavaScript-Proxy übergibt die echte Besucher-IP**: Bisher kam nur `X-Forwarded-For` bei Matomo an, das Matomo ohne eigene Proxy-Konfiguration ignoriert – alle über den Proxy getrackten Besuche hatten die IP des REDAXO-Servers (falsche Standorte, zusammengelegte Besucher). Der Proxy sendet die IP jetzt wie der offizielle Matomo Tracker Proxy als `cip` mit dem Token aus der Einrichtung, auch in Sammelanfragen
+- **Lange Tracking-Anfragen** (über 2000 Zeichen, vom Tracker per POST gesendet) gingen über den Proxy verloren, weil der `Content-Type` fehlte
+- Parameter, die Matomo nur mit Token annimmt (`cip`, `token_auth`, `cdt`, `cdo`, Ortsangaben), werden aus Besucher-Anfragen entfernt, damit sich über den Proxy keine IP, Zeit oder Herkunft fälschen lässt. Der Proxy-Test aus dem Backend lädt bei abgeschaltetem Proxy nur noch das Script
+- README: Anleitung, wie andere Systeme (TYPO3, WordPress …) per Matomo Tracker Proxy über die eigene Domain tracken
+
 ## 2.16.1 – 2026-10-26
 - **Zugeordnete Websites ohne YRewrite-Domain**: Wer einen Zugang mit fest zugeordneten Websites hat, sah „Keine Domains verfügbar“, wenn die Website keine YRewrite-Domain dieser Installation war (z. B. eine extern betreute Website im selben Matomo). Einzeln zugeordnete Websites erscheinen jetzt in Übersicht, Statistik und Widgets, unabhängig von YRewrite
 - **Neue Domain ohne YRewrite**: Eine unter „Domains“ angelegte Website ohne passende YRewrite-Domain fehlte in der Übersicht. Sie wird jetzt automatisch unter „Weitere Websites in der Übersicht“ freigeschaltet
